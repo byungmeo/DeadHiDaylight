@@ -12,6 +12,7 @@ void UGeneratorAnim::NativeBeginPlay()
 	if (Generator)
 	{
 		Generator->OnExplosion.AddDynamic(this, &UGeneratorAnim::OnExplosion);
+		Generator->OnPowerOn.AddDynamic(this, &UGeneratorAnim::OnPowerOn);
 	}
 }
 

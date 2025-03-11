@@ -7,6 +7,7 @@
 #include "Generator.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnExplosion);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPowerOn);
 
 UCLASS()
 class DEADHIDAYLIGHT_API AGenerator : public AActor
@@ -53,7 +54,9 @@ private:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USkeletalMeshComponent> Mesh = nullptr;
-	
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPowerOn OnPowerOn;
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bPowerOn = false;
 

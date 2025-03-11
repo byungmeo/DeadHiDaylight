@@ -29,4 +29,7 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnExplosion();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPowerOn();
 };

@@ -56,6 +56,7 @@ void AGenerator::Tick(float DeltaTime)
 	if (PowerGauge >= 1)
 	{
 		bPowerOn = true;
+		OnPowerOn.Broadcast();
 	}
 }
 

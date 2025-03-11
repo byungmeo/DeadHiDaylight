@@ -5,10 +5,14 @@
 
 #include "Generator.h"
 
-void UGeneratorAnim::NativeInitializeAnimation()
+void UGeneratorAnim::NativeBeginPlay()
 {
-	Super::NativeInitializeAnimation();
+	Super::NativeBeginPlay();
 	Generator = Cast<AGenerator>(GetOwningActor());
+	if (Generator)
+	{
+		Generator->OnExplosion.AddDynamic(this, &UGeneratorAnim::OnExplosion);
+	}
 }
 
 void UGeneratorAnim::NativeUpdateAnimation(float DeltaSeconds)
@@ -16,6 +20,8 @@ void UGeneratorAnim::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	if (Generator)
 	{
+		bPowerOn = Generator->bPowerOn;
+		bIsExplosion = Generator->bIsExplosion;
 		PowerGauge = Generator->PowerGauge;
 	}
 }

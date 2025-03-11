@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"
 #include "GameFramework/Character.h"
 #include "Camper.generated.h"
 
@@ -23,4 +24,34 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UPROPERTY()
+	class UCharacterMovementComponent* moveComp;
+	//Input IMC
+	UPROPERTY(EditAnywhere)
+	class UInputMappingContext* IMC_Camper;
+	//Input Move 변수
+	UPROPERTY(EditAnywhere)
+	class UInputAction* IA_Move;
+	UPROPERTY(EditAnywhere)
+	class UInputAction* IA_Look;
+	UPROPERTY(EditAnywhere)
+	class UInputAction* IA_Turn;
+	UPROPERTY(EditAnywhere)
+	class UInputAction* IA_Run;
+
+	
+	UPROPERTY()
+	FVector direction;
+	
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
+	float moveSpeed = 200;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
+	float maxSpeed = 500;
+	
+	void CamperMove(const FInputActionValue& value);
+	void Lookup(const struct FInputActionValue& value);
+	void Turn(const struct FInputActionValue& value);
+	void Run(const struct FInputActionValue& value);
+
 };

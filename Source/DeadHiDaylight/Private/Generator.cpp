@@ -52,7 +52,25 @@ void AGenerator::Tick(float DeltaTime)
 		return;
 	}
 	
-	PowerGauge += BaseRepairValue * DeltaTime;
+	float RepairValue = 0;
+	if (RepairingCount > 0)
+	{
+		RepairValue = BaseRepairValue - (BaseRepairValue * ReductionRepairEfficiency * (RepairingCount - 1));
+	}
+	
+	if (bIsBreak)
+	{
+		PowerGauge -= ProgressiveBreakValue * DeltaTime;
+		
+		RemainBreakShield -= RepairValue * DeltaTime;
+		if (RemainBreakShield <= 0)
+		{
+			bIsBreak = false;
+		}
+		return;
+	}
+	
+	PowerGauge += RepairValue * DeltaTime;
 	if (PowerGauge >= 1)
 	{
 		bPowerOn = true;
@@ -79,4 +97,17 @@ void AGenerator::SkillCheckFail()
 void AGenerator::TestExplosion()
 {
 	SkillCheckFail();
+}
+
+void AGenerator::Break()
+{
+	bIsBreak = true;
+	PowerGauge -= FMath::Clamp(ImmediateBreakValue, 0, 1);
+	RemainBreakShield = InitBreakShield;
+	OnBreak.Broadcast();
+}
+
+void AGenerator::TestBreak()
+{
+	Break();
 }

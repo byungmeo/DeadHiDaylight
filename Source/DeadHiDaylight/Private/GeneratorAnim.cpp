@@ -11,8 +11,9 @@ void UGeneratorAnim::NativeBeginPlay()
 	Generator = Cast<AGenerator>(GetOwningActor());
 	if (Generator)
 	{
-		Generator->OnExplosion.AddDynamic(this, &UGeneratorAnim::OnExplosion);
 		Generator->OnPowerOn.AddDynamic(this, &UGeneratorAnim::OnPowerOn);
+		Generator->OnExplosion.AddDynamic(this, &UGeneratorAnim::OnExplosion);
+		Generator->OnBreak.AddDynamic(this, &UGeneratorAnim::OnBreak);
 	}
 }
 

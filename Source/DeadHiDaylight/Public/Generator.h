@@ -6,8 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "Generator.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnExplosion);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPowerOn);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnExplosion);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBreak);
 
 UCLASS()
 class DEADHIDAYLIGHT_API AGenerator : public AActor
@@ -26,17 +27,13 @@ private:
 	// 살인마는 수리가 진행 중인 발전기에 손상을 입힐 수 있으며,
 	// 손상된 발전기는 즉시 5%의 진행도를 잃어버리고 초당 0.25%의 진행도가 깎인다.
 	// 생존자가 5%만큼 다시 수리를 재개하면 수리 진행도 감소가 정지된다.
-	bool bIsRegressing = false;
-	float ImmediateRegressionValue = 0.05f;
-	float ProgressiveRegressionValue = 0.0025f;
-	float MaxRegressionShield = 0.05f;
-	float CurrentRegressionShield = 0;
-
-	// 발전기를 동시에 수리 중인 생존자 수
+	float ImmediateBreakValue = 0.05f;
+	float ProgressiveBreakValue = 0.0025f;
+	float InitBreakShield = 0.05f;
+	float RemainBreakShield = 0;
+	
 	// 1명 기준 초당 1.25% 수리할 수 있음
 	// 인원 수가 늘어날 때마다 기본 효율의 10% 수치만큼 인당 수리 효율이 깎임
-	UPROPERTY(EditInstanceOnly, Category="Test")
-	int RepairingCount = 0;
 	float BaseRepairValue = 0.0125f;
 	float ReductionRepairEfficiency = 0.1f;
 
@@ -54,23 +51,36 @@ private:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USkeletalMeshComponent> Mesh = nullptr;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnPowerOn OnPowerOn;
+	
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bPowerOn = false;
-
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
-	bool bIsExplosion = false;
-	
+	UPROPERTY(BlueprintAssignable)
+	FOnPowerOn OnPowerOn;
+	UPROPERTY(EditInstanceOnly, Category="Test")
+	int RepairingCount = 0;
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	float PowerGauge = 0.0f;
 
+	/*
+	 *	Skill Check
+	 */
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	bool bIsExplosion = false;
 	void SkillCheckSuccess(const bool bGreateSuccess);
-
+	void SkillCheckFail();
 	UPROPERTY(BlueprintAssignable)
 	FOnExplosion OnExplosion;
-	void SkillCheckFail();
 	UFUNCTION(CallInEditor, Category="Test")
-	void TestExplosion();
+    void TestExplosion();
+
+	/*
+	 * Break by Slasher
+	 */
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	bool bIsBreak = false;
+	void Break();
+	UPROPERTY(BlueprintAssignable)
+	FOnBreak OnBreak;
+	UFUNCTION(CallInEditor, Category="Test")
+	void TestBreak();
 };

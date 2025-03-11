@@ -24,12 +24,16 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	float PowerGauge = 0.0f;
 
+	
 	virtual void NativeBeginPlay() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPowerOn();
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnExplosion();
-	
+
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnPowerOn();
+	void OnBreak();
 };

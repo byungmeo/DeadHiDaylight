@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Camper.h"
 #include "GameFramework/Actor.h"
 #include "Generator.generated.h"
 
@@ -51,6 +52,14 @@ private:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USkeletalMeshComponent> Mesh = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UGeneratorRepairSlot> SlotLeft = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UGeneratorRepairSlot> SlotRight = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UGeneratorRepairSlot> SlotFront = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UGeneratorRepairSlot> SlotBack = nullptr;
 	
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bPowerOn = false;
@@ -60,6 +69,7 @@ public:
 	int RepairingCount = 0;
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	float PowerGauge = 0.0f;
+	void PowerOn();
 
 	/*
 	 *	Skill Check
@@ -83,4 +93,14 @@ public:
 	FOnBreak OnBreak;
 	UFUNCTION(CallInEditor, Category="Test")
 	void TestBreak();
+
+	/*
+	 *	
+	 */
+	void Interact(ACharacter* Character);
+	void NotifyStartRepair(ACamper* Camper);
+	void NotifyEndRepair(const ACamper* Camper);
+	void NotifyStartBreak();
+	UGeneratorRepairSlot* FindBoxByCamper(const ACamper* Camper);
+	UGeneratorRepairSlot* FindOverlapBox(const ACharacter* Character);
 };

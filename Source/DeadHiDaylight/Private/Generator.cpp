@@ -74,10 +74,7 @@ void AGenerator::Tick(float DeltaTime)
 	}
 	
 	float RepairValue = 0;
-	if (RepairingCount > 0)
-	{
-		RepairValue = BaseRepairValue - (BaseRepairValue * ReductionRepairEfficiency * (RepairingCount - 1));
-	}
+	RepairValue = (BaseRepairValue - (BaseRepairValue * ReductionRepairEfficiency * (RepairingCount - 1))) * RepairingCount;
 	
 	if (bIsBreak)
 	{

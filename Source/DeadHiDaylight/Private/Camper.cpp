@@ -92,3 +92,26 @@ void ACamper::Run(const struct FInputActionValue& value)
 	if (movement->MaxWalkSpeed > moveSpeed) movement->MaxWalkSpeed = moveSpeed;
 	else movement->MaxWalkSpeed = maxSpeed;
 }
+
+void ACamper::BeginGeneratorOverlap(UGeneratorRepairSlot* GeneratorRepairSlot)
+{
+	OverlappedGeneratorSlot = GeneratorRepairSlot;
+}
+
+void ACamper::EndGeneratorOverlap(const UGeneratorRepairSlot* GeneratorRepairSlot)
+{
+	if (OverlappedGeneratorSlot == GeneratorRepairSlot)
+	{
+		OverlappedGeneratorSlot = nullptr;
+	}
+}
+
+void ACamper::StartRepair()
+{
+	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
+}
+
+void ACamper::EndRepair()
+{
+	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
+}

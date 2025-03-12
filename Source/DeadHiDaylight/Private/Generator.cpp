@@ -148,7 +148,7 @@ void AGenerator::TestBreak()
 
 void AGenerator::Interact(ACharacter* Character)
 {
-	const UBoxComponent* Box = FindOverlapBox(Character);
+	UGeneratorRepairSlot* Box = FindOverlapBox(Character);
 	if (nullptr == Box)
 	{
 		return;
@@ -156,30 +156,29 @@ void AGenerator::Interact(ACharacter* Character)
 
 	if (ACamper* Camper = Cast<ACamper>(Character))
 	{
-		NotifyStartRepair(Camper);
+		UE_LOG(LogTemp, Warning, TEXT("AGenerator::Interact Survivor"));
+		NotifyStartRepair(Camper, Box);
 	}
 	else
 	{
+		UE_LOG(LogTemp, Warning, TEXT("AGenerator::Interact Slasher"));
 		NotifyStartBreak();
 	}
 }
 
-void AGenerator::NotifyStartRepair(ACamper* Camper)
+void AGenerator::NotifyStartRepair(ACamper* Camper, UGeneratorRepairSlot* Box)
 {
-	UGeneratorRepairSlot* OverlappedBox = FindOverlapBox(Camper);
-	if (nullptr == OverlappedBox)
-	{
-		return;
-	}
-	
-	OverlappedBox->AttachCamper(Camper);
+	UE_LOG(LogTemp, Warning, TEXT("AGenerator::NotifyStartRepair"));
+	Box->AttachCamper(Camper);
 	RepairingCount++;
 	
-	// TODO: 생존자에게 발전기 수리를 시작하라고 알린다.
+	// 생존자에게 발전기 수리를 시작하라고 알린다.
+	Camper->StartRepair();
 }
 
-void AGenerator::NotifyEndRepair(const ACamper* Camper)
+void AGenerator::NotifyEndRepair(ACamper* Camper)
 {
+	UE_LOG(LogTemp, Warning, TEXT("AGenerator::NotifyEndRepair"));
 	UGeneratorRepairSlot* Box = FindBoxByCamper(Camper);
 	if (nullptr == Box)
 	{
@@ -188,7 +187,8 @@ void AGenerator::NotifyEndRepair(const ACamper* Camper)
 	Box->DetachCamper();
 	RepairingCount--;
 
-	// TODO: 생존자에게 발전기 수리를 멈추라고 알린다.
+	// 생존자에게 발전기 수리를 멈추라고 알린다.
+	Camper->EndRepair();
 }
 
 void AGenerator::NotifyStartBreak()
@@ -225,7 +225,7 @@ UGeneratorRepairSlot* AGenerator::FindOverlapBox(const ACharacter* Character)
 	}
 	if (SlotRight && SlotRight->IsActive() && SlotRight->IsOverlappingActor(Character))
 	{
-		return SlotLeft;
+		return SlotRight;
 	}
 	if (SlotFront && SlotFront->IsActive() && SlotFront->IsOverlappingActor(Character))
 	{

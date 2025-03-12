@@ -54,4 +54,14 @@ public:
 	void Turn(const struct FInputActionValue& value);
 	void Run(const struct FInputActionValue& value);
 
+	/*
+	 * Temp for Interact with Generator
+	 */
+public:
+	UPROPERTY()
+	class UGeneratorRepairSlot* OverlappedGeneratorSlot = nullptr;
+	void BeginGeneratorOverlap(UGeneratorRepairSlot* GeneratorRepairSlot);
+	void EndGeneratorOverlap(const UGeneratorRepairSlot* GeneratorRepairSlot);
+	void StartRepair();
+	void EndRepair();
 };

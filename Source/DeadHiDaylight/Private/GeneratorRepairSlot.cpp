@@ -7,6 +7,8 @@
 UGeneratorRepairSlot::UGeneratorRepairSlot()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	OnComponentBeginOverlap.AddDynamic(this, &UGeneratorRepairSlot::OnBeginOverlap);
+	OnComponentEndOverlap.AddDynamic(this, &UGeneratorRepairSlot::OnEndOverlap);
 }
 
 void UGeneratorRepairSlot::BeginPlay()
@@ -26,6 +28,7 @@ void UGeneratorRepairSlot::Init(USkeletalMeshComponent* GeneratorMesh, const FNa
 	SetupAttachment(GeneratorMesh, BoneName);
 	BindBoneName = BoneName;
 	SetBoxExtent(FVector(32, 50, 40));
+	SetActive(true);
 }
 
 void UGeneratorRepairSlot::AttachCamper(ACamper* Camper)
@@ -49,4 +52,22 @@ void UGeneratorRepairSlot::DetachCamper()
 	AttachedCamper->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 	AttachedCamper = nullptr;
 	SetActive(true);
+}
+
+void UGeneratorRepairSlot::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (ACamper* Camper = Cast<ACamper>(OtherActor))
+	{
+		Camper->BeginGeneratorOverlap(this);
+	}
+}
+
+void UGeneratorRepairSlot::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (ACamper* Camper = Cast<ACamper>(OtherActor))
+	{
+		Camper->EndGeneratorOverlap(this);
+	}
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Camper.h"
+#include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
 #include "Generator.generated.h"
 
@@ -98,8 +99,8 @@ public:
 	 *	
 	 */
 	void Interact(ACharacter* Character);
-	void NotifyStartRepair(ACamper* Camper);
-	void NotifyEndRepair(const ACamper* Camper);
+	void NotifyStartRepair(ACamper* Camper, UGeneratorRepairSlot* Box);
+	void NotifyEndRepair(ACamper* Camper);
 	void NotifyStartBreak();
 	UGeneratorRepairSlot* FindBoxByCamper(const ACamper* Camper);
 	UGeneratorRepairSlot* FindOverlapBox(const ACharacter* Character);

@@ -37,4 +37,10 @@ public:
 	void Init(USkeletalMeshComponent* GeneratorMesh, const FName BoneName);
 	void AttachCamper(ACamper* Camper);
 	void DetachCamper();
+	
+	UFUNCTION()
+	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

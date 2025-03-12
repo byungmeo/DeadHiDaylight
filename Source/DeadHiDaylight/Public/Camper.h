@@ -45,9 +45,9 @@ public:
 	FVector direction;
 	
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
-	float moveSpeed = 200;
+	float moveSpeed = 226;
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
-	float maxSpeed = 1000;
+	float maxSpeed = 400;
 	
 	void CamperMove(const FInputActionValue& value);
 	void Look(const struct FInputActionValue& value);

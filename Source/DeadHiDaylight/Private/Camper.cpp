@@ -7,6 +7,8 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
+#include "GeneratorRepairSlot.h"
+#include "Generator.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -99,8 +101,8 @@ void ACamper::Run(const struct FInputActionValue& value)
 		Anim->IsRun();
 	}
 	auto movement = moveComp;
-	if (movement->MaxWalkSpeed > moveSpeed) movement->MaxWalkSpeed = moveSpeed;
-	else movement->MaxWalkSpeed = maxSpeed;
+	if (movement->MaxWalkSpeed > moveSpeed) movement->MaxWalkSpeed = moveSpeed * 2;
+	else movement->MaxWalkSpeed = maxSpeed * 2;
 
 	UE_LOG(LogTemp, Warning, TEXT("ACamper::Run %f"), movement->MaxWalkSpeed);
 }
@@ -121,9 +123,17 @@ void ACamper::EndGeneratorOverlap(const UGeneratorRepairSlot* GeneratorRepairSlo
 void ACamper::StartRepair()
 {
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
+	OverlappedGeneratorSlot->Generator->Interact(this);
+	// 움직임 wsad 멈추고 카메라만 회전
+	// 애니메이션 실행
+	//
+
+	// 수리 중인데 마우스를 땠을 때 호출하는 함수
+	OverlappedGeneratorSlot->Generator->NotifyEndRepair(this);
 }
 
 void ACamper::EndRepair()
 {
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
+	// 다시 애니메이션 idle로 바꾸고 wsad 움직일 수 있게 변경
 }

@@ -21,11 +21,29 @@ void UCamperAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 void UCamperAnimInstance::IsWalk()
 {
 	bWalk = !bWalk;
-	UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::IsWalk %d"), bWalk);
+	// UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::IsWalk %d"), bWalk);
 }
 
 void UCamperAnimInstance::IsRun()
 {
 	bRun = !bRun;
-	UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::IsRun %d"), bRun);
+	// UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::IsRun %d"), bRun);
+}
+
+void UCamperAnimInstance::IsCrouch(bool value)
+{
+	bCrouch = value;
+	randValue = RandomValue();
+	UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::bCrouch %d randomValue : %d"), bCrouch, randValue);
+}
+
+/*void UCamperAnimInstance::IsWalk_Crouch()
+{
+	if (moveSpeed > 0) bWalk_Crouch = true;
+	else bWalk_Crouch = false;
+}*/
+
+int32 UCamperAnimInstance::RandomValue()
+{
+	return FMath::RandRange(1, 2);
 }

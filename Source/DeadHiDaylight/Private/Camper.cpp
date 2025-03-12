@@ -28,7 +28,8 @@ void ACamper::BeginPlay()
 	Super::BeginPlay();
 
 	Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
-	
+
+	// 시작 시 IMC 세팅
 	FTimerHandle timerHandle;
 	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this](){ 
 	auto* pc = Cast<APlayerController>(Controller);
@@ -41,6 +42,7 @@ void ACamper::BeginPlay()
 	}
 }, 0.1f, false);
 
+	// 캐릭터 움직임 컴포넌트 세팅
 	moveComp = GetCharacterMovement();
 	moveComp->MaxWalkSpeed = moveSpeed;
 }
@@ -49,11 +51,6 @@ void ACamper::BeginPlay()
 void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (Anim)
-	{
-		Anim->bWalk = GetVelocity().Size() > 3.0f;
-	}
 }
 
 // Called to bind functionality to input
@@ -66,6 +63,8 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ACamper::CamperMove);
 		input->BindAction(IA_Run, ETriggerEvent::Started, this, &ACamper::Run);
 		input->BindAction(IA_Run, ETriggerEvent::Completed, this, &ACamper::Run);
+		input->BindAction(IA_Crouch, ETriggerEvent::Started, this, &ACamper::Start_Crouch);
+		input->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &ACamper::End_Crouch);
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
 	}
 }
@@ -100,11 +99,32 @@ void ACamper::Run(const struct FInputActionValue& value)
 	{
 		Anim->IsRun();
 	}
-	auto movement = moveComp;
-	if (movement->MaxWalkSpeed > moveSpeed) movement->MaxWalkSpeed = moveSpeed * 2;
-	else movement->MaxWalkSpeed = maxSpeed * 2;
+	if (Anim->bRun) moveComp->MaxWalkSpeed = maxSpeed * 2;
+	else moveComp->MaxWalkSpeed = moveSpeed * 2;
 
-	UE_LOG(LogTemp, Warning, TEXT("ACamper::Run %f"), movement->MaxWalkSpeed);
+	// UE_LOG(LogTemp, Warning, TEXT("ACamper::Run %f"), movement->MaxWalkSpeed);
+}
+
+void ACamper::Start_Crouch(const struct FInputActionValue& value)
+{
+	if (Anim) Anim->IsCrouch(true);
+	
+	if (Anim)
+	{
+		moveComp->MaxWalkSpeed = crouchSpeed * 2;
+	}
+	// UE_LOG(LogTemp, Warning, TEXT("ACamper::StartCrouch %f"), moveComp->MaxWalkSpeed);
+}
+
+void ACamper::End_Crouch(const struct FInputActionValue& value)
+{
+	if (Anim) Anim->IsCrouch(false);
+	
+	if (Anim)
+	{
+		moveComp->MaxWalkSpeed = moveSpeed * 2;
+	}
+	// UE_LOG(LogTemp, Warning, TEXT("ACamper::EndCrouch %f"), moveComp->MaxWalkSpeed);
 }
 
 void ACamper::BeginGeneratorOverlap(UGeneratorRepairSlot* GeneratorRepairSlot)

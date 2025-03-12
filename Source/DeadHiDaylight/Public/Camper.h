@@ -24,34 +24,39 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 	UPROPERTY()
-	class UCharacterMovementComponent* moveComp;
-	//Input IMC
+	class UCharacterMovementComponent* moveComp; // 캐릭터 움직임 컴포넌트
 	UPROPERTY(EditAnywhere)
-	class UInputMappingContext* IMC_Camper;
-	//Input Move 변수
+	class UCamperAnimInstance* Anim;
+	
+	// Input 변수
 	UPROPERTY(EditAnywhere)
-	class UInputAction* IA_Move;
+	class UInputMappingContext* IMC_Camper; //Input IMC 변수
+	UPROPERTY(EditAnywhere)
+	class UInputAction* IA_Move; 
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_Look;
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_Run;
-
 	UPROPERTY(EditAnywhere)
-	class UCamperAnimInstance* Anim;
+	class UInputAction* IA_Crouch;
 	
-	UPROPERTY()
-	FVector direction;
-	
+	// 속도 변수
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
-	float moveSpeed = 226;
+	float moveSpeed = 226; // 걷는 속도
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
-	float maxSpeed = 400;
-	
-	void CamperMove(const FInputActionValue& value);
-	void Look(const struct FInputActionValue& value);
-	void Run(const struct FInputActionValue& value);
+	float maxSpeed = 400; // 뛰는 속도
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
+	float crouchSpeed = 113; // 앉아서 걷는 속도
+
+	// 이동 관련 함수
+	void CamperMove(const FInputActionValue& value); // 캠퍼 움직임 함수
+	void Run(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
+	void Start_Crouch(const struct FInputActionValue& value); // 앉기 시작 함수 
+	void End_Crouch(const struct FInputActionValue& value); // 앉기 끝 함수
+	// 카메라 관련 함수
+	void Look(const struct FInputActionValue& value);  // 카메라 움직임 함수
 
 	/*
 	 * Temp for Interact with Generator

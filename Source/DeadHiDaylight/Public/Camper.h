@@ -36,10 +36,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_Look;
 	UPROPERTY(EditAnywhere)
-	class UInputAction* IA_Turn;
-	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_Run;
 
+	UPROPERTY(EditAnywhere)
+	class UCamperAnimInstance* Anim;
 	
 	UPROPERTY()
 	FVector direction;
@@ -47,11 +47,10 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
 	float moveSpeed = 200;
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
-	float maxSpeed = 500;
+	float maxSpeed = 1000;
 	
 	void CamperMove(const FInputActionValue& value);
-	void Lookup(const struct FInputActionValue& value);
-	void Turn(const struct FInputActionValue& value);
+	void Look(const struct FInputActionValue& value);
 	void Run(const struct FInputActionValue& value);
 
 };

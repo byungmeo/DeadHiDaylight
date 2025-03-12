@@ -3,6 +3,7 @@
 
 #include "DeadHiDaylight/Public/Camper.h"
 
+#include "CamperAnimInstance.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
@@ -14,12 +15,17 @@ ACamper::ACamper()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	
 }
 
 // Called when the game starts or when spawned
 void ACamper::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
 	
 	FTimerHandle timerHandle;
 	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this](){ 
@@ -42,13 +48,10 @@ void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	/*FVector P0 = GetActorLocation();
-	FVector vt = direction * moveSpeed * DeltaTime;
-	FVector P = P0 + vt;
-	SetActorLocation(P);*/
-	direction = FTransform(GetControlRotation()).TransformVector(direction);
-	AddMovementInput(direction);
-	direction = FVector::Zero();
+	if (Anim)
+	{
+		Anim->bWalk = GetVelocity().Size() > 3.0f;
+	}
 }
 
 // Called to bind functionality to input
@@ -61,34 +64,43 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ACamper::CamperMove);
 		input->BindAction(IA_Run, ETriggerEvent::Started, this, &ACamper::Run);
 		input->BindAction(IA_Run, ETriggerEvent::Completed, this, &ACamper::Run);
-		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Lookup);
-		input->BindAction(IA_Turn, ETriggerEvent::Triggered, this, &ACamper::Turn);
+		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
 	}
 }
 
 void ACamper::CamperMove(const FInputActionValue& value)
 {
 	FVector2D dir = value.Get<FVector2D>();
-	direction.X = dir.X;
-	direction.Y = dir.Y;
-	// direction.Normalize();
+	
+	const FRotator Rotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	
+	// get right vector 
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	// add movement 
+	AddMovementInput(ForwardDirection, dir.Y);
+	AddMovementInput(RightDirection, dir.X);
 }
 
-void ACamper::Lookup(const struct FInputActionValue& value)
+void ACamper::Look(const struct FInputActionValue& value)
 {
-	float v = value.Get<float>();
-	AddControllerPitchInput(v);
-}
-
-void ACamper::Turn(const struct FInputActionValue& value)
-{
-	float v = value.Get<float>();
-	AddControllerYawInput(v);
+	FVector2D v = value.Get<FVector2D>();
+	AddControllerYawInput(v.X);
+	AddControllerPitchInput(v.Y);
 }
 
 void ACamper::Run(const struct FInputActionValue& value)
 {
+	if (Anim)
+	{
+		Anim->IsRun();
+	}
 	auto movement = moveComp;
 	if (movement->MaxWalkSpeed > moveSpeed) movement->MaxWalkSpeed = moveSpeed;
 	else movement->MaxWalkSpeed = maxSpeed;
+
+	UE_LOG(LogTemp, Warning, TEXT("ACamper::Run %f"), movement->MaxWalkSpeed);
 }

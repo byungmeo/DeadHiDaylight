@@ -14,9 +14,18 @@ void UCamperAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		// 전방방향 벡터 구하기
 		FVector velocity = player->GetVelocity();
 		FVector forward = player->GetActorForwardVector();
-		dirV = FVector::DotProduct(velocity, forward);
-		// 좌우방향 벡터 구하기
-		FVector right = player->GetActorRightVector();
-		dirH = FVector::DotProduct(velocity, right);
+		moveSpeed = FVector::DotProduct(velocity, forward);
 	}
+}
+
+void UCamperAnimInstance::IsWalk()
+{
+	bWalk = !bWalk;
+	UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::IsWalk %d"), bWalk);
+}
+
+void UCamperAnimInstance::IsRun()
+{
+	bRun = !bRun;
+	UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::IsRun %d"), bRun);
 }

@@ -19,8 +19,12 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	float dirH;
+	float moveSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	float dirV;
-	
+	bool bWalk = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bRun = false;
+
+	void IsWalk();
+	void IsRun();
 };

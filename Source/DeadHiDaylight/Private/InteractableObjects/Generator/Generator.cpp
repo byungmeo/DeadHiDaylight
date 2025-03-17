@@ -21,7 +21,7 @@ AGenerator::AGenerator()
 	{
 		Mesh->SetSkeletalMeshAsset(MeshObj.Object);
 	}
-	static ConstructorHelpers::FClassFinder<UGeneratorAnim> AnimClass(TEXT("/Script/Engine.AnimBlueprint'/Game/KBD/Generator/ABP_Generator.ABP_Generator_C'"));
+	ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Script/Engine.AnimBlueprint'/Game/KBD/Generator/ABP_Generator.ABP_Generator_C'"));
 	if (AnimClass.Succeeded())
 	{
 		Mesh->SetAnimInstanceClass(AnimClass.Class);

@@ -23,7 +23,6 @@ public:
 	bool bIsExplosion = 0.0f;
 	UPROPERTY(BlueprintReadOnly)
 	float PowerGauge = 0.0f;
-
 	
 	virtual void NativeBeginPlay() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;

@@ -13,6 +13,7 @@ public class DeadHiDaylight : ModuleRules
 		PublicIncludePaths.AddRange(new string[] {
 			"DeadHiDaylight/Public/InteractableObjects",
 			"DeadHiDaylight/Public/InteractableObjects/Generator",
+			"DeadHiDaylight/Public/InteractableObjects/Meathook",
 		});
 	}
 }

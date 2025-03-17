@@ -7,7 +7,27 @@
 #include "SacrificeGameState.generated.h"
 
 /**
- * 
+ * 생존자의 상태 중 게임 전체에 공유되어야 하는 상태
+ */
+USTRUCT()
+struct FCamperStats
+{
+	GENERATED_BODY()
+
+	// TODO: 갈고리 걸린 횟수, 체력, 집착 등
+};
+
+/**
+ * 살인마의 상태 중 게임 전체에 공유되어야 하는 상태
+ */
+USTRUCT()
+struct FSlasherStats
+{
+	GENERATED_BODY()
+};
+
+/**
+ * 희생제에서 생존자, 살인마 모두가 가지고 있는(혹은 알아야 하는) 상태
  */
 UCLASS()
 class DEADHIDAYLIGHT_API ASacrificeGameState : public AGameStateBase

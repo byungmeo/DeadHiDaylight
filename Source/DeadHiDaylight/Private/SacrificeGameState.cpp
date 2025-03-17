@@ -10,6 +10,7 @@ void ASacrificeGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 모든 발전기 참조를 가져온다.
 	TArray<AActor*> OutActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGenerator::StaticClass(), OutActors);
 	for (auto* Actor : OutActors)

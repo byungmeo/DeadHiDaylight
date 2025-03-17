@@ -9,7 +9,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "GeneratorRepairSlot.h"
 #include "Generator.h"
+#include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 
 
 // Sets default values
@@ -18,6 +20,23 @@ ACamper::ACamper()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	glassesComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("glassesComp"));
+	glassesComp->SetupAttachment(RootComponent, TEXT("Glasses"));
+	
+	hairComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("hairComp"));
+	hairComp->SetupAttachment(RootComponent, TEXT("Hair"));
+
+	springArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("springArmComp"));
+	springArmComp->SetupAttachment(RootComponent);
+	springArmComp->SetRelativeLocation(FVector(0, 0, 210));
+	springArmComp->TargetArmLength = 400;
+	springArmComp->bUsePawnControlRotation = true;
+	
+	cameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("cameraComp"));
+	cameraComp->SetupAttachment(springArmComp);
+	cameraComp->SetRelativeRotation(FRotator(-10, 0, 0));
+
+	
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	
 }
@@ -66,6 +85,8 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Crouch, ETriggerEvent::Started, this, &ACamper::Start_Crouch);
 		input->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &ACamper::End_Crouch);
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
+		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::StartRepair);
+		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::EndRepair);
 	}
 }
 
@@ -142,18 +163,28 @@ void ACamper::EndGeneratorOverlap(const UGeneratorRepairSlot* GeneratorRepairSlo
 
 void ACamper::StartRepair()
 {
+	if (Anim == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Camper : StartRepair : Anim : nullptr"));
+		return;
+	}
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
-	OverlappedGeneratorSlot->Generator->Interact(this);
+	// OverlappedGeneratorSlot->Generator->Interact(this);
 	// 움직임 wsad 멈추고 카메라만 회전
 	// 애니메이션 실행
-	//
-
+	Anim->PlayRepairAnimation(TEXT("GenIn"));
 	// 수리 중인데 마우스를 땠을 때 호출하는 함수
-	OverlappedGeneratorSlot->Generator->NotifyEndRepair(this);
+	// OverlappedGeneratorSlot->Generator->NotifyEndRepair(this);
 }
 
 void ACamper::EndRepair()
 {
+	if (Anim == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Camper : EndRepair : Anim : nullptr"));
+		return;
+	}
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
 	// 다시 애니메이션 idle로 바꾸고 wsad 움직일 수 있게 변경
+	Anim->PlayRepairAnimation(TEXT("GenOut"));
 }

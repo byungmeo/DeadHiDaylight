@@ -37,13 +37,17 @@ void UCamperAnimInstance::IsCrouch(bool value)
 	UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::bCrouch %d randomValue : %d"), bCrouch, randValue);
 }
 
-/*void UCamperAnimInstance::IsWalk_Crouch()
-{
-	if (moveSpeed > 0) bWalk_Crouch = true;
-	else bWalk_Crouch = false;
-}*/
-
 int32 UCamperAnimInstance::RandomValue()
 {
 	return FMath::RandRange(1, 2);
+}
+
+void UCamperAnimInstance::AnimNotify_StartGen()
+{
+	bRepairing = true;
+}
+
+void UCamperAnimInstance::AnimNotify_GenEnd()
+{
+	bRepairing = false;
 }

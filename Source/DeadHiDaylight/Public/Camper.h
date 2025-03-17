@@ -24,6 +24,19 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	//Camper 매쉬 등 기본 세팅
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* glassesComp;
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* hairComp;
+	UPROPERTY(EditAnywhere)
+	class USpringArmComponent* springArmComp;
+	UPROPERTY(EditAnywhere)
+	class UCameraComponent* cameraComp;
+	
+
+
 	
 	UPROPERTY()
 	class UCharacterMovementComponent* moveComp; // 캐릭터 움직임 컴포넌트
@@ -41,6 +54,9 @@ public:
 	class UInputAction* IA_Run;
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_Crouch;
+	UPROPERTY(EditAnywhere)
+	class UInputAction* IA_Repair;
+	
 	
 	// 속도 변수
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
@@ -66,6 +82,9 @@ public:
 	class UGeneratorRepairSlot* OverlappedGeneratorSlot = nullptr;
 	void BeginGeneratorOverlap(UGeneratorRepairSlot* GeneratorRepairSlot);
 	void EndGeneratorOverlap(const UGeneratorRepairSlot* GeneratorRepairSlot);
+
+	// 여러 함수를 처리할 함수 바인딩이 필요 할듯
 	void StartRepair();
 	void EndRepair();
 };
+

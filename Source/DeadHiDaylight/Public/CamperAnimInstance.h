@@ -26,14 +26,22 @@ public:
 	bool bRun = false; // 일반 뛰기
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	bool bCrouch = false; // 앉기
-	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	// bool bWalk_Crouch = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bRepairing = false;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	int32 randValue = 0; // 앉아서 걷는 애니메이션 선택 하는 값
 	
 	void IsWalk(); // 걷고 있는지 체크
 	void IsRun(); // 뛰고 있는지 체크
 	void IsCrouch(bool value); // 앉아 있는지 체크
-	// void IsWalk_Crouch();
+
 	int32 RandomValue(); // 1, 2중 값 반환
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlayRepairAnimation(FName sectionName);
+
+	UFUNCTION()
+	void AnimNotify_StartGen();
+	UFUNCTION()
+	void AnimNotify_GenEnd();
 };

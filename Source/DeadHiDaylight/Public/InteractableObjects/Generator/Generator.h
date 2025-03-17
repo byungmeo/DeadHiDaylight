@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Camper.h"
-#include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
 #include "Generator.generated.h"
 
@@ -53,14 +51,15 @@ private:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USkeletalMeshComponent> Mesh = nullptr;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UGeneratorRepairSlot> SlotLeft = nullptr;
+	TObjectPtr<class UInteractionPoint> PointLeft = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UGeneratorRepairSlot> SlotRight = nullptr;
+	TObjectPtr<class UInteractionPoint> PointRight = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UGeneratorRepairSlot> SlotFront = nullptr;
+	TObjectPtr<class UInteractionPoint> PointFront = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UGeneratorRepairSlot> SlotBack = nullptr;
+	TObjectPtr<class UInteractionPoint> PointBack = nullptr;
 	
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bPowerOn = false;
@@ -94,14 +93,14 @@ public:
 	FOnBreak OnBreak;
 	UFUNCTION(CallInEditor, Category="Test")
 	void TestBreak();
-
+	
 	/*
-	 *	
+	 *	Interaction
 	 */
-	void Interact(ACharacter* Character);
-	void NotifyStartRepair(ACamper* Camper, UGeneratorRepairSlot* Box);
-	void NotifyEndRepair(ACamper* Camper);
-	void NotifyStartBreak();
-	UGeneratorRepairSlot* FindBoxByCamper(const ACamper* Camper);
-	UGeneratorRepairSlot* FindOverlapBox(const ACharacter* Character);
+	UFUNCTION()
+	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);
+	UFUNCTION()
+	void OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor);
+	void DetachAll() const;
+	void DestroyPointsAll() const;
 };

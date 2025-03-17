@@ -4,9 +4,7 @@
 #include "Generator.h"
 
 #include "Camper.h"
-#include "GeneratorAnim.h"
-#include "GeneratorRepairSlot.h"
-#include "Components/BoxComponent.h"
+#include "InteractionPoint.h"
 
 
 // Sets default values
@@ -29,21 +27,29 @@ AGenerator::AGenerator()
 
 	if (Mesh)
 	{
-		SlotLeft = CreateDefaultSubobject<UGeneratorRepairSlot>(TEXT("SlotLeft"));
-		SlotLeft->Init(Mesh, TEXT("joint_CamperAttach01"));
-		SlotLeft->SetRelativeRotation(FRotator(0, 180, 90));
-	
-		SlotRight = CreateDefaultSubobject<UGeneratorRepairSlot>(TEXT("SlotRight"));
-		SlotRight->Init(Mesh, TEXT("joint_CamperAttach02"));
-		SlotRight->SetRelativeRotation(FRotator(0, 0, -90));
-	
-		SlotFront = CreateDefaultSubobject<UGeneratorRepairSlot>(TEXT("SlotFront"));
-		SlotFront->Init(Mesh, TEXT("joint_CamperAttach03"));
-		SlotFront->SetRelativeRotation(FRotator(-90, 0, -90));
-	
-		SlotBack = CreateDefaultSubobject<UGeneratorRepairSlot>(TEXT("SlotBack"));
-		SlotBack->Init(Mesh, TEXT("joint_CamperAttach04"));
-		SlotBack->SetRelativeRotation(FRotator(90, 0, -90));
+		PointLeft = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointLeft"));
+		PointLeft->SetupAttachment(Mesh, TEXT("joint_CamperAttach01"));
+		PointLeft->SetRelativeRotation(FRotator(0, 180, 90));
+		PointLeft->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
+		PointLeft->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
+		
+		PointRight = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointRight"));
+		PointRight->SetupAttachment(Mesh, TEXT("joint_CamperAttach02"));
+		PointRight->SetRelativeRotation(FRotator(0, 0, -90));
+		PointRight->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
+		PointRight->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
+		
+		PointFront = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointFront"));
+		PointFront->SetupAttachment(Mesh, TEXT("joint_CamperAttach03"));
+		PointFront->SetRelativeRotation(FRotator(-90, 0, -90));
+		PointFront->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
+		PointFront->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
+		
+		PointBack = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointBack"));
+		PointBack->SetupAttachment(Mesh, TEXT("joint_CamperAttach04"));
+		PointBack->SetRelativeRotation(FRotator(90, 0, -90));
+		PointBack->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
+		PointBack->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
 	}
 }
 
@@ -98,17 +104,8 @@ void AGenerator::Tick(float DeltaTime)
 void AGenerator::PowerOn()
 {
 	bPowerOn = true;
-	
-	SlotLeft->DetachCamper();
-	SlotRight->DetachCamper();
-	SlotFront->DetachCamper();
-	SlotBack->DetachCamper();
-	
-	SlotLeft->DestroyComponent();
-	SlotRight->DestroyComponent();
-	SlotFront->DestroyComponent();
-	SlotBack->DestroyComponent();
-	
+	DetachAll();
+	DestroyPointsAll();
 	OnPowerOn.Broadcast();
 }
 
@@ -146,94 +143,50 @@ void AGenerator::TestBreak()
 	Break();
 }
 
-void AGenerator::Interact(ACharacter* Character)
+void AGenerator::DetachAll() const
 {
-	UGeneratorRepairSlot* Box = FindOverlapBox(Character);
-	if (nullptr == Box)
-	{
-		return;
-	}
+	PointLeft->DetachActor();
+	PointRight->DetachActor();
+	PointFront->DetachActor();
+	PointBack->DetachActor();
+}
 
-	if (ACamper* Camper = Cast<ACamper>(Character))
+void AGenerator::DestroyPointsAll() const
+{
+	PointLeft->DestroyComponent();
+	PointRight->DestroyComponent();
+	PointFront->DestroyComponent();
+	PointBack->DestroyComponent();
+}
+
+void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor)
+{
+	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AGenerator::Interact Survivor"));
-		NotifyStartRepair(Camper, Box);
+		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Survivor"));
+		Point->AttachActor(OtherActor);
+		RepairingCount++;
+		Camper->StartRepair();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AGenerator::Interact Slasher"));
-		NotifyStartBreak();
+		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Slasher"));
+		// NotifyStartBreak();
 	}
 }
 
-void AGenerator::NotifyStartRepair(ACamper* Camper, UGeneratorRepairSlot* Box)
+void AGenerator::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AGenerator::NotifyStartRepair"));
-	Box->AttachCamper(Camper);
-	RepairingCount++;
-	
-	// 생존자에게 발전기 수리를 시작하라고 알린다.
-	Camper->StartRepair();
-}
-
-void AGenerator::NotifyEndRepair(ACamper* Camper)
-{
-	UE_LOG(LogTemp, Warning, TEXT("AGenerator::NotifyEndRepair"));
-	UGeneratorRepairSlot* Box = FindBoxByCamper(Camper);
-	if (nullptr == Box)
+	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		return;
+		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Survivor"));
+		Point->DetachActor();
+		RepairingCount--;
+		Camper->EndRepair();
 	}
-	Box->DetachCamper();
-	RepairingCount--;
-
-	// 생존자에게 발전기 수리를 멈추라고 알린다.
-	Camper->EndRepair();
-}
-
-void AGenerator::NotifyStartBreak()
-{
-	// TODO: 살인마에게 발전기 부수기를 시작해도 된다고 알린다.
-}
-
-UGeneratorRepairSlot* AGenerator::FindBoxByCamper(const ACamper* Camper)
-{
-	if (SlotLeft && SlotLeft->AttachedCamper == Camper)
-    {
-    	return SlotLeft;
-    }
-    if (SlotRight && SlotRight->AttachedCamper == Camper)
-    {
-    	return SlotLeft;
-    }
-    if (SlotFront && SlotFront->AttachedCamper == Camper)
-    {
-    	return SlotFront;
-    }
-    if (SlotBack && SlotBack->AttachedCamper == Camper)
-    {
-    	return SlotBack;
-    }
-	return nullptr;
-}
-
-UGeneratorRepairSlot* AGenerator::FindOverlapBox(const ACharacter* Character)
-{
-	if (SlotLeft && SlotLeft->IsActive() && SlotLeft->IsOverlappingActor(Character))
+	else
 	{
-		return SlotLeft;
+		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Slasher"));
+		// NotifyEndBreak();
 	}
-	if (SlotRight && SlotRight->IsActive() && SlotRight->IsOverlappingActor(Character))
-	{
-		return SlotRight;
-	}
-	if (SlotFront && SlotFront->IsActive() && SlotFront->IsOverlappingActor(Character))
-	{
-		return SlotFront;
-	}
-	if (SlotBack && SlotBack->IsActive() && SlotBack->IsOverlappingActor(Character))
-	{
-		return SlotBack;
-	}
-	return nullptr;
 }

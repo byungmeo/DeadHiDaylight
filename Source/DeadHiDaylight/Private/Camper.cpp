@@ -7,9 +7,9 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
-#include "GeneratorRepairSlot.h"
-#include "Generator.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 // Sets default values
@@ -51,6 +51,30 @@ void ACamper::BeginPlay()
 void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// InteractionPoint 찾는 Trace
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+	TArray<FHitResult> OutHits;
+	const bool bHit = UKismetSystemLibrary::SphereTraceMultiByProfile(
+		GetWorld(),
+		GetMovementComponent()->GetFeetLocation(),
+		GetMovementComponent()->GetFeetLocation(),
+		200,
+		TEXT("InteractionPoint"),
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::ForOneFrame,
+		OutHits,
+		true
+	);
+	if (bHit)
+	{
+		for (const auto HitResult : OutHits)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *HitResult.GetComponent()->GetName());
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -127,33 +151,16 @@ void ACamper::End_Crouch(const struct FInputActionValue& value)
 	// UE_LOG(LogTemp, Warning, TEXT("ACamper::EndCrouch %f"), moveComp->MaxWalkSpeed);
 }
 
-void ACamper::BeginGeneratorOverlap(UGeneratorRepairSlot* GeneratorRepairSlot)
-{
-	OverlappedGeneratorSlot = GeneratorRepairSlot;
-}
-
-void ACamper::EndGeneratorOverlap(const UGeneratorRepairSlot* GeneratorRepairSlot)
-{
-	if (OverlappedGeneratorSlot == GeneratorRepairSlot)
-	{
-		OverlappedGeneratorSlot = nullptr;
-	}
-}
-
 void ACamper::StartRepair()
 {
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
-	OverlappedGeneratorSlot->Generator->Interact(this);
-	// 움직임 wsad 멈추고 카메라만 회전
-	// 애니메이션 실행
-	//
 
-	// 수리 중인데 마우스를 땠을 때 호출하는 함수
-	OverlappedGeneratorSlot->Generator->NotifyEndRepair(this);
+	// TODO: 발전기 수리 시작 시 해야할 일 작성
 }
 
 void ACamper::EndRepair()
 {
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
-	// 다시 애니메이션 idle로 바꾸고 wsad 움직일 수 있게 변경
+
+	// TODO: 발전기 수리 종료 시 해야할 일 작성
 }

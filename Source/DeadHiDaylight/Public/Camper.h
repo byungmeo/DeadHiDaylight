@@ -78,11 +78,6 @@ public:
 	 * Temp for Interact with Generator
 	 */
 public:
-	UPROPERTY()
-	class UGeneratorRepairSlot* OverlappedGeneratorSlot = nullptr;
-	void BeginGeneratorOverlap(UGeneratorRepairSlot* GeneratorRepairSlot);
-	void EndGeneratorOverlap(const UGeneratorRepairSlot* GeneratorRepairSlot);
-
 	// 여러 함수를 처리할 함수 바인딩이 필요 할듯
 	void StartRepair();
 	void EndRepair();

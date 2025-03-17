@@ -9,5 +9,10 @@ public class DeadHiDaylight : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+		
+		PublicIncludePaths.AddRange(new string[] {
+			"DeadHiDaylight/Public/InteractableObjects",
+			"DeadHiDaylight/Public/InteractableObjects/Generator",
+		});
 	}
 }

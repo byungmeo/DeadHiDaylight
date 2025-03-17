@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "DeadHiDaylight/Public/Generator.h"
+#include "Generator.h"
 
 #include "Camper.h"
 #include "GeneratorAnim.h"

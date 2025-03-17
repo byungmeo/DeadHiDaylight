@@ -7,14 +7,45 @@
 #include "SacrificeGameState.generated.h"
 
 /**
+ * 잠식 단계
+ */
+UENUM()
+enum class EStrugglePhase : uint8
+{
+	ESP_First,
+	ESP_Second,
+	ESP_Third
+};
+
+/**
+ * 생존자 건강 상태
+ */
+UENUM()
+enum class ECamperHealth : uint8
+{
+	ECH_Healthy,
+	ECH_Injury,
+	ECH_Endurance,
+	ECH_Moribund,
+	ECH_Dead
+};
+
+/**
  * 생존자의 상태 중 게임 전체에 공유되어야 하는 상태
  */
 USTRUCT()
 struct FCamperStats
 {
 	GENERATED_BODY()
+	
+	UPROPERTY()
+	FName Name = FName(NAME_None);
+	
+	UPROPERTY()
+	EStrugglePhase StrugglePhase = EStrugglePhase::ESP_First;
 
-	// TODO: 갈고리 걸린 횟수, 체력, 집착 등
+	UPROPERTY()
+	ECamperHealth Health = ECamperHealth::ECH_Healthy;
 };
 
 /**
@@ -41,9 +72,10 @@ protected:
 	void OnPowerOn();
 	
 public:
+	// TODO: GameMode 등을 통해서 전달받도록 변경하기
 	TArray<class AGenerator*> Generators;
-
-	// 현재 탈출구 활성화에 필요한 발전기의 수
 	UPROPERTY(BlueprintReadOnly)
 	int ReqGeneratorCount = 5;
+
+	TArray<FCamperStats> CamperStats;
 };

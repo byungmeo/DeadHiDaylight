@@ -16,4 +16,13 @@ class DEADHIDAYLIGHT_API ASacrificeGameMode : public AGameModeBase
 
 public:
 	ASacrificeGameMode();
+
+protected:
+	virtual void BeginPlay() override;
+
+public:
+	TArray<class ACamper*> Campers;
+	TObjectPtr<class ACanival> Slasher = nullptr;
+	TArray<class AGenerator*> Generators;
+	TArray<class AMeatHook*> MeatHooks;
 };

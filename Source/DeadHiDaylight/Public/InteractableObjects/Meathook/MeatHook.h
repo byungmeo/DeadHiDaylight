@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Meathook.generated.h"
+#include "MeatHook.generated.h"
 
 UCLASS()
-class DEADHIDAYLIGHT_API AMeathook : public AActor
+class DEADHIDAYLIGHT_API AMeatHook : public AActor
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
-	AMeathook();
+	AMeatHook();
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,4 +26,12 @@ public:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USkeletalMeshComponent> Mesh = nullptr;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UInteractionPoint> CamperPoint = nullptr;
+
+	UFUNCTION()
+	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);
+	UFUNCTION()
+	void OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor);
 };

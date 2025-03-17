@@ -4,19 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "MeathookAnim.generated.h"
+#include "MeatHookAnim.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DEADHIDAYLIGHT_API UMeathookAnim : public UAnimInstance
+class DEADHIDAYLIGHT_API UMeatHookAnim : public UAnimInstance
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(BlueprintReadWrite)
-	TObjectPtr<class AMeathook> Meathook = nullptr;
+	TObjectPtr<class AMeatHook> MeatHook = nullptr;
 
 	virtual void NativeBeginPlay() override;
 };

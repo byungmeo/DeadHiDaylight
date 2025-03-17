@@ -8,12 +8,12 @@
 UInteractionPoint::UInteractionPoint()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	BoxExtent = FVector(1, 1, 1);
 }
 
 void UInteractionPoint::BeginPlay()
 {
 	Super::BeginPlay();
-	SetBoxExtent(FVector(1, 1, 1));
 	SetCollisionProfileName(TEXT("InteractionPoint"));
 }
 

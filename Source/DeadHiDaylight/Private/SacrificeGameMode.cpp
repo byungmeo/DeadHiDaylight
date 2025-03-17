@@ -2,3 +2,12 @@
 
 
 #include "SacrificeGameMode.h"
+
+#include "SacrificeGameState.h"
+
+ASacrificeGameMode::ASacrificeGameMode()
+{
+	GameStateClass = ASacrificeGameState::StaticClass();
+	PlayerStateClass = nullptr;
+	DefaultPawnClass = nullptr;
+}

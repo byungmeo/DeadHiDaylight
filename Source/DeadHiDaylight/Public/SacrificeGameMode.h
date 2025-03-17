@@ -13,4 +13,7 @@ UCLASS()
 class DEADHIDAYLIGHT_API ASacrificeGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	ASacrificeGameMode();
 };

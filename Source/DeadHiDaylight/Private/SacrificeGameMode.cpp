@@ -6,14 +6,17 @@
 #include "Camper.h"
 #include "Generator.h"
 #include "MeatHook.h"
+#include "Observer.h"
 #include "SacrificeGameState.h"
+#include "SacrificePlayerController.h"
 #include "DeadHiDaylight/Canival.h"
 #include "Kismet/GameplayStatics.h"
 
 ASacrificeGameMode::ASacrificeGameMode()
 {
 	GameStateClass = ASacrificeGameState::StaticClass();
-	PlayerStateClass = nullptr;
+	PlayerControllerClass = ASacrificePlayerController::StaticClass();
+	// PlayerStateClass = nullptr;
 	DefaultPawnClass = nullptr;
 }
 
@@ -43,5 +46,28 @@ void ASacrificeGameMode::BeginPlay()
 	{
 		AMeatHook* MeatHook = Cast<AMeatHook>(Actor);
 		MeatHooks.Add(MeatHook);
+	}
+}
+
+void ASacrificeGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	if (NewPlayer->IsLocalController())
+	{
+		if (AObserver* Observer = GetWorld()->SpawnActor<AObserver>())
+		{
+			NewPlayer->Possess(Observer);
+		}
+	}
+	else
+	{
+		// NewPlayer->Destroy();
+		// NewPlayer = GetWorld()->SpawnActor<AMyPlayerController>(DefaultPlayerControllerClass);
+		ACamper* Camper = GetWorld()->SpawnActor<ACamper>();
+		if (Camper)
+		{
+			NewPlayer->Possess(Camper);
+		}
 	}
 }

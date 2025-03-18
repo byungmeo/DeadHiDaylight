@@ -8,6 +8,7 @@
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
 #include "Generator.h"
+#include "InteractionPoint.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -88,30 +89,7 @@ void ACamper::BeginPlay()
 void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	// InteractionPoint 찾는 Trace
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
-	TArray<FHitResult> OutHits;
-	const bool bHit = UKismetSystemLibrary::SphereTraceMultiByProfile(
-		GetWorld(),
-		GetMovementComponent()->GetFeetLocation(),
-		GetMovementComponent()->GetFeetLocation(),
-		200,
-		TEXT("InteractionPoint"),
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::ForOneFrame,
-		OutHits,
-		true
-	);
-	if (bHit)
-	{
-		for (const auto HitResult : OutHits)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *HitResult.GetComponent()->GetName());
-		}
-	}
+	
 }
 
 // Called to bind functionality to input
@@ -127,8 +105,8 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Crouch, ETriggerEvent::Started, this, &ACamper::Start_Crouch);
 		input->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &ACamper::End_Crouch);
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
-		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::StartRepair);
-		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::EndRepair);
+		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::CheckInteractPoint);
+		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::Test);
 	}
 }
 
@@ -189,35 +167,74 @@ void ACamper::End_Crouch(const struct FInputActionValue& value)
 	}
 	// UE_LOG(LogTemp, Warning, TEXT("ACamper::EndCrouch %f"), moveComp->MaxWalkSpeed);
 }
+void ACamper::CheckInteractPoint()
+{
+	// InteractionPoint 찾는 Trace
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+	TArray<FHitResult> OutHits;
+	const bool bHit = UKismetSystemLibrary::SphereTraceMultiByProfile(
+		GetWorld(),
+		GetMovementComponent()->GetFeetLocation(),
+		GetMovementComponent()->GetFeetLocation(),
+		500,
+		TEXT("InteractionPoint"),
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::ForDuration,
+		OutHits,
+		true
+	);
+	if (bHit)
+	{
+		for (const auto HitResult : OutHits)
+		{
+			
+			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
+			{
+				if (Anim == nullptr || Anim->bStartRepair) return;
+				
+				UE_LOG(LogTemp, Warning, TEXT("%s, %d"), *HitResult.GetComponent()->GetName(), Anim->bStartRepair);
+				interact->Interaction(this);
+				SaveInteract = interact;
+				break;
+			}
+			
+		}
+	}
+}
 
 void ACamper::StartRepair()
 {
-	if (Anim == nullptr)
+	if (Anim == nullptr || Anim->bStartRepair)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Camper : StartRepair : Anim : nullptr"));
 		return;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
-	// OverlappedGeneratorSlot->Generator->Interact(this);
-	// 움직임 wsad 멈추고 카메라만 회전
-	// 애니메이션 실행
+	// 시작 애니메이션 몽타주 실행
 	Anim->PlayRepairAnimation(TEXT("GenIn"));
-	// 수리 중인데 마우스를 땠을 때 호출하는 함수
-	// OverlappedGeneratorSlot->Generator->NotifyEndRepair(this);
-
-	// TODO: 발전기 수리 시작 시 해야할 일 작성
 }
 
 void ACamper::EndRepair()
 {
-	if (Anim == nullptr)
+	if (Anim == nullptr || Anim->bEndRepair == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Camper : EndRepair : Anim : nullptr"));
 		return;
 	}
+	Anim->bEndRepair = false;
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
+	
 	// 다시 애니메이션 idle로 바꾸고 wsad 움직일 수 있게 변경
 	Anim->PlayRepairAnimation(TEXT("GenOut"));
+}
 
-	// TODO: 발전기 수리 종료 시 해야할 일 작성
+
+void ACamper::Test()
+{
+	if (SaveInteract)
+	{
+		SaveInteract->StopInteraction(this);
+	}
 }

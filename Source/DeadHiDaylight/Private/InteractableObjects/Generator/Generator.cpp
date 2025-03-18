@@ -164,7 +164,11 @@ void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActo
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Survivor"));
+		float OrgZ = OtherActor->GetActorLocation().Z;
 		Point->AttachActor(OtherActor);
+		FVector NewLocation = OtherActor->GetActorLocation();
+		NewLocation.Z = OrgZ;
+		OtherActor->SetActorLocation(NewLocation);
 		RepairingCount++;
 		Camper->StartRepair();
 	}

@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "SacrificePlayerController.generated.h"
 
+enum class EPlayerRole : uint8;
 /**
  * 
  */
@@ -20,12 +21,16 @@ public:
 	
 	UPROPERTY()
 	class ASacrificeGameMode* GameMode = nullptr;
-	UPROPERTY()
-	TArray<APawn*> Players;
 	
 	bool bIsFreeMode = true;
 	int SpectatorIndex = 0;
 	void PrevPlayer();
 	void NextPlayer();
 	void ToggleCamera();
+	
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_RequestCallbackWithGuid();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_RequestCreatePawn(FGuid Guid);
 };

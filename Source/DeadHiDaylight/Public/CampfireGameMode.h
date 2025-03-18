@@ -17,7 +17,12 @@ class DEADHIDAYLIGHT_API ACampfireGameMode : public AGameMode
 public:
 	ACampfireGameMode();
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	UFUNCTION(BlueprintCallable)
+	void GameStart();
+	virtual void BeginPlay() override;
 
+	int Temp = 0;
+	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> ObserverWidgetFactory;
 	UPROPERTY(EditDefaultsOnly)

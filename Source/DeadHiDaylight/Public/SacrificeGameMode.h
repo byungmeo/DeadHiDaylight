@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerController.h"
 #include "GameFramework/GameModeBase.h"
 #include "SacrificeGameMode.generated.h"
 
@@ -19,11 +20,18 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 
 public:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ACamper> CamperFactory;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ACanival> SlasherFactory;
+	
 	TArray<class ACamper*> Campers;
 	TObjectPtr<class ACanival> Slasher = nullptr;
 	TArray<class AGenerator*> Generators;
 	TArray<class AMeatHook*> MeatHooks;
+
+	void RequestCreatePawn(ASacrificePlayerController* Controller, EPlayerRole PlayerRole);
 };

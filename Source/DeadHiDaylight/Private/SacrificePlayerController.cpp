@@ -6,6 +6,7 @@
 #include "SacrificeGameMode.h"
 #include "DeadHiDaylight/Canival.h"
 #include "Camper.h"
+#include "DHDGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
 void ASacrificePlayerController::SetupInputComponent()
@@ -23,51 +24,58 @@ void ASacrificePlayerController::SetupInputComponent()
 void ASacrificePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
 	if (HasAuthority())
 	{
 		GameMode = Cast<ASacrificeGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-		if (GameMode->Slasher)
-		{
-			Players.Add(GameMode->Slasher);
-		}
-		for (auto* Camper : GameMode->Campers)
-		{
-			Players.Add(Camper);
-		}
 	}
+	
+	ClientRPC_RequestCallbackWithGuid();
 }
 
 void ASacrificePlayerController::PrevPlayer()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::PrevPlayer"));
-	if (bIsFreeMode || Players.Num() == 0)
+	if (bIsFreeMode || nullptr == GameMode->Slasher || GameMode->Campers.Num() == 0)
 	{
 		return;
 	}
 	
 	if (--SpectatorIndex < 0)
 	{
-		SpectatorIndex = Players.Num() - 1;
+		SpectatorIndex = GameMode->Campers.Num();
 	}
 
-	SetViewTargetWithBlend(Players[SpectatorIndex], 0.5f);
+	if (SpectatorIndex == 0)
+	{
+		SetViewTargetWithBlend(GameMode->Slasher, 0.5f);
+	}
+	else
+	{
+		SetViewTargetWithBlend(GameMode->Campers[SpectatorIndex - 1], 0.5f);
+	}
 }
 
 void ASacrificePlayerController::NextPlayer()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::NextPlayer"));
-	if (bIsFreeMode)
+	if (bIsFreeMode || nullptr == GameMode->Slasher || GameMode->Campers.Num() == 0)
 	{
 		return;
 	}
 
-	if (++SpectatorIndex >= Players.Num())
+	if (++SpectatorIndex > GameMode->Campers.Num())
 	{
 		SpectatorIndex = 0;
 	}
 	
-	SetViewTargetWithBlend(Players[SpectatorIndex], 0.5f);
+	if (SpectatorIndex == 0)
+	{
+		SetViewTargetWithBlend(GameMode->Slasher, 0.5f);
+	}
+	else
+	{
+		SetViewTargetWithBlend(GameMode->Campers[SpectatorIndex - 1], 0.5f);
+	}
 }
 
 void ASacrificePlayerController::ToggleCamera()
@@ -84,9 +92,32 @@ void ASacrificePlayerController::ToggleCamera()
 	}
 	else
 	{
-		if (Players[SpectatorIndex])
+		if (nullptr == GameMode->Slasher || GameMode->Campers.Num() == 0)
 		{
-			SetViewTargetWithBlend(Players[SpectatorIndex], 0.5f);
+			return;
+		}
+		
+		if (SpectatorIndex == 0)
+		{
+			SetViewTargetWithBlend(GameMode->Slasher, 0.5f);
+		}
+		else
+		{
+			SetViewTargetWithBlend(GameMode->Campers[SpectatorIndex - 1], 0.5f);
 		}
 	}
+}
+
+void ASacrificePlayerController::ClientRPC_RequestCallbackWithGuid_Implementation()
+{
+	const auto* ClientGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
+	ServerRPC_RequestCreatePawn(ClientGameInstance->Guid);
+}
+
+void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(const FGuid Guid)
+{
+	UE_LOG(LogTemp, Warning, TEXT("ServerRPC_RequestCreatePawn_Implementation %s"), *Guid.ToString());
+	auto* ServerGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
+	const EPlayerRole PlayerRole = ServerGameInstance->RoleMap[Guid];
+	GameMode->RequestCreatePawn(this, PlayerRole);
 }

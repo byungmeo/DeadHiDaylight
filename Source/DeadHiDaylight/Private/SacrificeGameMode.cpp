@@ -4,6 +4,8 @@
 #include "SacrificeGameMode.h"
 
 #include "Camper.h"
+#include "DHDGameInstance.h"
+#include "DHDPlayerState.h"
 #include "Generator.h"
 #include "MeatHook.h"
 #include "Observer.h"
@@ -16,24 +18,15 @@ ASacrificeGameMode::ASacrificeGameMode()
 {
 	GameStateClass = ASacrificeGameState::StaticClass();
 	PlayerControllerClass = ASacrificePlayerController::StaticClass();
-	// PlayerStateClass = nullptr;
+	PlayerStateClass = ADHDPlayerState::StaticClass();
 	DefaultPawnClass = nullptr;
 }
 
 void ASacrificeGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	TArray<AActor*> OutActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACamper::StaticClass(), OutActors);
-	for (auto* Actor : OutActors)
-	{
-		ACamper* Camper = Cast<ACamper>(Actor);
-		Campers.Add(Camper);
-	}
-
-	Slasher = Cast<ACanival>(UGameplayStatics::GetActorOfClass(GetWorld(), ACanival::StaticClass()));
-
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGenerator::StaticClass(), OutActors);
 	for (auto* Actor : OutActors)
 	{
@@ -49,25 +42,50 @@ void ASacrificeGameMode::BeginPlay()
 	}
 }
 
-void ASacrificeGameMode::PostLogin(APlayerController* NewPlayer)
+void ASacrificeGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
-	Super::PostLogin(NewPlayer);
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+}
 
-	if (NewPlayer->IsLocalController())
+void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controller, const EPlayerRole PlayerRole)
+{
+	switch (PlayerRole)
 	{
-		if (AObserver* Observer = GetWorld()->SpawnActor<AObserver>())
+	case EPlayerRole::EPR_Observer:
 		{
-			NewPlayer->Possess(Observer);
+			UE_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Observer"));
+			if (AObserver* Observer = GetWorld()->SpawnActor<AObserver>(AObserver::StaticClass()))
+			{
+				Controller->Possess(Observer);
+			}
+			break;
 		}
-	}
-	else
-	{
-		// NewPlayer->Destroy();
-		// NewPlayer = GetWorld()->SpawnActor<AMyPlayerController>(DefaultPlayerControllerClass);
-		ACamper* Camper = GetWorld()->SpawnActor<ACamper>();
-		if (Camper)
+	case EPlayerRole::EPR_Slasher:
 		{
-			NewPlayer->Possess(Camper);
+			UE_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Slasher"));
+			if (ACanival* Canival = GetWorld()->SpawnActor<ACanival>(SlasherFactory))
+			{
+				Canival->SetActorLocation(FVector(1410, 3440, 250));
+				Controller->Possess(Canival);
+				Slasher = Canival;
+			}
+			break;
+		}
+	case EPlayerRole::EPR_Camper:
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Camper"));
+			if (ACamper* Camper = GetWorld()->SpawnActor<ACamper>(CamperFactory))
+			{
+				Camper->SetActorLocation(FVector(-1620, 1580, 250));
+				Controller->Possess(Camper);
+				Campers.Add(Camper);
+			}
+			break;
+		}
+	case EPlayerRole::EPR_None:
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn None"));
+			break;
 		}
 	}
 }

@@ -17,4 +17,7 @@ class DEADHIDAYLIGHT_API ACampfirePlayerController : public APlayerController
 public:
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_AddWidget(TSubclassOf<UUserWidget> WidgetClass);
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_SetGuid(const FGuid NewGuid);
 };

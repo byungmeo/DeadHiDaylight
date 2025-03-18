@@ -6,6 +6,15 @@
 #include "Engine/GameInstance.h"
 #include "DHDGameInstance.generated.h"
 
+UENUM(BlueprintType)
+enum class EPlayerRole : uint8
+{
+	EPR_None		UMETA(DisplayName = "None"),
+	EPR_Observer	UMETA(DisplayName = "Observer"),
+	EPR_Slasher		UMETA(DisplayName = "Slasher"),
+	EPR_Camper		UMETA(DisplayName = "Camper")
+};
+
 /**
  * 
  */
@@ -15,8 +24,6 @@ class DEADHIDAYLIGHT_API UDHDGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void CreateRoom();
-	UFUNCTION(BlueprintCallable)
-	void JoinRoom(const FString& ServerAddress);
+	FGuid Guid;
+	TMap<FGuid, EPlayerRole> RoleMap;
 };

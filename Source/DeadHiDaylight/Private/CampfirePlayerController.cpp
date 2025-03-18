@@ -3,6 +3,7 @@
 
 #include "CampfirePlayerController.h"
 
+#include "DHDGameInstance.h"
 #include "Blueprint/UserWidget.h"
 
 void ACampfirePlayerController::ClientRPC_AddWidget_Implementation(TSubclassOf<UUserWidget> WidgetClass)
@@ -14,5 +15,15 @@ void ACampfirePlayerController::ClientRPC_AddWidget_Implementation(TSubclassOf<U
 		{
 			Widget->AddToViewport();
 		}
+	}
+}
+
+void ACampfirePlayerController::ClientRPC_SetGuid_Implementation(const FGuid NewGuid)
+{
+	auto* ClientGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
+	if (ClientGameInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ClientRPC_SetGuid_Implementation %s"), *NewGuid.ToString());
+		ClientGameInstance->Guid = NewGuid;
 	}
 }

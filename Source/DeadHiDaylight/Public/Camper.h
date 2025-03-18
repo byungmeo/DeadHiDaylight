@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
+#include "InteractionPoint.h"
 #include "GameFramework/Character.h"
 #include "Camper.generated.h"
 
@@ -21,7 +22,7 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -78,8 +79,20 @@ public:
 	 * Temp for Interact with Generator
 	 */
 public:
-	// 여러 함수를 처리할 함수 바인딩이 필요 할듯
 	void StartRepair();
 	void EndRepair();
+
+	// 틱에서 계속 체크하면서 포인트 찾기
+	void CheckInteractPoint();
+
+	
+	// 찾은 포인트
+
+
+
+
+	void Test();
+	UPROPERTY()
+	UInteractionPoint* SaveInteract;
 };
 

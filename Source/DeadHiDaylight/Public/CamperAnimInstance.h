@@ -27,7 +27,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	bool bCrouch = false; // 앉기
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	bool bRepairing = false;
+	bool bStartRepair = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bEndRepair = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	int32 randValue = 0; // 앉아서 걷는 애니메이션 선택 하는 값
 	

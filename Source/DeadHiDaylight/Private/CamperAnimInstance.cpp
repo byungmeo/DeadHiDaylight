@@ -44,10 +44,11 @@ int32 UCamperAnimInstance::RandomValue()
 
 void UCamperAnimInstance::AnimNotify_StartGen()
 {
-	bRepairing = true;
+	bStartRepair = true;
+	bEndRepair = true;
 }
 
 void UCamperAnimInstance::AnimNotify_GenEnd()
 {
-	bRepairing = false;
+	bStartRepair = false;
 }

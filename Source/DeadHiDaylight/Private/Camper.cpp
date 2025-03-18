@@ -23,11 +23,27 @@ ACamper::ACamper()
 	PrimaryActorTick.bCanEverTick = true;
 
 	glassesComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("glassesComp"));
-	glassesComp->SetupAttachment(RootComponent, TEXT("Glasses"));
+	glassesComp->SetupAttachment(GetMesh(), TEXT("Glasses"));
+	glassesComp->SetRelativeLocation(FVector(2.2f, -11, 0));
+	glassesComp->SetRelativeScale3D(FVector(0.72f));
 	
-	hairComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("hairComp"));
-	hairComp->SetupAttachment(RootComponent, TEXT("Hair"));
+	ConstructorHelpers::FObjectFinder<UStaticMesh> tempGlassesMesh(TEXT("/Script/Engine.StaticMesh'/Game/JS/Assets/Camper/Character/Claudette/Acc/Glasses/CM_Glasses_Acc01_REF.CM_Glasses_Acc01_REF'"));
 
+	if (tempGlassesMesh.Succeeded())
+	{
+		glassesComp->SetStaticMesh(tempGlassesMesh.Object);
+	}
+	hairComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("hairComp"));
+	hairComp->SetupAttachment(GetMesh(), TEXT("Hair"));
+	hairComp->SetRelativeLocationAndRotation(FVector(2.84f, -9, 1), FRotator(80, 180, 100));
+	hairComp->SetRelativeScale3D(FVector(0.35f));
+	
+	ConstructorHelpers::FObjectFinder<UStaticMesh> tempHairMesh(TEXT("/Script/Engine.StaticMesh'/Game/JS/Assets/Camper/Character/Claudette/Acc/Hair/CM_Hair_Acc01_REF.CM_Hair_Acc01_REF'"));
+
+	if (tempHairMesh.Succeeded())
+	{
+		hairComp->SetStaticMesh(tempHairMesh.Object);
+	}
 	springArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("springArmComp"));
 	springArmComp->SetupAttachment(RootComponent);
 	springArmComp->SetRelativeLocation(FVector(0, 0, 210));

@@ -14,6 +14,7 @@ public class DeadHiDaylight : ModuleRules
 			"DeadHiDaylight/Public/InteractableObjects",
 			"DeadHiDaylight/Public/InteractableObjects/Generator",
 			"DeadHiDaylight/Public/InteractableObjects/Meathook",
+			"DeadHiDaylight/Public/InteractableObjects/ExitDoor",
 			"DeadHiDaylight/Public/Net",
 			"DeadHiDaylight/Public/Net/0Global",
 			"DeadHiDaylight/Public/Net/1Lobby",

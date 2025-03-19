@@ -58,6 +58,11 @@ public:
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_Repair;
 	
+	// 체력 변수
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
+	float maxHP = 2;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
+	float curHP = maxHP;
 	
 	// 속도 변수
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
@@ -66,7 +71,7 @@ public:
 	float maxSpeed = 400; // 뛰는 속도
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
 	float crouchSpeed = 113; // 앉아서 걷는 속도
-
+	
 	// 이동 관련 함수
 	void CamperMove(const FInputActionValue& value); // 캠퍼 움직임 함수
 	void Run(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
@@ -79,20 +84,21 @@ public:
 	 * Temp for Interact with Generator
 	 */
 public:
+	// 발전기 시작 함수
 	void StartRepair();
+	// 발전기 끝 함수
 	void EndRepair();
-
-	// 틱에서 계속 체크하면서 포인트 찾기
+	// 주변 상호작용 포인트 탐지 함수
 	void CheckInteractPoint();
-
 	
-	// 찾은 포인트
-
-
 
 
 	void Test();
 	UPROPERTY()
 	UInteractionPoint* SaveInteract;
+
+public:
+	UPROPERTY(VisibleAnywhere, Category = PerksComponent)
+	class UPerksComponent* perksComp;
 };
 

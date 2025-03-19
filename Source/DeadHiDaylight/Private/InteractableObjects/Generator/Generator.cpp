@@ -140,10 +140,10 @@ void AGenerator::TestBreak()
 
 void AGenerator::DetachAll() const
 {
-	PointLeft->DetachActor();
-	PointRight->DetachActor();
-	PointFront->DetachActor();
-	PointBack->DetachActor();
+	PointLeft->StopInteraction(PointLeft->AttachedActor);
+	PointRight->StopInteraction(PointRight->AttachedActor);
+	PointFront->StopInteraction(PointFront->AttachedActor);
+	PointBack->StopInteraction(PointBack->AttachedActor);
 }
 
 void AGenerator::DestroyPointsAll() const
@@ -176,6 +176,11 @@ void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActo
 
 void AGenerator::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor)
 {
+	if (nullptr == OtherActor)
+	{
+		return;
+	}
+	
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Survivor"));

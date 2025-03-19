@@ -31,6 +31,10 @@ void UInteractionPoint::Interaction(AActor* OtherActor)
 
 void UInteractionPoint::StopInteraction(AActor* OtherActor)
 {
+	if (nullptr == OtherActor)
+	{
+		return;
+	}
 	OnStopInteraction.Broadcast(this, OtherActor);
 }
 

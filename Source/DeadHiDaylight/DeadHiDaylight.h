@@ -3,3 +3,32 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#define NET_LOG(CategoryName, Verbosity, Format, ...) \
+{ \
+    FString Prefix; \
+    if (GEngine) \
+    { \
+        if (auto* World = GetWorld()) \
+        { \
+            ENetMode NetMode = World->GetNetMode(); \
+            if (NetMode == NM_DedicatedServer || NetMode == NM_ListenServer) \
+            { \
+                Prefix = TEXT("[SERVER] "); \
+            } \
+            else if (NetMode == NM_Client) \
+            { \
+                Prefix = TEXT("[CLIENT] "); \
+            } \
+            else \
+            { \
+                Prefix = TEXT("[STANDALONE] "); \
+            } \
+        } \
+        else \
+        { \
+            Prefix = TEXT("[UNKNOWN] "); \
+        } \
+    } \
+    UE_LOG(CategoryName, Verbosity, TEXT("%s%s"), *Prefix, *FString::Printf(Format, ##__VA_ARGS__)); \
+}

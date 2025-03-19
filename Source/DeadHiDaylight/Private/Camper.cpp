@@ -90,6 +90,10 @@ void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
+	{
+		Anim->bInjure = !(Anim->bInjure);
+	}
 }
 
 // Called to bind functionality to input
@@ -181,7 +185,7 @@ void ACamper::CheckInteractPoint()
 		TEXT("InteractionPoint"),
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::ForOneFrame,
 		OutHits,
 		true
 	);

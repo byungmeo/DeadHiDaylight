@@ -31,6 +31,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	bool bEndRepair = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bInjure = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	int32 randValue = 0; // 앉아서 걷는 애니메이션 선택 하는 값
 	
 	void IsWalk(); // 걷고 있는지 체크

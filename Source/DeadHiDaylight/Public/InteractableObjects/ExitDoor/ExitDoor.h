@@ -33,14 +33,19 @@ public:
 	TObjectPtr<class UInteractionPoint> CamperPoint = nullptr;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
-	bool bDoorOpened = false;
+	bool bIsDoorOpened = false;
 	UPROPERTY(BlueprintAssignable)
 	FOnOpenExitDoor OnOpenExitDoor;
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
-	bool bIsDoorOpening = false;
+	bool bIsActivating = false;
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	float PowerGauge = 0.0f;
 	void OpenExitDoor();
+	
+	UFUNCTION(CallInEditor, Category="Test")
+	void StartActivatingPIE();
+	UFUNCTION(CallInEditor, Category="Test")
+	void StopActivatingPIE();
 	
 	UFUNCTION()
 	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);

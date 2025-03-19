@@ -18,9 +18,9 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<class AGenerator> Generator = nullptr;
 	UPROPERTY(BlueprintReadOnly)
-	bool bPowerOn = 0.0f;
+	bool bPowerOn = false;
 	UPROPERTY(BlueprintReadOnly)
-	bool bIsExplosion = 0.0f;
+	bool bIsExplosion = false;
 	UPROPERTY(BlueprintReadOnly)
 	float PowerGauge = 0.0f;
 	

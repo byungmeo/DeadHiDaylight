@@ -18,5 +18,14 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<class AExitDoor> ExitDoor = nullptr;
 
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsDoorOpened = false;
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsActivating = false;
+	
 	virtual void NativeBeginPlay() override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+	UFUNCTION()
+	void OnOpenExitDoor();
 };

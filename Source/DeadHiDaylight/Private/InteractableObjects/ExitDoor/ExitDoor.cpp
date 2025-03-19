@@ -42,7 +42,7 @@ void AExitDoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (true == bDoorOpened || false == bIsDoorOpening)
+	if (true == bIsDoorOpened || false == bIsActivating)
 	{
 		return;
 	}
@@ -57,11 +57,21 @@ void AExitDoor::Tick(float DeltaTime)
 void AExitDoor::OpenExitDoor()
 {
 	NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OpenExitDoor"));
-	bDoorOpened = true;
+	bIsDoorOpened = true;
 	OnStopInteraction(CamperPoint, CamperPoint->AttachedActor);
 	CamperPoint->DestroyComponent();
 	OnOpenExitDoor.Broadcast();
 	SetActorTickEnabled(false);
+}
+
+void AExitDoor::StartActivatingPIE()
+{
+	bIsActivating = true;
+}
+
+void AExitDoor::StopActivatingPIE()
+{
+	bIsActivating = false;
 }
 
 void AExitDoor::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor)
@@ -69,7 +79,7 @@ void AExitDoor::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnInteraction Survivor"));
-		bIsDoorOpening = true;
+		bIsActivating = true;
 		float OrgZ = OtherActor->GetActorLocation().Z;
 		Point->AttachActor(OtherActor);
 		FVector NewLocation = OtherActor->GetActorLocation();
@@ -84,9 +94,8 @@ void AExitDoor::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherA
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnInteraction Survivor"));
-		bIsDoorOpening = false;
+		bIsActivating = false;
 		Point->DetachActor();
 		// Camper->EndOpenExitDoor();
 	}
 }
-

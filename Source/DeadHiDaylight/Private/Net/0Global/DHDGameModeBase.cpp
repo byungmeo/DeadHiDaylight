@@ -4,12 +4,11 @@
 #include "DHDGameModeBase.h"
 
 #include "DHDGameInstance.h"
-#include "DHDPlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 
 ADHDGameModeBase::ADHDGameModeBase()
 {
-	PlayerStateClass = ADHDPlayerState::StaticClass();
+	PlayerStateClass = nullptr;
 	GameSessionClass = nullptr;
 	DefaultPawnClass = nullptr;
 	SpectatorClass = nullptr;

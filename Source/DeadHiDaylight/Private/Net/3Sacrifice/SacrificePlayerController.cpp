@@ -7,6 +7,7 @@
 #include "DeadHiDaylight/Canival.h"
 #include "Camper.h"
 #include "DHDGameInstance.h"
+#include "SacrificePlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -29,7 +30,8 @@ void ASacrificePlayerController::BeginPlay()
 	{
 		GameMode = Cast<ASacrificeGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	}
-	
+
+	SacrificePlayerState = Cast<ASacrificePlayerState>(PlayerState);
 	ClientRPC_RequestCallbackWithGuid();
 }
 
@@ -120,4 +122,31 @@ void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(cons
 	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_RequestCreatePawn_Implementation %s"), *Guid.ToString());
 	const EPlayerRole PlayerRole = GameMode->ServerGameInstance->RoleMap[Guid];
 	GameMode->RequestCreatePawn(this, PlayerRole);
+	FBaseState NewState;
+	switch (PlayerRole)
+	{
+	case EPlayerRole::EPR_None:
+		{
+			NewState = FBaseState();
+			break;
+		}
+	case EPlayerRole::EPR_Observer:
+		{
+			NewState = FBaseState(FObserverState());
+			break;
+		}
+	case EPlayerRole::EPR_Slasher:
+		{
+			NewState = FBaseState(FSlasherState());
+			break;
+		}
+	case EPlayerRole::EPR_Camper:
+		{
+			NewState = FBaseState(FCamperState());
+			break;
+		}
+	}
+
+	NewState.PlayerRole = PlayerRole;
+	SacrificePlayerState->PlayerState = NewState;
 }

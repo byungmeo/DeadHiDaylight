@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerState.h"
 #include "GameFramework/PlayerController.h"
 #include "SacrificePlayerController.generated.h"
 
@@ -26,9 +27,12 @@ public:
 	TObjectPtr<class ASacrificeGameMode> GameMode = nullptr;
 	UPROPERTY()
 	TObjectPtr<class UDHDGameInstance> ServerGameInstance = nullptr;
+	UPROPERTY()
+	TObjectPtr<class ASacrificePlayerState> SacrificePlayerState = nullptr;
 	
 	bool bIsFreeMode = true;
 	int SpectatorIndex = 0;
+	
 	void PrevPlayer();
 	void NextPlayer();
 	void ToggleCamera();

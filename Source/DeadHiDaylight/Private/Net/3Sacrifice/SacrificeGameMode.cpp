@@ -10,6 +10,7 @@
 #include "Observer.h"
 #include "SacrificeGameState.h"
 #include "SacrificePlayerController.h"
+#include "SacrificePlayerState.h"
 #include "DeadHiDaylight/Canival.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +19,7 @@ ASacrificeGameMode::ASacrificeGameMode()
 {
 	GameStateClass = ASacrificeGameState::StaticClass();
 	PlayerControllerClass = ASacrificePlayerController::StaticClass();
+	PlayerStateClass = ASacrificePlayerState::StaticClass();
 }
 
 void ASacrificeGameMode::BeginPlay()

@@ -20,6 +20,7 @@ AExitDoor::AExitDoor()
 	if (MeshObj.Succeeded())
 	{
 		Mesh->SetSkeletalMeshAsset(MeshObj.Object);
+		Mesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	}
 	ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Script/Engine.AnimBlueprint'/Game/KBD/ExitDoor/ABP_ExitDoor.ABP_ExitDoor_C'"));
 	if (AnimClass.Succeeded())

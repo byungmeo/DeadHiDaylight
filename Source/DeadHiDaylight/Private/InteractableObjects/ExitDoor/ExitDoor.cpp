@@ -3,6 +3,8 @@
 
 #include "ExitDoor.h"
 
+#include "InteractionPoint.h"
+
 
 // Sets default values
 AExitDoor::AExitDoor()
@@ -21,6 +23,15 @@ AExitDoor::AExitDoor()
 	if (AnimClass.Succeeded())
 	{
 		Mesh->SetAnimInstanceClass(AnimClass.Class);
+	}
+
+	if (Mesh)
+	{
+		CamperPoint = CreateDefaultSubobject<UInteractionPoint>(TEXT("CamperPoint"));
+		CamperPoint->SetupAttachment(Mesh, TEXT("joint_AttachCamper"));
+		CamperPoint->SetRelativeRotation(FRotator(0, 0, -90));
+		CamperPoint->OnInteraction.AddDynamic(this, &AExitDoor::OnInteraction);
+		CamperPoint->OnStopInteraction.AddDynamic(this, &AExitDoor::OnStopInteraction);
 	}
 }
 

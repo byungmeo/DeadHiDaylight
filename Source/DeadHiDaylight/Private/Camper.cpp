@@ -10,6 +10,7 @@
 #include "Generator.h"
 #include "InteractionPoint.h"
 #include "Camera/CameraComponent.h"
+#include "CamperComps/PerksComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -57,7 +58,8 @@ ACamper::ACamper()
 
 	
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	
+
+	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("PerksComp"));
 }
 
 // Called when the game starts or when spawned
@@ -111,6 +113,8 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
 		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::CheckInteractPoint);
 		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::Test);
+
+		perksComp->SetupInputBinding(input);
 	}
 }
 

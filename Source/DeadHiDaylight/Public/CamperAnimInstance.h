@@ -27,11 +27,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	bool bCrouch = false; // 앉기
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	bool bStartRepair = false;
+	bool bStartRepair = false; // 수리 시작 했는지 체크 하는 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	bool bEndRepair = true;
+	bool bEndRepair = true; // 수리가 끝났는지 체크 하는 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	bool bInjure = false;
+	bool bInjure = false; // 다친 상태 판별 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	int32 randValue = 0; // 앉아서 걷는 애니메이션 선택 하는 값
 	
@@ -44,6 +44,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayRepairAnimation(FName sectionName);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlayDeadHardAnimation(FName sectionName);
+	
 	UFUNCTION()
 	void AnimNotify_StartGen();
 	UFUNCTION()

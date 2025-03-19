@@ -53,12 +53,6 @@ AGenerator::AGenerator()
 	}
 }
 
-// Called when the game starts or when spawned
-void AGenerator::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 // Called every frame
 void AGenerator::Tick(float DeltaTime)
 {
@@ -107,6 +101,7 @@ void AGenerator::PowerOn()
 	DetachAll();
 	DestroyPointsAll();
 	OnPowerOn.Broadcast();
+	SetActorTickEnabled(false);
 }
 
 void AGenerator::SkillCheckSuccess(const bool bGreateSuccess)

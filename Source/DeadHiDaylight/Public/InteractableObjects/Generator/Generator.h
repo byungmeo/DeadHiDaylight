@@ -19,10 +19,6 @@ public:
 	// Sets default values for this actor's properties
 	AGenerator();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 private:
 	// 살인마는 수리가 진행 중인 발전기에 손상을 입힐 수 있으며,
 	// 손상된 발전기는 즉시 5%의 진행도를 잃어버리고 초당 0.25%의 진행도가 깎인다.

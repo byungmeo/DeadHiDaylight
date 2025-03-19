@@ -3,7 +3,9 @@
 
 #include "ExitDoor.h"
 
+#include "Camper.h"
 #include "InteractionPoint.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 
 
 // Sets default values
@@ -35,24 +37,56 @@ AExitDoor::AExitDoor()
 	}
 }
 
-// Called when the game starts or when spawned
-void AExitDoor::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
 // Called every frame
 void AExitDoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (true == bDoorOpened || false == bIsDoorOpening)
+	{
+		return;
+	}
+	
+	PowerGauge += BasePowerValue * DeltaTime;
+	if (PowerGauge >= 1)
+	{
+		OpenExitDoor();
+	}
+}
+
+void AExitDoor::OpenExitDoor()
+{
+	NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OpenExitDoor"));
+	bDoorOpened = true;
+	OnStopInteraction(CamperPoint, CamperPoint->AttachedActor);
+	CamperPoint->DestroyComponent();
+	OnOpenExitDoor.Broadcast();
+	SetActorTickEnabled(false);
 }
 
 void AExitDoor::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor)
 {
+	if (ACamper* Camper = Cast<ACamper>(OtherActor))
+	{
+		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnInteraction Survivor"));
+		bIsDoorOpening = true;
+		float OrgZ = OtherActor->GetActorLocation().Z;
+		Point->AttachActor(OtherActor);
+		FVector NewLocation = OtherActor->GetActorLocation();
+		NewLocation.Z = OrgZ;
+		OtherActor->SetActorLocation(NewLocation);
+		// Camper->StartOpenExitDoor();
+	}
 }
 
 void AExitDoor::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor)
 {
+	if (ACamper* Camper = Cast<ACamper>(OtherActor))
+	{
+		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnInteraction Survivor"));
+		bIsDoorOpening = false;
+		Point->DetachActor();
+		// Camper->EndOpenExitDoor();
+	}
 }
 

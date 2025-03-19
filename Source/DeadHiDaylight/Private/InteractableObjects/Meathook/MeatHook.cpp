@@ -28,11 +28,19 @@ AMeatHook::AMeatHook()
 
 	if (Mesh)
 	{
+		SlasherPoint = CreateDefaultSubobject<UInteractionPoint>(TEXT("SlasherPoint"));
+		SlasherPoint->SetupAttachment(Mesh, TEXT("joint_KillerAttach"));
+		SlasherPoint->SetRelativeRotation(FRotator(-90, 0, -90));
+		SlasherPoint->OnInteraction.AddDynamic(this, &AMeatHook::OnInteraction);
+		SlasherPoint->OnStopInteraction.AddDynamic(this, &AMeatHook::OnStopInteraction);
+		SlasherPoint->InteractionMode = EInteractionMode::EIM_SlasherOnly;
+		
 		CamperPoint = CreateDefaultSubobject<UInteractionPoint>(TEXT("CamperPoint"));
 		CamperPoint->SetupAttachment(Mesh, TEXT("joint_CamperAttach"));
 		CamperPoint->SetRelativeRotation(FRotator(-90, 0, -90));
 		CamperPoint->OnInteraction.AddDynamic(this, &AMeatHook::OnInteraction);
 		CamperPoint->OnStopInteraction.AddDynamic(this, &AMeatHook::OnStopInteraction);
+		CamperPoint->InteractionMode = EInteractionMode::EIM_CamperOnly;
 	}
 }
 

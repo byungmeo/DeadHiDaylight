@@ -26,6 +26,9 @@ public:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USkeletalMeshComponent> Mesh = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<class UInteractionPoint> SlasherPoint = nullptr;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UInteractionPoint> CamperPoint = nullptr;

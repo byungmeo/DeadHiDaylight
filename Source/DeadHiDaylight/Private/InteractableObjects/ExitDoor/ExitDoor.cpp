@@ -35,6 +35,7 @@ AExitDoor::AExitDoor()
 		CamperPoint->SetRelativeRotation(FRotator(0, 0, -90));
 		CamperPoint->OnInteraction.AddDynamic(this, &AExitDoor::OnInteraction);
 		CamperPoint->OnStopInteraction.AddDynamic(this, &AExitDoor::OnStopInteraction);
+		CamperPoint->InteractionMode = EInteractionMode::EIM_CamperOnly;
 	}
 }
 

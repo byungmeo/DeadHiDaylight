@@ -6,6 +6,15 @@
 #include "Components/BoxComponent.h"
 #include "InteractionPoint.generated.h"
 
+UENUM()
+enum class EInteractionMode : uint8
+{
+	EIM_None,
+	EIM_Both,
+	EIM_CamperOnly,
+	EIM_SlasherOnly
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteraction, UInteractionPoint*, Point, AActor*, OtherActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStopInteraction, UInteractionPoint*, Point, AActor*, OtherActor);
 
@@ -21,6 +30,8 @@ public:
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	
 public:
+	EInteractionMode InteractionMode = EInteractionMode::EIM_Both;
+	
 	/**
 	 * 상호작용을 시작
 	 * @param OtherActor 상호작용을 시도하는 액터

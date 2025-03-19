@@ -32,24 +32,28 @@ AGenerator::AGenerator()
 		PointLeft->SetRelativeRotation(FRotator(0, 180, 90));
 		PointLeft->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
 		PointLeft->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
+		PointLeft->InteractionMode = EInteractionMode::EIM_Both;
 		
 		PointRight = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointRight"));
 		PointRight->SetupAttachment(Mesh, TEXT("joint_CamperAttach02"));
 		PointRight->SetRelativeRotation(FRotator(0, 0, -90));
 		PointRight->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
 		PointRight->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
+		PointRight->InteractionMode = EInteractionMode::EIM_Both;
 		
 		PointFront = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointFront"));
 		PointFront->SetupAttachment(Mesh, TEXT("joint_CamperAttach03"));
 		PointFront->SetRelativeRotation(FRotator(-90, 0, -90));
 		PointFront->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
 		PointFront->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
+		PointFront->InteractionMode = EInteractionMode::EIM_Both;
 		
 		PointBack = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointBack"));
 		PointBack->SetupAttachment(Mesh, TEXT("joint_CamperAttach04"));
 		PointBack->SetRelativeRotation(FRotator(90, 0, -90));
 		PointBack->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
 		PointBack->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
+		PointBack->InteractionMode = EInteractionMode::EIM_Both;
 	}
 }
 

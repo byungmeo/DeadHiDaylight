@@ -3,15 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DHDGameModeBase.h"
 #include "SacrificePlayerController.h"
-#include "GameFramework/GameModeBase.h"
 #include "SacrificeGameMode.generated.h"
 
 /**
  * 희생제에서 Listen Server(Observer)에서만 동작해야 하는, 알아야 하는
  */
 UCLASS()
-class DEADHIDAYLIGHT_API ASacrificeGameMode : public AGameModeBase
+class DEADHIDAYLIGHT_API ASacrificeGameMode : public ADHDGameModeBase
 {
 	GENERATED_BODY()
 

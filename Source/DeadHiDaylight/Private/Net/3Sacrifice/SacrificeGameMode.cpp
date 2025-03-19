@@ -5,21 +5,19 @@
 
 #include "Camper.h"
 #include "DHDGameInstance.h"
-#include "DHDPlayerState.h"
 #include "Generator.h"
 #include "MeatHook.h"
 #include "Observer.h"
 #include "SacrificeGameState.h"
 #include "SacrificePlayerController.h"
 #include "DeadHiDaylight/Canival.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 
 ASacrificeGameMode::ASacrificeGameMode()
 {
 	GameStateClass = ASacrificeGameState::StaticClass();
 	PlayerControllerClass = ASacrificePlayerController::StaticClass();
-	PlayerStateClass = ADHDPlayerState::StaticClass();
-	DefaultPawnClass = nullptr;
 }
 
 void ASacrificeGameMode::BeginPlay()
@@ -53,7 +51,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 	{
 	case EPlayerRole::EPR_Observer:
 		{
-			UE_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Observer"));
+			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Observer"));
 			if (AObserver* Observer = GetWorld()->SpawnActor<AObserver>(AObserver::StaticClass()))
 			{
 				Controller->Possess(Observer);
@@ -62,7 +60,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 		}
 	case EPlayerRole::EPR_Slasher:
 		{
-			UE_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Slasher"));
+			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Slasher"));
 			if (ACanival* Canival = GetWorld()->SpawnActor<ACanival>(SlasherFactory))
 			{
 				Canival->SetActorLocation(FVector(1410, 3440, 250));
@@ -73,7 +71,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 		}
 	case EPlayerRole::EPR_Camper:
 		{
-			UE_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Camper"));
+			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Camper"));
 			if (ACamper* Camper = GetWorld()->SpawnActor<ACamper>(CamperFactory))
 			{
 				Camper->SetActorLocation(FVector(-1620, 1580, 250));
@@ -84,7 +82,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 		}
 	case EPlayerRole::EPR_None:
 		{
-			UE_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn None"));
+			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn None"));
 			break;
 		}
 	}

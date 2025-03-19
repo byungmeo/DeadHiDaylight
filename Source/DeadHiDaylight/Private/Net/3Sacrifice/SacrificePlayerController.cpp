@@ -7,6 +7,7 @@
 #include "DeadHiDaylight/Canival.h"
 #include "Camper.h"
 #include "DHDGameInstance.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 
 void ASacrificePlayerController::SetupInputComponent()
@@ -34,7 +35,7 @@ void ASacrificePlayerController::BeginPlay()
 
 void ASacrificePlayerController::PrevPlayer()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::PrevPlayer"));
+	NET_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::PrevPlayer"));
 	if (bIsFreeMode || nullptr == GameMode->Slasher || GameMode->Campers.Num() == 0)
 	{
 		return;
@@ -57,7 +58,7 @@ void ASacrificePlayerController::PrevPlayer()
 
 void ASacrificePlayerController::NextPlayer()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::NextPlayer"));
+	NET_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::NextPlayer"));
 	if (bIsFreeMode || nullptr == GameMode->Slasher || GameMode->Campers.Num() == 0)
 	{
 		return;
@@ -80,7 +81,7 @@ void ASacrificePlayerController::NextPlayer()
 
 void ASacrificePlayerController::ToggleCamera()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::ToggleCamera"));
+	NET_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::ToggleCamera"));
 	bIsFreeMode = !bIsFreeMode;
 
 	if (bIsFreeMode)
@@ -116,8 +117,7 @@ void ASacrificePlayerController::ClientRPC_RequestCallbackWithGuid_Implementatio
 
 void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(const FGuid Guid)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ServerRPC_RequestCreatePawn_Implementation %s"), *Guid.ToString());
-	auto* ServerGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
-	const EPlayerRole PlayerRole = ServerGameInstance->RoleMap[Guid];
+	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_RequestCreatePawn_Implementation %s"), *Guid.ToString());
+	const EPlayerRole PlayerRole = GameMode->ServerGameInstance->RoleMap[Guid];
 	GameMode->RequestCreatePawn(this, PlayerRole);
 }

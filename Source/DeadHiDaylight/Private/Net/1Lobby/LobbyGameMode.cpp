@@ -5,6 +5,11 @@
 
 #include "Kismet/GameplayStatics.h"
 
+ALobbyGameMode::ALobbyGameMode()
+{
+	DefaultPawnClass = nullptr;
+}
+
 void ALobbyGameMode::CreateRoom()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ALobbyGameMode::CreateRoom"));

@@ -15,6 +15,9 @@ class DEADHIDAYLIGHT_API ALobbyGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+	ALobbyGameMode();
+	
+public:
 	UFUNCTION(BlueprintCallable)
 	void CreateRoom();
 	UFUNCTION(BlueprintCallable)

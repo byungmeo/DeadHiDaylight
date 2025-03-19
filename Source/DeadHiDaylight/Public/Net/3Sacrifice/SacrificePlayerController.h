@@ -18,9 +18,14 @@ class DEADHIDAYLIGHT_API ASacrificePlayerController : public APlayerController
 public:
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay() override;
-	
+
+	/*
+	 *	Server Only
+	 */
 	UPROPERTY()
-	class ASacrificeGameMode* GameMode = nullptr;
+	TObjectPtr<class ASacrificeGameMode> GameMode = nullptr;
+	UPROPERTY()
+	TObjectPtr<class UDHDGameInstance> ServerGameInstance = nullptr;
 	
 	bool bIsFreeMode = true;
 	int SpectatorIndex = 0;

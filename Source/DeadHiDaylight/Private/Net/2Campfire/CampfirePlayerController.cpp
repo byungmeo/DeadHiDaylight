@@ -5,6 +5,7 @@
 
 #include "DHDGameInstance.h"
 #include "Blueprint/UserWidget.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 
 void ACampfirePlayerController::ClientRPC_AddWidget_Implementation(TSubclassOf<UUserWidget> WidgetClass)
 {
@@ -23,7 +24,7 @@ void ACampfirePlayerController::ClientRPC_SetGuid_Implementation(const FGuid New
 	auto* ClientGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
 	if (ClientGameInstance)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ClientRPC_SetGuid_Implementation %s"), *NewGuid.ToString());
+		NET_LOG(LogTemp, Warning, TEXT("ClientRPC_SetGuid_Implementation %s"), *NewGuid.ToString());
 		ClientGameInstance->Guid = NewGuid;
 	}
 }

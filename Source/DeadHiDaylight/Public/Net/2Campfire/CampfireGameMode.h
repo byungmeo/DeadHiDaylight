@@ -3,23 +3,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameMode.h"
+#include "DHDGameModeBase.h"
 #include "CampfireGameMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DEADHIDAYLIGHT_API ACampfireGameMode : public AGameMode
+class DEADHIDAYLIGHT_API ACampfireGameMode : public ADHDGameModeBase
 {
 	GENERATED_BODY()
 
 public:
 	ACampfireGameMode();
+
+protected:
+	virtual void BeginPlay() override;
+	
+public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	UFUNCTION(BlueprintCallable)
 	void GameStart();
-	virtual void BeginPlay() override;
 
 	int Temp = 0;
 	

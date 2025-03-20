@@ -10,7 +10,7 @@
 #include "Observer.h"
 #include "SacrificeGameState.h"
 #include "SacrificePlayerController.h"
-#include "DeadHiDaylight/Canival.h"
+#include "Canival.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 

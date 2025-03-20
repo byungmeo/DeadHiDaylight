@@ -4,7 +4,7 @@
 #include "SacrificePlayerController.h"
 
 #include "SacrificeGameMode.h"
-#include "DeadHiDaylight/Canival.h"
+#include "Canival.h"
 #include "Camper.h"
 #include "DHDGameInstance.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"

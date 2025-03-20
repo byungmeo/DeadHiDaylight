@@ -3,11 +3,14 @@
 
 #include "Canival.h"
 
+#include "Camper.h"
+#include "CanivalAnim.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "Camera/CameraComponent.h"
 
 // Sets default values
 ACanival::ACanival()
@@ -15,27 +18,58 @@ ACanival::ACanival()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Character/Carnival.Carnival'"));
+	if (MeshObj.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(MeshObj.Object);
+		GetMesh()->SetRelativeRotation(FRotator(0, -90, 0));
+	}
+	
 	ConstructorHelpers::FObjectFinder<UInputMappingContext> TempIMC(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/KHA/Carnival/Inputs/IMC_Canival.IMC_Canival'"));
 	if (TempIMC.Succeeded())
 	{
 		imc_carnival = TempIMC.Object;
 	}
 	
-	ConstructorHelpers::FObjectFinder<UInputAction> TempIAMove(TEXT("/Script/EnhancedInput.InputAction'/Game/KHA/Carnival/Inputs/IA_Move.IA_Move'"));
+	ConstructorHelpers::FObjectFinder<UInputAction> TempIAMove(TEXT("/Script/EnhancedInput.InputAction'/Game/KHA/Carnival/Inputs/IA_CanivalMove.IA_CanivalMove'"));
 	if (TempIAMove.Succeeded())
 	{
 		ia_move = TempIAMove.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UInputAction> TempIAKick(TEXT("/Script/EnhancedInput.InputAction'/Game/KHA/Carnival/Inputs/IA_Kick.IA_Kick'"));
-	if (TempIAKick.Succeeded())
+
+	ConstructorHelpers::FObjectFinder<UInputAction> TempIALook(TEXT("/Script/EnhancedInput.InputAction'/Game/KHA/Carnival/Inputs/IA_CanivalLook.IA_CanivalLook'"));
+	if (TempIALook.Succeeded())
 	{
-		ia_kick = TempIAKick.Object;
+		ia_look = TempIALook.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UAnimMontage> TempKickMontage(TEXT("/Script/Engine.AnimMontage'/Game/KHA/Carnival/Character/Animations/Obstacles/CA_Destroy_Pallet_Montage.CA_Destroy_Pallet_Montage'"));
-	if (TempKickMontage.Succeeded())
+
+	ConstructorHelpers::FObjectFinder<UInputAction> TempIALeftClick(TEXT("/Script/EnhancedInput.InputAction'/Game/KHA/Carnival/Inputs/IA_CanivalLeftClick.IA_CanivalLeftClick'"));
+	if (TempIALeftClick.Succeeded())
 	{
-		MyAnimMontage = TempKickMontage.Object;
+		ia_leftClick = TempIALeftClick.Object;
 	}
+
+	ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Script/Engine.AnimBlueprint'/Game/KHA/Carnival/Character/ABP_Canival.ABP_Canival_C'"));
+	if (AnimClass.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(AnimClass.Class);
+	}
+
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetupAttachment(GetMesh(), TEXT("joint_Cam_01"));
+	Camera->bUsePawnControlRotation = true;
+
+	Hammer = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hammer"));
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> HammerObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Weapon/Hammer/Hammer.Hammer'"));
+	if (HammerObj.Succeeded())
+	{
+		Hammer->SetSkeletalMesh(HammerObj.Object);
+	}
+	Hammer->SetupAttachment(GetMesh(), TEXT("joint_Hand_RT_01_IK"));
+	Hammer->SetRelativeLocation(FVector(2.060449, 14.845951, 6.233762));
+	Hammer->SetRelativeRotation(FRotator(7.372038, 110.272844, 92.284188));
+	Hammer->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.3f));
+	Hammer->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 }
 
 // Called when the game starts or when spawned
@@ -52,6 +86,9 @@ void ACanival::BeginPlay()
 			subSystem->AddMappingContext(imc_carnival, 0);
 		}
 	}
+
+	AnimInstance = Cast<UCanivalAnim>(GetMesh()->GetAnimInstance());
+	Hammer->OnComponentBeginOverlap.AddDynamic(this, &ACanival::OnHammerBeginOverlap);
 }
 
 
@@ -60,7 +97,6 @@ void ACanival::BeginPlay()
 void ACanival::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -71,7 +107,8 @@ void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputCompo
 	if (pi)
 	{
 		pi->BindAction(ia_move, ETriggerEvent::Triggered,this, &ACanival::Move);
-		pi->BindAction(ia_kick, ETriggerEvent::Triggered,this, &ACanival::PlayKick);
+		pi->BindAction(ia_look, ETriggerEvent::Triggered,this, &ACanival::Look);
+		pi->BindAction(ia_leftClick, ETriggerEvent::Started,this, &ACanival::LeftClick);
 	}
 }
 
@@ -85,25 +122,36 @@ void ACanival::Move(const struct FInputActionValue& inputValue)
 	AddMovementInput(GetActorRightVector(), MovementVector.X);
 }
 
-void ACanival::Kick(const struct FInputActionValue& inputValue)
+void ACanival::Look(const FInputActionValue& InputActionValue)
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("인풋 스페이스"));
-		PlayKick(inputValue);
-	}
-	
+	FVector2D Value = InputActionValue.Get<FVector2D>();
+	AddControllerYawInput(Value.X);
+	AddControllerPitchInput(Value.Y);
 }
-void ACanival::PlayKick(const FInputActionValue& inputValue)
+
+void ACanival::LeftClick()
 {
-	// MyAnimMontage가 유효한지 확인한 후, 애니메이션 몽타주 재생
-	if (MyAnimMontage)
-	{
-		PlayAnimMontage(MyAnimMontage);
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("킥"));
-		}
-	}
+	AnimInstance->PlayLeftClickAnimation();
+	Hammer->SetGenerateOverlapEvents(true);
+}
+
+void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
 	
+	if (OtherActor == this)
+	{
+		return;
+	}
+
+	// 생존자냐
+	if (ACamper* Camper = Cast<ACamper>(OtherActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
+		Hammer->SetGenerateOverlapEvents(false);
+		// Camper->야 너 맞았어
+		AnimInstance->PlayWipeAnimation();
+	}
+	// 벽이냐
+	// 그 외냐
 }

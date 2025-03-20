@@ -7,14 +7,11 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
-#include "Generator.h"
 #include "InteractionPoint.h"
 #include "Camera/CameraComponent.h"
 #include "CamperComps/PerksComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 
@@ -94,8 +91,22 @@ void ACamper::Tick(float DeltaTime)
 	
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
-		Anim->bInjure = !(Anim->bInjure);
+		GetDamage();
 	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
+	{
+		Anim->bInjure = false;
+	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Three))
+	{
+		// 쓰러진 상태에서 돌아갈 때 Crawlhealing이 끝나면
+		curHP = maxHP;
+		Anim->bCrawl = false;
+		Anim->bInjure = false;
+		moveComp->MaxWalkSpeed = moveSpeed;
+		UE_LOG(LogTemp, Warning, TEXT("%d"), Anim->bInjure);
+	}
+	
 }
 
 // Called to bind functionality to input
@@ -120,6 +131,8 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACamper::CamperMove(const FInputActionValue& value)
 {
+	if (Anim->bSelfHealing || (Anim->bCrawl && Anim->bHitCrawl == false)) return;
+	
 	FVector2D dir = value.Get<FVector2D>();
 	
 	const FRotator Rotation = Controller->GetControlRotation();
@@ -144,6 +157,8 @@ void ACamper::Look(const struct FInputActionValue& value)
 
 void ACamper::Run(const struct FInputActionValue& value)
 {
+	if (Anim->bSelfHealing || Anim->bCrawl) return; // 자가 치유 중이라면 리턴
+	
 	if (Anim)
 	{
 		Anim->IsRun();
@@ -156,6 +171,7 @@ void ACamper::Run(const struct FInputActionValue& value)
 
 void ACamper::Start_Crouch(const struct FInputActionValue& value)
 {
+	if (Anim->bSelfHealing || Anim->bCrawl) return; // 자가 치유 중이라면 리턴
 	if (Anim) Anim->IsCrouch(true);
 	
 	if (Anim)
@@ -177,6 +193,8 @@ void ACamper::End_Crouch(const struct FInputActionValue& value)
 }
 void ACamper::CheckInteractPoint()
 {
+	if (Anim->bSelfHealing || Anim->bCrawl) return; // 자가 치유 중이라면 리턴
+	
 	// InteractionPoint 찾는 Trace
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -195,6 +213,7 @@ void ACamper::CheckInteractPoint()
 	);
 	if (bHit)
 	{
+		bFindPoints = true;
 		for (const auto HitResult : OutHits)
 		{
 			
@@ -207,14 +226,17 @@ void ACamper::CheckInteractPoint()
 				SaveInteract = interact;
 				break;
 			}
-			
 		}
+	}
+	else
+	{
+		bFindPoints = false;
 	}
 }
 
 void ACamper::StartRepair()
 {
-	if (Anim == nullptr || Anim->bStartRepair)
+	if (Anim == nullptr || Anim->bStartRepair || Anim->bSelfHealing || Anim->bCrawl)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Camper : StartRepair : Anim : nullptr"));
 		return;
@@ -245,4 +267,42 @@ void ACamper::Test()
 	{
 		SaveInteract->StopInteraction(this);
 	}
+}
+
+void ACamper::GetDamage()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f "), curHP);
+	if (curHP > 1)
+	{
+		// HP를 줄이고
+		--curHP;
+		UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f "), curHP);
+		// 다친 상태로 변경하고
+		Anim->bInjure = true;
+		// 이전 속도를 저장
+		beforeSpeed = moveComp->MaxWalkSpeed;
+		// 다쳤을 때 2초동안 스피드가 2배 증가
+		moveComp->MaxWalkSpeed = moveComp->MaxWalkSpeed * 2;
+		
+		// 2초 후 다시 이전 속도로 복귀
+		FTimerHandle hitTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, this, &ACamper::HitSpeedTimer, 2.0f, false);
+	}
+	else
+	{
+		Crawling();
+	}
+}
+
+void ACamper::HitSpeedTimer()
+{
+	if (Anim->bCrawl) return;
+	moveComp->MaxWalkSpeed = beforeSpeed;
+}
+
+void ACamper::Crawling()
+{
+	Anim->HitCrawl();
+	Anim->bCrawl = true;
+	moveComp->MaxWalkSpeed = crawlSpeed;
 }

@@ -33,22 +33,38 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	bool bInjure = false; // 다친 상태 판별 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bSelfHealing = false; // 자가 치유 시작하고 끝내는 조건 판별 변수
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bCrawl = false; // 피가 0이 됐을 때 기어다니기 위한 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	bool bHitCrawl = false; // 피가 0이 됐을 때 기어다니기 위한 변수
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	int32 randValue = 0; // 앉아서 걷는 애니메이션 선택 하는 값
 	
 	void IsWalk(); // 걷고 있는지 체크
 	void IsRun(); // 뛰고 있는지 체크
 	void IsCrouch(bool value); // 앉아 있는지 체크
-
 	int32 RandomValue(); // 1, 2중 값 반환
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void HitCrawl();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayRepairAnimation(FName sectionName);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayDeadHardAnimation(FName sectionName);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlaySelfHealingAnimation(FName sectionName);
 	
 	UFUNCTION()
 	void AnimNotify_StartGen();
 	UFUNCTION()
 	void AnimNotify_GenEnd();
+
+	UFUNCTION()
+	void AnimNotify_StartSelfHealing();
+	UFUNCTION()
+	void AnimNotify_EndSelfHealing();
 };

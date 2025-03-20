@@ -36,9 +36,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	class UCameraComponent* cameraComp;
 	
-
-
-	
 	UPROPERTY()
 	class UCharacterMovementComponent* moveComp; // 캐릭터 움직임 컴포넌트
 	UPROPERTY(EditAnywhere)
@@ -71,6 +68,13 @@ public:
 	float maxSpeed = 400; // 뛰는 속도
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
 	float crouchSpeed = 113; // 앉아서 걷는 속도
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
+	float crawlSpeed = 70;
+	UPROPERTY(EditAnywhere)
+	float beforeSpeed = 0; // 이전 속도 저장용 변수
+	
+	// 포인트 찾았는지 체크하는 변수
+	bool bFindPoints = false;
 	
 	// 이동 관련 함수
 	void CamperMove(const FInputActionValue& value); // 캠퍼 움직임 함수
@@ -100,5 +104,11 @@ public:
 public:
 	UPROPERTY(VisibleAnywhere, Category = PerksComponent)
 	class UPerksComponent* perksComp;
+
+	
+	void GetDamage();
+	void HitSpeedTimer();
+
+	void Crawling();
 };
 

@@ -80,15 +80,9 @@ void ACanival::Move(const struct FInputActionValue& inputValue)
 	// input is a Vector2D
 	FVector2D MovementVector = inputValue.Get<FVector2D>();
 
-	if (Controller != nullptr)
-	{
-		// add movement 
-		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
-		AddMovementInput(GetActorRightVector(), MovementVector.X);
-	}
-	/*FVector2d dir = inputValue.Get<FVector2d>();
-	direction.X = dir.Y;
-	direction.Y = dir.X;*/
+	// add movement 
+	AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+	AddMovementInput(GetActorRightVector(), MovementVector.X);
 }
 
 void ACanival::Kick(const struct FInputActionValue& inputValue)

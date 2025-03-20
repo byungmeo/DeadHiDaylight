@@ -40,9 +40,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	class UAnimMontage* MyAnimMontage;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* MoveAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=FSM)
 	float speed = 0;
@@ -55,6 +52,4 @@ public:
 	bool Input_LMB  = false;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=FSM)
 	bool ElapsedTime   = false;
-
-
 };

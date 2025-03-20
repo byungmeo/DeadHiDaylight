@@ -11,6 +11,8 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 ACanival::ACanival()
@@ -97,6 +99,11 @@ void ACanival::BeginPlay()
 void ACanival::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
+	{
+		FindPoint();
+	}
+	
 }
 
 void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -154,4 +161,38 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	}
 	// 벽이냐
 	// 그 외냐
+}
+
+void ACanival::FindPoint()
+{
+	// InteractionPoint 찾는 Trace
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+	TArray<FHitResult> OutHits;
+	const bool bHit = UKismetSystemLibrary::SphereTraceMultiByProfile(
+		GetWorld(),
+		GetMovementComponent()->GetFeetLocation(),
+		GetMovementComponent()->GetFeetLocation(),
+		500,
+		TEXT("InteractionPoint"),
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::ForDuration,
+		OutHits,
+		true
+	);
+	if (bHit)
+	{
+		for (const auto HitResult : OutHits)
+		{
+			
+			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Find InteractionPoint"));
+				interact->Interaction(this);
+				break;
+			}
+			
+		}
+	}
 }

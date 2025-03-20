@@ -50,7 +50,13 @@ ACanival::ACanival()
 	{
 		ia_leftClick = TempIALeftClick.Object;
 	}
-
+	
+	ConstructorHelpers::FObjectFinder<UInputAction> TempIAKick(TEXT("/Script/EnhancedInput.InputAction'/Game/KHA/Carnival/Inputs/IA_CanivalKick.IA_CanivalKick'"));
+	if (TempIAKick.Succeeded())
+	{
+		ia_Kick = TempIAKick.Object;
+	}
+	
 	ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Script/Engine.AnimBlueprint'/Game/KHA/Carnival/Character/ABP_Canival.ABP_Canival_C'"));
 	if (AnimClass.Succeeded())
 	{
@@ -116,6 +122,7 @@ void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputCompo
 		pi->BindAction(ia_move, ETriggerEvent::Triggered,this, &ACanival::Move);
 		pi->BindAction(ia_look, ETriggerEvent::Triggered,this, &ACanival::Look);
 		pi->BindAction(ia_leftClick, ETriggerEvent::Started,this, &ACanival::LeftClick);
+		pi->BindAction(ia_Kick, ETriggerEvent::Started,this, &ACanival::FindPoint);
 	}
 }
 
@@ -142,8 +149,20 @@ void ACanival::LeftClick()
 	Hammer->SetGenerateOverlapEvents(true);
 }
 
+void ACanival::Kick()
+{
+	AnimInstance->PlayKickAnimation();
+	UE_LOG(LogTemp, Warning, TEXT("Kick"));
+}
+
+void ACanival::CompletedKick()
+{
+	
+}
+
+
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	
 	if (OtherActor == this)

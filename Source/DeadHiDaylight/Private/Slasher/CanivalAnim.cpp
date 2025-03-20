@@ -36,3 +36,8 @@ void UCanivalAnim::NativeUpdateAnimation(float DeltaSeconds)
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *NewCamBoneTransform.ToString());*/
 	}
 }
+
+void UCanivalAnim::CompletedKickAnimation()
+{
+	// Canival->CompletedKick();
+}

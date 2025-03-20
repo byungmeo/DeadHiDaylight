@@ -35,4 +35,10 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayWipeAnimation();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayKickAnimation();
+	
+	UFUNCTION(BlueprintCallable)
+	void CompletedKickAnimation();
 };

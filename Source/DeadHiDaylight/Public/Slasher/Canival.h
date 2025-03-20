@@ -50,12 +50,19 @@ public:
 
 	UPROPERTY()
 	class UCanivalAnim* AnimInstance = nullptr;
+	TObjectPtr<UInputAction> ia_Kick;
+	
 
 public:
 	UFUNCTION()
 	void OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void FindPoint();
-	// 애니메이션 몽타주 실행
+	void Kick();
 	
+	
+
+	UPROPERTY(EditAnywhere)
+	class UCanivalAnim* Anim;
 };
+

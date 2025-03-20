@@ -52,3 +52,14 @@ void UCamperAnimInstance::AnimNotify_GenEnd()
 {
 	bStartRepair = false;
 }
+
+void UCamperAnimInstance::AnimNotify_StartSelfHealing()
+{
+	bSelfHealing = true;
+}
+
+void UCamperAnimInstance::AnimNotify_EndSelfHealing()
+{
+	bSelfHealing = false;
+	Montage_Stop(0.2f);
+}

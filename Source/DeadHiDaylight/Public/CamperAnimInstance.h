@@ -33,6 +33,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	bool bInjure = false; // 다친 상태 판별 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bSelfHealing = false; // 자가 치유 시작하고 끝내는 조건 판별 변수
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	int32 randValue = 0; // 앉아서 걷는 애니메이션 선택 하는 값
 	
 	void IsWalk(); // 걷고 있는지 체크
@@ -46,9 +48,17 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayDeadHardAnimation(FName sectionName);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlaySelfHealingAnimation(FName sectionName);
 	
 	UFUNCTION()
 	void AnimNotify_StartGen();
 	UFUNCTION()
 	void AnimNotify_GenEnd();
+
+	UFUNCTION()
+	void AnimNotify_StartSelfHealing();
+	UFUNCTION()
+	void AnimNotify_EndSelfHealing();
 };

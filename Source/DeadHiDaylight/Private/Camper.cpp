@@ -95,6 +95,15 @@ void ACamper::Tick(float DeltaTime)
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		Anim->bInjure = !(Anim->bInjure);
+		
+	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
+	{
+		if (curHP > 0) curHP--;
+	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Three))
+	{
+		curHP = maxHP;
 	}
 }
 
@@ -120,6 +129,8 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACamper::CamperMove(const FInputActionValue& value)
 {
+	if (Anim->bSelfHealing) return;
+	
 	FVector2D dir = value.Get<FVector2D>();
 	
 	const FRotator Rotation = Controller->GetControlRotation();
@@ -144,6 +155,8 @@ void ACamper::Look(const struct FInputActionValue& value)
 
 void ACamper::Run(const struct FInputActionValue& value)
 {
+	if (Anim->bSelfHealing) return; // 자가 치유 중이라면 리턴
+	
 	if (Anim)
 	{
 		Anim->IsRun();
@@ -156,6 +169,7 @@ void ACamper::Run(const struct FInputActionValue& value)
 
 void ACamper::Start_Crouch(const struct FInputActionValue& value)
 {
+	if (Anim->bSelfHealing) return; // 자가 치유 중이라면 리턴
 	if (Anim) Anim->IsCrouch(true);
 	
 	if (Anim)
@@ -177,6 +191,8 @@ void ACamper::End_Crouch(const struct FInputActionValue& value)
 }
 void ACamper::CheckInteractPoint()
 {
+	if (Anim->bSelfHealing) return; // 자가 치유 중이라면 리턴
+	
 	// InteractionPoint 찾는 Trace
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -195,6 +211,7 @@ void ACamper::CheckInteractPoint()
 	);
 	if (bHit)
 	{
+		bFindPoints = true;
 		for (const auto HitResult : OutHits)
 		{
 			
@@ -207,14 +224,17 @@ void ACamper::CheckInteractPoint()
 				SaveInteract = interact;
 				break;
 			}
-			
 		}
+	}
+	else
+	{
+		bFindPoints = false;
 	}
 }
 
 void ACamper::StartRepair()
 {
-	if (Anim == nullptr || Anim->bStartRepair)
+	if (Anim == nullptr || Anim->bStartRepair || Anim->bSelfHealing)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Camper : StartRepair : Anim : nullptr"));
 		return;

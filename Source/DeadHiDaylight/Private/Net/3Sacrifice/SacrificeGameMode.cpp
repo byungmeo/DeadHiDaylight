@@ -11,7 +11,7 @@
 #include "SacrificeGameState.h"
 #include "SacrificePlayerController.h"
 #include "SacrificePlayerState.h"
-#include "DeadHiDaylight/Canival.h"
+#include "Canival.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 

@@ -3,6 +3,7 @@
 
 #include "CampfireGameMode.h"
 
+#include "CampfireGameState.h"
 #include "CampfirePlayerController.h"
 #include "DHDGameInstance.h"
 #include "Blueprint/UserWidget.h"
@@ -11,6 +12,7 @@
 
 ACampfireGameMode::ACampfireGameMode()
 {
+	GameStateClass = ACampfireGameState::StaticClass();
 	PlayerControllerClass = ACampfirePlayerController::StaticClass();
 }
 
@@ -53,4 +55,15 @@ void ACampfireGameMode::PostLogin(APlayerController* NewPlayer)
 void ACampfireGameMode::GameStart()
 {
 	GetWorld()->ServerTravel("/Game/Common/Maps/SacrificeMap");
+}
+
+bool ACampfireGameMode::RequestSelect(ACampfirePlayerController* PlayerController, bool bIsSlasher)
+{
+	ACampfireGameState* GS = GetGameState<ACampfireGameState>();
+	if (GS)
+	{
+		GS->MulticastRPC_UpdateSlot(FMath::RandRange(0, 1), FMath::RandRange(0, 4));
+	}
+	PlayerController->ClientRPC_UpdateSelectedSlot(bIsSlasher);
+	return true;
 }

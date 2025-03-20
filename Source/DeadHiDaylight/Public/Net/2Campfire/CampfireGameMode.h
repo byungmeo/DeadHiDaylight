@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CampfirePlayerController.h"
 #include "DHDGameModeBase.h"
 #include "CampfireGameMode.generated.h"
 
@@ -31,4 +32,6 @@ public:
 	TSubclassOf<UUserWidget> ObserverWidgetFactory;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> ClientWidgetFactory;
+
+	bool RequestSelect(ACampfirePlayerController* PlayerController, bool bIsSlasher);
 };

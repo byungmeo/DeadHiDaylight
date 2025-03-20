@@ -68,7 +68,7 @@ public:
 	float maxSpeed = 400; // 뛰는 속도
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
 	float crouchSpeed = 113; // 앉아서 걷는 속도
-
+	
 	// 포인트 찾았는지 체크하는 변수
 	bool bFindPoints = false;
 	
@@ -100,5 +100,10 @@ public:
 public:
 	UPROPERTY(VisibleAnywhere, Category = PerksComponent)
 	class UPerksComponent* perksComp;
+
+	UPROPERTY(EditAnywhere)
+	float beforeSpeed = 0;
+	void GetDamage();
+	void HitSpeedTimer();
 };
 

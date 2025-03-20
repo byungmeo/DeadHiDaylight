@@ -94,12 +94,22 @@ void ACamper::Tick(float DeltaTime)
 	
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
-		Anim->bInjure = !(Anim->bInjure);
+		// 체력이 0보다 클때
+		if (curHP > 0)
+		{
+			// 데미지를 입는다.
+			GetDamage();
+		}
+		else
+		{
+			// 아니라면 쓰러진 상태가 된다.
+			curHP = maxHP;
+		}
 		
 	}
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
 	{
-		if (curHP > 0) curHP--;
+		Anim->bInjure = false;
 	}
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Three))
 	{
@@ -265,4 +275,25 @@ void ACamper::Test()
 	{
 		SaveInteract->StopInteraction(this);
 	}
+}
+
+void ACamper::GetDamage()
+{
+	// HP를 줄이고
+	curHP--;
+	// 다친 상태로 변경하고
+	Anim->bInjure = true;
+	// 이전 속도를 저장
+	beforeSpeed = moveComp->MaxWalkSpeed;
+	// 다쳤을 때 2초동안 스피드가 2배 증가
+	moveComp->MaxWalkSpeed = moveComp->MaxWalkSpeed * 2;
+	// 2초 후 다시 이전 속도로 복귀
+	FTimerHandle hitTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, this, &ACamper::HitSpeedTimer, 2.0f, false);
+	
+}
+
+void ACamper::HitSpeedTimer()
+{
+	moveComp->MaxWalkSpeed = beforeSpeed;
 }

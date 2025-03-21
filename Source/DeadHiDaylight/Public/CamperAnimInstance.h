@@ -38,6 +38,10 @@ public:
 	bool bCrawl = false; // 피가 0이 됐을 때 기어다니기 위한 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool bHitCrawl = false; // 피가 0이 됐을 때 기어다니기 위한 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	bool bUnLock = false; // 문을 열었는지 안열열었는지 확인 하는 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	bool bUnLocking = false; // 문을 열고 있는 중인지 확인하는 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	int32 randValue = 0; // 앉아서 걷는 애니메이션 선택 하는 값
 	
@@ -57,6 +61,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlaySelfHealingAnimation(FName sectionName);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlayUnLockAnimation(FName sectionName);
 	
 	UFUNCTION()
 	void AnimNotify_StartGen();
@@ -67,4 +74,8 @@ public:
 	void AnimNotify_StartSelfHealing();
 	UFUNCTION()
 	void AnimNotify_EndSelfHealing();
+	UFUNCTION()
+	void AnimNotify_StartUnLock();
+	UFUNCTION()
+	void AnimNotify_EndUnLock();
 };

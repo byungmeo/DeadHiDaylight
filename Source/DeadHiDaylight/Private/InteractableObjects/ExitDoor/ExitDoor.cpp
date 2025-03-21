@@ -83,7 +83,7 @@ void AExitDoor::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor
 		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnInteraction Survivor"));
 		bIsActivating = true;
 		Point->AttachActor(OtherActor, 0, true);
-		// Camper->StartOpenExitDoor();
+		Camper->StartUnLock(); // 정솔 추가 부분
 	}
 }
 
@@ -94,6 +94,6 @@ void AExitDoor::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherA
 		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnInteraction Survivor"));
 		bIsActivating = false;
 		Point->DetachActor();
-		// Camper->EndOpenExitDoor();
+		Camper->EndUnLock(); // 정솔 추가 부분
 	}
 }

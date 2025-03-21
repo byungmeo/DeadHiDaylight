@@ -51,6 +51,7 @@ void UCamperAnimInstance::AnimNotify_StartGen()
 void UCamperAnimInstance::AnimNotify_GenEnd()
 {
 	bStartRepair = false;
+	Montage_Stop(0.2f);
 }
 
 void UCamperAnimInstance::AnimNotify_StartSelfHealing()
@@ -61,5 +62,17 @@ void UCamperAnimInstance::AnimNotify_StartSelfHealing()
 void UCamperAnimInstance::AnimNotify_EndSelfHealing()
 {
 	bSelfHealing = false;
+	Montage_Stop(0.2f);
+}
+
+void UCamperAnimInstance::AnimNotify_StartUnLock()
+{
+	bUnLocking = true;
+}
+
+void UCamperAnimInstance::AnimNotify_EndUnLock()
+{
+	bUnLocking = false;
+	bUnLock = true;
 	Montage_Stop(0.2f);
 }

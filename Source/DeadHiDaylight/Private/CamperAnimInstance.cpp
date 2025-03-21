@@ -5,6 +5,7 @@
 
 #include "Camper.h"
 
+
 void UCamperAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
@@ -63,3 +64,4 @@ void UCamperAnimInstance::AnimNotify_EndSelfHealing()
 	bSelfHealing = false;
 	Montage_Stop(0.2f);
 }
+

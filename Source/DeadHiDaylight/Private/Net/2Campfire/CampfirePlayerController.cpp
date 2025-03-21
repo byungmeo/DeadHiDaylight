@@ -42,8 +42,17 @@ void ACampfirePlayerController::BeginPlay()
 
 void ACampfirePlayerController::UpdateSlot(const int SlasherCount, const int CamperCount)
 {
-	UCampfireClientUI* ClientUI = Cast<UCampfireClientUI>(CampfireWidget);
-	ClientUI->UpdateSlot(SlasherCount, CamperCount);
+	if (HasAuthority())
+	{
+		// UCampfireServerUI* ServerUI = Cast<UCampfireServerUI>(CampfireWidget);
+		// ServerUI->UpdateSlot(SlasherCount, CamperCount);
+	}
+	else
+	{
+		UCampfireClientUI* ClientUI = Cast<UCampfireClientUI>(CampfireWidget);
+		ClientUI->UpdateSlot(SlasherCount, CamperCount);
+	}
+	
 }
 
 void ACampfirePlayerController::ClientRPC_UpdateSelectedSlot_Implementation(const bool bIsSlasher)

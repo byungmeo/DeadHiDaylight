@@ -8,18 +8,9 @@
 
 void ACampfireGameState::MulticastRPC_UpdateSlot_Implementation(const int SlasherCount, const int CamperCount)
 {
-	if (HasAuthority())
-	{
-		return;
-	}
-	
 	ACampfirePlayerController* PlayerController = Cast<ACampfirePlayerController>(GetWorld()->GetFirstPlayerController());
 	if (PlayerController)
 	{
-		UCampfireClientUI* ClientUI = Cast<UCampfireClientUI>(PlayerController->CampfireWidget);
-		if (ClientUI)
-		{
-			ClientUI->UpdateSlot(SlasherCount, CamperCount);
-		}
+		PlayerController->UpdateSlot(SlasherCount, CamperCount);
 	}
 }

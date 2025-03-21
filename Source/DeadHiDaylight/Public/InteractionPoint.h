@@ -48,6 +48,12 @@ public:
 
 	UPROPERTY()
 	TObjectPtr<AActor> AttachedActor = nullptr;
-	void AttachActor(AActor* Actor);
+	/**
+	 * 액터를 Point에 부착
+	 * @param Actor 부착할 액터
+	 * @param ForwardOffset
+	 * @param bRestoreZ 부착 후 액터의 기존 Z좌표 복구 여부
+	 */
+	void AttachActor(AActor* Actor, const float ForwardOffset, const bool bRestoreZ);
 	void DetachActor();
 };

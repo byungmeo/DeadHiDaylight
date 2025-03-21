@@ -82,11 +82,7 @@ void AExitDoor::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnInteraction Survivor"));
 		bIsActivating = true;
-		float OrgZ = OtherActor->GetActorLocation().Z;
-		Point->AttachActor(OtherActor);
-		FVector NewLocation = OtherActor->GetActorLocation();
-		NewLocation.Z = OrgZ;
-		OtherActor->SetActorLocation(NewLocation);
+		Point->AttachActor(OtherActor, 0, true);
 		// Camper->StartOpenExitDoor();
 	}
 }

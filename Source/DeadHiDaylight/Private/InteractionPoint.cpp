@@ -38,9 +38,25 @@ void UInteractionPoint::StopInteraction(AActor* OtherActor)
 	OnStopInteraction.Broadcast(this, OtherActor);
 }
 
-void UInteractionPoint::AttachActor(AActor* Actor)
+void UInteractionPoint::AttachActor(AActor* Actor, const float ForwardOffset, const bool bRestoreZ)
 {
+	// 액터의 Z좌표 기억
+	const float OrgZ = Actor->GetActorLocation().Z;
+	
 	Actor->AttachToComponent(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	
+	if (bRestoreZ)
+	{
+		// 액터의 Z좌표 복구
+		FVector NewLocation = Actor->GetActorLocation();
+		NewLocation.Z = OrgZ;
+
+		// ForwardOffset 적용
+		NewLocation += Actor->GetActorForwardVector() * ForwardOffset;
+		
+		Actor->SetActorLocation(NewLocation);
+	}
+
 	AttachedActor = Actor;
 	SetActive(false);
 }

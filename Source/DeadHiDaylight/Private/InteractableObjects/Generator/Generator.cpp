@@ -164,23 +164,14 @@ void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActo
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Survivor"));
-		float OrgZ = OtherActor->GetActorLocation().Z;
-		Point->AttachActor(OtherActor);
-		FVector NewLocation = OtherActor->GetActorLocation();
-		NewLocation.Z = OrgZ;
-		OtherActor->SetActorLocation(NewLocation);
+		Point->AttachActor(OtherActor, 0, true);
 		RepairingCount++;
 		Camper->StartRepair();
 	}
 	else if (ACanival* Slasher = Cast<ACanival>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Slasher"));
-		float OrgZ = OtherActor->GetActorLocation().Z;
-		Point->AttachActor(Slasher);
-		FVector NewLocation = OtherActor->GetActorLocation();
-		NewLocation.Z = OrgZ;
-		NewLocation = NewLocation + OtherActor->GetActorForwardVector() * -150;
-		OtherActor->SetActorLocation(NewLocation);
+		Point->AttachActor(Slasher, -100, true);
 		Slasher->Kick();
 	}
 }

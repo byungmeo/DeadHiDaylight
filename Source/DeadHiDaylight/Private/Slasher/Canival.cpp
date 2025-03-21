@@ -155,12 +155,6 @@ void ACanival::Kick()
 	UE_LOG(LogTemp, Warning, TEXT("Kick"));
 }
 
-void ACanival::CompletedKick()
-{
-	
-}
-
-
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {

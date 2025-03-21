@@ -21,6 +21,7 @@ public class DeadHiDaylight : ModuleRules
 			"DeadHiDaylight/Public/Net/2Campfire",
 			"DeadHiDaylight/Public/Net/3Sacrifice",
 			"DeadHiDaylight/Public/Slasher",
+			"DeadHiDaylight/Public/UI",
 		});
 	}
 }

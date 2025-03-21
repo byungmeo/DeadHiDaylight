@@ -4,6 +4,7 @@
 #include "Generator.h"
 
 #include "Camper.h"
+#include "Canival.h"
 #include "InteractionPoint.h"
 
 
@@ -171,10 +172,16 @@ void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActo
 		RepairingCount++;
 		Camper->StartRepair();
 	}
-	else
+	else if (ACanival* Slasher = Cast<ACanival>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Slasher"));
-		// NotifyStartBreak();
+		float OrgZ = OtherActor->GetActorLocation().Z;
+		Point->AttachActor(Slasher);
+		FVector NewLocation = OtherActor->GetActorLocation();
+		NewLocation.Z = OrgZ;
+		NewLocation = NewLocation + OtherActor->GetActorForwardVector() * -150;
+		OtherActor->SetActorLocation(NewLocation);
+		Slasher->Kick();
 	}
 }
 

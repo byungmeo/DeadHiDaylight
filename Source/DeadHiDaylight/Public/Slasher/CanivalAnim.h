@@ -29,6 +29,11 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	FRotator CamRotator = FRotator::ZeroRotator;
+	
+	UPROPERTY(BlueprintReadOnly)
+	double Speed = 0.0;
+	UPROPERTY(BlueprintReadOnly)
+	int Direction;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayLeftClickAnimation();

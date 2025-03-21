@@ -109,7 +109,8 @@ void ACanival::Tick(float DeltaTime)
 	{
 		FindPoint();
 	}
-	
+
+	UE_LOG(LogTemp, Display, TEXT("%s"), *GetVelocity().ToString());
 }
 
 void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -153,11 +154,6 @@ void ACanival::Kick()
 {
 	AnimInstance->PlayKickAnimation();
 	UE_LOG(LogTemp, Warning, TEXT("Kick"));
-}
-
-void ACanival::CompletedKick()
-{
-	
 }
 
 

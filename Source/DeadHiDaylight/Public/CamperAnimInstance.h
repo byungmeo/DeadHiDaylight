@@ -52,18 +52,38 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void HitCrawl();
-
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_HitCrawl();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_HitCrawl();
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayRepairAnimation(FName sectionName);
-
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PlayRepairAnimation(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PlayRepairAnimation(FName sectionName);
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayDeadHardAnimation(FName sectionName);
-
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PlayDeadHardAnimation(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PlayDeadHardAnimation(FName sectionName);
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlaySelfHealingAnimation(FName sectionName);
-
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PlaySelfHealingAnimation(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PlaySelfHealingAnimation(FName sectionName);
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayUnLockAnimation(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PlayUnLockAnimation(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PlayUnLockAnimation(FName sectionName);
 	
 	UFUNCTION()
 	void AnimNotify_StartGen();

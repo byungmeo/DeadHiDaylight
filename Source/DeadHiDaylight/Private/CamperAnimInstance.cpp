@@ -78,3 +78,52 @@ void UCamperAnimInstance::AnimNotify_EndUnLock()
 	Montage_Stop(0.2f);
 }
 
+void UCamperAnimInstance::ServerRPC_HitCrawl_Implementation()
+{
+	MultiCastRPC_HitCrawl();
+}
+
+void UCamperAnimInstance::MultiCastRPC_HitCrawl_Implementation()
+{
+	HitCrawl();
+}
+
+void UCamperAnimInstance::ServerRPC_PlayRepairAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlayRepairAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlayRepairAnimation_Implementation(FName sectionName)
+{
+	PlayRepairAnimation(sectionName);
+}
+
+void UCamperAnimInstance::ServerRPC_PlayDeadHardAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlayDeadHardAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlayDeadHardAnimation_Implementation(FName sectionName)
+{
+	PlayDeadHardAnimation(sectionName);
+}
+
+void UCamperAnimInstance::ServerRPC_PlaySelfHealingAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlaySelfHealingAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlaySelfHealingAnimation_Implementation(FName sectionName)
+{
+	PlaySelfHealingAnimation(sectionName);
+}
+
+void UCamperAnimInstance::ServerRPC_PlayUnLockAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlayUnLockAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlayUnLockAnimation_Implementation(FName sectionName)
+{
+	PlayUnLockAnimation(sectionName);
+}

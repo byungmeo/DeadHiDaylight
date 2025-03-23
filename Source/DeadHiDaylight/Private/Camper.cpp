@@ -46,7 +46,7 @@ ACamper::ACamper()
 	springArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("springArmComp"));
 	springArmComp->SetupAttachment(RootComponent);
 	springArmComp->SetRelativeLocation(FVector(0, 0, 210));
-	springArmComp->TargetArmLength = 400;
+	springArmComp->TargetArmLength = 450;
 	springArmComp->bUsePawnControlRotation = true;
 	
 	cameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("cameraComp"));
@@ -131,7 +131,7 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACamper::CamperMove(const FInputActionValue& value)
 {
-	if (Anim->bSelfHealing || (Anim->bCrawl && Anim->bHitCrawl == false)) return;
+	if (Anim->bStartRepair || Anim->bSelfHealing || (Anim->bCrawl && Anim->bHitCrawl == false)) return;
 	
 	FVector2D dir = value.Get<FVector2D>();
 	
@@ -176,6 +176,7 @@ void ACamper::Start_Crouch(const struct FInputActionValue& value)
 	
 	if (Anim)
 	{
+		springArmComp->SetRelativeLocation(FVector(0, 0, 160));
 		moveComp->MaxWalkSpeed = crouchSpeed * 2;
 	}
 	// UE_LOG(LogTemp, Warning, TEXT("ACamper::StartCrouch %f"), moveComp->MaxWalkSpeed);
@@ -187,6 +188,7 @@ void ACamper::End_Crouch(const struct FInputActionValue& value)
 	
 	if (Anim)
 	{
+		springArmComp->SetRelativeLocation(FVector(0, 0, 210));
 		moveComp->MaxWalkSpeed = moveSpeed * 2;
 	}
 	// UE_LOG(LogTemp, Warning, TEXT("ACamper::EndCrouch %f"), moveComp->MaxWalkSpeed);
@@ -305,4 +307,18 @@ void ACamper::Crawling()
 	Anim->HitCrawl();
 	Anim->bCrawl = true;
 	moveComp->MaxWalkSpeed = crawlSpeed;
+}
+
+void ACamper::StartUnLock()
+{
+	if (Anim == nullptr || Anim->bUnLocking) return;
+
+	Anim->PlayUnLockAnimation(TEXT("StartUnLock"));
+}
+
+void ACamper::EndUnLock()
+{
+	if (Anim == nullptr) return;
+	
+	Anim->PlayUnLockAnimation(TEXT("OpenDoor"));
 }

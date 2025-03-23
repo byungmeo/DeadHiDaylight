@@ -54,6 +54,8 @@ public:
 	class UInputAction* IA_Crouch;
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_Repair;
+	UPROPERTY(EditAnywhere)
+	class UInputAction* IA_UnLock;
 	
 	// 체력 변수
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
@@ -108,7 +110,10 @@ public:
 	
 	void GetDamage();
 	void HitSpeedTimer();
-
 	void Crawling();
+
+	void StartUnLock();
+	void EndUnLock();
+	
 };
 

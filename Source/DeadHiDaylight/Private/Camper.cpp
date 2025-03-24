@@ -110,6 +110,28 @@ void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	if (btest)
+	{
+		// 갈고리 자가 탈출 테스트
+		// testCheckTime += DeltaTime;
+		// UE_LOG(LogTemp, Warning, TEXT("%f"), testCheckTime);
+		// if (testCheckTime > 3.0f)
+		// {
+		// 	Hooking(TEXT("HookFree"));
+		// 	btest = false;
+		// 	testCheckTime = 0.0f;
+		// }
+		// 갈고리 구출 테스트
+		testRescueTime += DeltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("%f"), testRescueTime);
+		if (testRescueTime > 1.12f)
+		{
+			RescueHooking(TEXT("HookRescueEnd"));
+			btest = false;
+			testRescueTime = 0.0f;
+		}
+	}
+	
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		GetDamage();
@@ -127,7 +149,28 @@ void ACamper::Tick(float DeltaTime)
 		moveComp->MaxWalkSpeed = moveSpeed;
 		UE_LOG(LogTemp, Warning, TEXT("%d"), Anim->bInjure);
 	}
-	
+	// Hook 걸리는 거 테스트 용
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Four))
+	{
+		Hooking(TEXT("HookIn"));
+	}
+	// Hook 자가 탈출 테스트 용
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Five))
+	{
+		Hooking(TEXT("HookStruggle"));
+		btest = true;
+	}
+	// Hook 구해지는 거 테스트
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Six))
+	{
+		Hooking(TEXT("HookRescuedEnd"));
+	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Seven))
+	{
+		
+		RescueHooking(TEXT("HookRescueIn"));
+		btest = true;
+	}
 	PrintNetLog();
 }
 
@@ -458,6 +501,40 @@ void ACamper::MultiCastRPC_EndUnLock_Implementation()
 	
 	Anim->ServerRPC_PlayUnLockAnimation(TEXT("OpenDoor"));
 }
+
+void ACamper::Hooking(FName sectionName)
+{
+	ServerRPC_Hooking(sectionName);
+}
+
+void ACamper::ServerRPC_Hooking_Implementation(FName sectionName)
+{
+	NetMultiCastRPC_Hooking(sectionName);
+}
+
+void ACamper::NetMultiCastRPC_Hooking_Implementation(FName sectionName)
+{
+	if (Anim == nullptr) return;
+	Anim->ServerRPC_PlayHookingAnimation(sectionName);
+}
+
+void ACamper::RescueHooking(FName sectionName)
+{
+	ServerRPC_RescueHooking(sectionName);
+}
+
+void ACamper::ServerRPC_RescueHooking_Implementation(FName sectionName)
+{
+	NetMultiCastRPC_RescueHooking(sectionName);
+}
+
+void ACamper::NetMultiCastRPC_RescueHooking_Implementation(FName sectionName)
+{
+	if (Anim == nullptr) return;
+
+	Anim->ServerRPC_PlayRescueHookingAnimation(sectionName);
+}
+
 void ACamper::PrintNetLog()
 {
 	FString conStr = GetNetConnection() != nullptr ? TEXT("Valid Connection") : TEXT("Invalid Connection");
@@ -468,3 +545,5 @@ void ACamper::PrintNetLog()
 	
 	DrawDebugString(GetWorld(), GetActorLocation(), logStr, nullptr, FColor::Red, 0, true);
 }
+
+

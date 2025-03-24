@@ -169,7 +169,24 @@ public:
 	void ServerRPC_EndUnLock();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_EndUnLock();
+	// 갈고리 걸리는 함수 RPC
+	void Hooking(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Hooking(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMultiCastRPC_Hooking(FName sectionName);
+	
+	// 갈고리에서 구해주는 RPC
+	void RescueHooking(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_RescueHooking(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMultiCastRPC_RescueHooking(FName sectionName);
 	
 	void PrintNetLog();
+
+	float testCheckTime = 0;
+	bool btest = false;
+	float testRescueTime = 0;
 };
 

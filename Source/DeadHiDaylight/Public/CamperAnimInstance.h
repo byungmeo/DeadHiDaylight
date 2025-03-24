@@ -50,40 +50,55 @@ public:
 	void IsCrouch(bool value); // 앉아 있는지 체크
 	int32 RandomValue(); // 1, 2중 값 반환
 
+	// 기어가는 불 값 변경하는 함수 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void HitCrawl();
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_HitCrawl();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_HitCrawl();
-	
+	// 발전기 고치는 애니메이션 몽타주 실행하는 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayRepairAnimation(FName sectionName);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_PlayRepairAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PlayRepairAnimation(FName sectionName);
-	
+	// 데드하드퍽 애니메이션 몽타주 실행하는 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayDeadHardAnimation(FName sectionName);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_PlayDeadHardAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PlayDeadHardAnimation(FName sectionName);
-	
+	// 자가치유퍽 애니메이션 몽타주 실행하는 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlaySelfHealingAnimation(FName sectionName);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_PlaySelfHealingAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PlaySelfHealingAnimation(FName sectionName);
-	
+	// 문여는 애니메이션 몽타주 실행하는 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayUnLockAnimation(FName sectionName);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_PlayUnLockAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PlayUnLockAnimation(FName sectionName);
+	// 갈고리 애니메이션 몽타주 실행하는 RPC
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlayHookingAnimation(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PlayHookingAnimation(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PlayHookingAnimation(FName sectionName);
+	// 갈고리에서 구해주는 애니메이션 몽타주 실행하는 RPC
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlayRescueHookingAnimation(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PlayRescueHookingAnimation(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PlayRescueHookingAnimation(FName sectionName);
 	
 	UFUNCTION()
 	void AnimNotify_StartGen();

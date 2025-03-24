@@ -5,10 +5,8 @@
 #include "CoreMinimal.h"
 
 #define NET_LOG(CategoryName, Verbosity, Format, ...) \
-{ \
-    FString Prefix; \
-    if (GEngine) \
     { \
+        FString Prefix; \
         if (auto* World = GetWorld()) \
         { \
             ENetMode NetMode = World->GetNetMode(); \
@@ -29,6 +27,11 @@
         { \
             Prefix = TEXT("[UNKNOWN] "); \
         } \
-    } \
-    UE_LOG(CategoryName, Verbosity, TEXT("%s%s"), *Prefix, *FString::Printf(Format, ##__VA_ARGS__)); \
-}
+        UE_LOG(CategoryName, Verbosity, TEXT("%s%s"), *Prefix, *FString::Printf(Format, ##__VA_ARGS__)); \
+    }
+
+#define SCREEN_LOG(Format, ...) \
+    if (GEngine) \
+    { \
+        GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, *FString::Printf(Format, ##__VA_ARGS__)); \
+    }

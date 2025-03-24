@@ -6,6 +6,7 @@
 #include "Camper.h"
 #include "Canival.h"
 #include "InteractionPoint.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 
 
 // Sets default values
@@ -34,6 +35,8 @@ AGenerator::AGenerator()
 		PointLeft->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
 		PointLeft->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
 		PointLeft->InteractionMode = EInteractionMode::EIM_Both;
+		PointLeft->bSkillCheckEnable = true;
+		PointLeft->OnSkillCheck.AddDynamic(this, &AGenerator::OnSkillCheck);
 		
 		PointRight = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointRight"));
 		PointRight->SetupAttachment(Mesh, TEXT("joint_CamperAttach02"));
@@ -41,6 +44,8 @@ AGenerator::AGenerator()
 		PointRight->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
 		PointRight->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
 		PointRight->InteractionMode = EInteractionMode::EIM_Both;
+		PointRight->bSkillCheckEnable = true;
+		PointRight->OnSkillCheck.AddDynamic(this, &AGenerator::OnSkillCheck);
 		
 		PointFront = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointFront"));
 		PointFront->SetupAttachment(Mesh, TEXT("joint_CamperAttach03"));
@@ -48,6 +53,8 @@ AGenerator::AGenerator()
 		PointFront->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
 		PointFront->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
 		PointFront->InteractionMode = EInteractionMode::EIM_Both;
+		PointFront->bSkillCheckEnable = true;
+		PointFront->OnSkillCheck.AddDynamic(this, &AGenerator::OnSkillCheck);
 		
 		PointBack = CreateDefaultSubobject<UInteractionPoint>(TEXT("PointBack"));
 		PointBack->SetupAttachment(Mesh, TEXT("joint_CamperAttach04"));
@@ -55,6 +62,8 @@ AGenerator::AGenerator()
 		PointBack->OnInteraction.AddDynamic(this, &AGenerator::OnInteraction);
 		PointBack->OnStopInteraction.AddDynamic(this, &AGenerator::OnStopInteraction);
 		PointBack->InteractionMode = EInteractionMode::EIM_Both;
+		PointBack->bSkillCheckEnable = true;
+		PointBack->OnSkillCheck.AddDynamic(this, &AGenerator::OnSkillCheck);
 	}
 }
 
@@ -107,6 +116,14 @@ void AGenerator::PowerOn()
 	DestroyPointsAll();
 	OnPowerOn.Broadcast();
 	SetActorTickEnabled(false);
+}
+
+void AGenerator::OnSkillCheck(AActor* TargetActor)
+{
+	if (ACamper* Camper = Cast<ACamper>(TargetActor))
+	{
+		NET_LOG(LogTemp, Warning, TEXT("AGenerator::OnSkillCheck"));
+	}
 }
 
 void AGenerator::SkillCheckSuccess(const bool bGreateSuccess)
@@ -185,14 +202,14 @@ void AGenerator::OnStopInteraction(class UInteractionPoint* Point, AActor* Other
 	
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Survivor"));
+		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnStopInteraction Survivor"));
 		Point->DetachActor();
 		RepairingCount--;
 		Camper->EndRepair();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Slasher"));
+		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnStopInteraction Slasher"));
 		// NotifyEndBreak();
 	}
 }

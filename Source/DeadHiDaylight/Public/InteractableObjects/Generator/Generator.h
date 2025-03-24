@@ -70,6 +70,8 @@ public:
 	/*
 	 *	Skill Check
 	 */
+	UFUNCTION()
+	void OnSkillCheck(AActor* TargetActor);
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bIsExplosion = false;
 	void SkillCheckSuccess(const bool bGreateSuccess);

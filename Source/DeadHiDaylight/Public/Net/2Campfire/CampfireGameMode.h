@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CampfirePlayerController.h"
 #include "DHDGameModeBase.h"
 #include "CampfireGameMode.generated.h"
 
@@ -19,19 +18,21 @@ public:
 	ACampfireGameMode();
 
 protected:
+	virtual void InitGameState() override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void BeginPlay() override;
 	
 public:
-	virtual void PostLogin(APlayerController* NewPlayer) override;
-	UFUNCTION(BlueprintCallable)
-	void GameStart();
-
+	UPROPERTY()
+	TObjectPtr<class ACampfireGameState> CampfireGameState = nullptr;
+	
 	int Temp = 0;
 	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> ObserverWidgetFactory;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> ClientWidgetFactory;
-
-	bool RequestSelect(ACampfirePlayerController* PlayerController, bool bIsSlasher);
+	
+	UFUNCTION(BlueprintCallable)
+    void StartSacrifice();
 };

@@ -22,6 +22,12 @@ ASacrificeGameMode::ASacrificeGameMode()
 	PlayerStateClass = ASacrificePlayerState::StaticClass();
 }
 
+void ASacrificeGameMode::InitGameState()
+{
+	Super::InitGameState();
+	SacrificeGameState = Cast<ASacrificeGameState>(GameState);
+}
+
 void ASacrificeGameMode::BeginPlay()
 {
 	Super::BeginPlay();
@@ -49,17 +55,18 @@ void ASacrificeGameMode::HandleStartingNewPlayer_Implementation(APlayerControlle
 
 void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controller, const EPlayerRole PlayerRole)
 {
+	if (Controller->IsLocalController())
+	{
+		NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Observer"));
+		if (AObserver* Observer = GetWorld()->SpawnActor<AObserver>(AObserver::StaticClass()))
+		{
+			Controller->Possess(Observer);
+		}
+		return;
+	}
+	
 	switch (PlayerRole)
 	{
-	case EPlayerRole::EPR_Observer:
-		{
-			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Observer"));
-			if (AObserver* Observer = GetWorld()->SpawnActor<AObserver>(AObserver::StaticClass()))
-			{
-				Controller->Possess(Observer);
-			}
-			break;
-		}
 	case EPlayerRole::EPR_Slasher:
 		{
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Slasher"));
@@ -87,5 +94,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn None"));
 			break;
 		}
+	default:
+		break;
 	}
 }

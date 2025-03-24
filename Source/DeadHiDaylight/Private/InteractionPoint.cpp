@@ -3,11 +3,13 @@
 
 #include "InteractionPoint.h"
 
+#include "DeadHiDaylight/DeadHiDaylight.h"
+
 
 // Sets default values for this component's properties
 UInteractionPoint::UInteractionPoint()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 	BoxExtent = FVector(1, 1, 1);
 }
 
@@ -17,11 +19,43 @@ void UInteractionPoint::BeginPlay()
 	SetCollisionProfileName(TEXT("InteractionPoint"));
 }
 
+void UInteractionPoint::TickComponent(float DeltaTime, enum ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (false == GetOwner()->HasAuthority())
+	{
+		return;
+	}
+	
+	if (bSkillCheckEnable && AttachedActor)
+	{
+		SCREEN_LOG(TEXT("ASD"));
+		if (SkillCheckCooldownRemaining > 0.0f)
+		{
+			SkillCheckCooldownRemaining -= DeltaTime;
+		}
+		else
+		{
+			if (FMath::RandRange(0.0f, 1.0f) <= SkillCheckChancePerSecond * DeltaTime)
+			{
+				NET_LOG(LogTemp, Warning, TEXT("Skill Check!!!"));
+				// 스킬체크는 생존자한테만 일어나지만 InteractionPoint 입장에서는 고려하지 않고, OnSkillCheck를 바인딩 한 쪽에서 관리
+				OnSkillCheck.Broadcast(AttachedActor);
+				// 스킬체크 중에는 중복으로 발생하지 않도록 함
+				SkillCheckCooldownRemaining = SkillCheckCooldown;
+			}
+		}
+	}
+}
+
 void UInteractionPoint::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 	OnInteraction.Clear();
 	OnStopInteraction.Clear();
+	OnSkillCheck.Clear();
 }
 
 void UInteractionPoint::Interaction(AActor* OtherActor)
@@ -56,9 +90,9 @@ void UInteractionPoint::AttachActor(AActor* Actor, const float ForwardOffset, co
 		
 		Actor->SetActorLocation(NewLocation);
 	}
-
+	NET_LOG(LogTemp, Warning, TEXT("UInteractionPoint::AttachActor"));
 	AttachedActor = Actor;
-	SetActive(false);
+	bCanInteract = false;
 }
 
 void UInteractionPoint::DetachActor()
@@ -67,7 +101,8 @@ void UInteractionPoint::DetachActor()
 	{
 		return;
 	}
+	NET_LOG(LogTemp, Warning, TEXT("UInteractionPoint::DetachActor"));
 	AttachedActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	AttachedActor = nullptr;
-	SetActive(true);
+	bCanInteract = true;
 }

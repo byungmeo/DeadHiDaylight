@@ -123,6 +123,7 @@ void AGenerator::OnSkillCheck(AActor* TargetActor)
 	if (ACamper* Camper = Cast<ACamper>(TargetActor))
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AGenerator::OnSkillCheck"));
+		// Camper->StartSkillCheck();
 	}
 }
 

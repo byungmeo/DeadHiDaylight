@@ -17,6 +17,7 @@ enum class EInteractionMode : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteraction, UInteractionPoint*, Point, AActor*, OtherActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStopInteraction, UInteractionPoint*, Point, AActor*, OtherActor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillCheck, AActor*, TargetActor);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DEADHIDAYLIGHT_API UInteractionPoint : public UBoxComponent
@@ -27,9 +28,11 @@ public:
 	// Sets default values for this component's properties
 	UInteractionPoint();
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	
 public:
+	bool bCanInteract = true;
 	EInteractionMode InteractionMode = EInteractionMode::EIM_Both;
 	
 	/**
@@ -56,4 +59,13 @@ public:
 	 */
 	void AttachActor(AActor* Actor, const float ForwardOffset, const bool bRestoreZ);
 	void DetachActor();
+	
+	// 이 InteractionPoint에 Attach된 Actor에 스킬체크가 발동할 수 있는지 여부
+	bool bSkillCheckEnable = false;
+	// 1초가 지났을 때 스킬 체크가 발동 될 확률
+	float SkillCheckChancePerSecond = 0.08f;
+	// 스킬체크 쿨타임
+	float SkillCheckCooldown = 2.0f;
+	float SkillCheckCooldownRemaining = 0.0f;
+	FOnSkillCheck OnSkillCheck;
 };

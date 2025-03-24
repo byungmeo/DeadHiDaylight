@@ -289,11 +289,13 @@ void ACamper::MultiCastRPC_CheckInteractPoint_Implementation()
 			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
 			{
 				if (Anim == nullptr || Anim->bStartRepair) return;
-				
 				UE_LOG(LogTemp, Warning, TEXT("%s, %d"), *HitResult.GetComponent()->GetName(), Anim->bStartRepair);
-				interact->Interaction(this);
-				SaveInteract = interact;
-				break;
+				if(interact->bCanInteract)
+				{
+					interact->Interaction(this);
+					SaveInteract = interact;
+					break;
+				}
 			}
 		}
 	}

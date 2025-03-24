@@ -32,7 +32,9 @@ public:
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	
 public:
+	// 현재 상호 작용이 가능한 상태인지 여부
 	bool bCanInteract = true;
+	// 누구와 상호 작용이 가능한가?
 	EInteractionMode InteractionMode = EInteractionMode::EIM_Both;
 	
 	/**

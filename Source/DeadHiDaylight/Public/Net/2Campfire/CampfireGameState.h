@@ -6,6 +6,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "CampfireGameState.generated.h"
 
+enum class EPlayerRole : uint8;
 /**
  * 
  */
@@ -15,6 +16,18 @@ class DEADHIDAYLIGHT_API ACampfireGameState : public AGameStateBase
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_UpdateSlot(const int SlasherCount, const int CamperCount);
+	TMap<FGuid, EPlayerRole> RoleMap;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_SlotCount)
+	int SlasherCount = 0;
+	UPROPERTY(ReplicatedUsing = OnRep_SlotCount)
+	int CamperCount = 0;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_RequestSelect(class ACampfirePlayerController* Controller, const EPlayerRole ReqRole);
+
+	UFUNCTION()
+	void OnRep_SlotCount() const;
 };

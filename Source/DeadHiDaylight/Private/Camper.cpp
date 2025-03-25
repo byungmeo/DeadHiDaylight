@@ -21,6 +21,10 @@ ACamper::ACamper()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+	bAlwaysRelevant = true;
+	bNetLoadOnClient = true;
+	
 	GetCapsuleComponent()->SetCapsuleHalfHeight(212.173325f);
 	GetCapsuleComponent()->SetCapsuleRadius(70);
 
@@ -76,7 +80,6 @@ ACamper::ACamper()
 	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("PerksComp"));
 
 	bUseControllerRotationYaw = false;
-	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -187,7 +190,7 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &ACamper::End_Crouch);
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
 		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::CheckInteractPoint);
-		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::Test);
+		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::StopInteract);
 
 		if (perksComp)
 		{
@@ -299,11 +302,6 @@ void ACamper::CheckInteractPoint()
 
 void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 {
-	MultiCastRPC_CheckInteractPoint();
-}
-
-void ACamper::MultiCastRPC_CheckInteractPoint_Implementation()
-{
 	if (Anim->bSelfHealing || Anim->bCrawl) return; // 자가 치유 중이라면 리턴
 	
 	// InteractionPoint 찾는 Trace
@@ -347,17 +345,6 @@ void ACamper::MultiCastRPC_CheckInteractPoint_Implementation()
 	}
 }
 
-// Repair
-void ACamper::StartRepair()
-{
-	ServerRPC_StartRepair();
-}
-
-void ACamper::ServerRPC_StartRepair_Implementation()
-{
-	MultiCastRPC_StartRepair();
-}
-
 void ACamper::MultiCastRPC_StartRepair_Implementation()
 {
 	if (Anim == nullptr || Anim->bStartRepair || Anim->bSelfHealing || Anim->bCrawl)
@@ -366,19 +353,11 @@ void ACamper::MultiCastRPC_StartRepair_Implementation()
 		return;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
-	// 시작 애니메이션 몽타주 실행
+
+	GetCharacterMovement()->StopMovementImmediately();
 	
+	// 시작 애니메이션 몽타주 실행
 	Anim->ServerRPC_PlayRepairAnimation(TEXT("GenIn"));
-}
-
-void ACamper::EndRepair()
-{
-	ServerRPC_EndRepair();
-}
-
-void ACamper::ServerRPC_EndRepair_Implementation()
-{
-	MultiCastRPC_EndRepair();
 }
 
 void ACamper::MultiCastRPC_EndRepair_Implementation()
@@ -396,7 +375,12 @@ void ACamper::MultiCastRPC_EndRepair_Implementation()
 }
 // Repair End
 
-void ACamper::Test()
+void ACamper::StopInteract()
+{
+	ServerRPC_StopInteract();
+}
+
+void ACamper::ServerRPC_StopInteract_Implementation()
 {
 	if (SaveInteract)
 	{

@@ -106,17 +106,9 @@ public:
 	 * Temp for Interact with Generator
 	 */
 public:
-	// 발전기 시작 함수
-	void StartRepair();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_StartRepair();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_StartRepair();
 	
-	// 발전기 끝 함수
-	void EndRepair();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_EndRepair();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_EndRepair();
 	
@@ -124,11 +116,11 @@ public:
 	void CheckInteractPoint();
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_CheckInteractPoint();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_CheckInteractPoint();
 
-
-	void Test();
+	
+	void StopInteract();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StopInteract();
 	UPROPERTY()
 	UInteractionPoint* SaveInteract;
 

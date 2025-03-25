@@ -9,7 +9,9 @@
 #include "SacrificeCommonHUD.h"
 #include "SacrificePlayerController.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 
 // Sets default values
@@ -17,6 +19,10 @@ AGenerator::AGenerator()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+	bAlwaysRelevant = true;
+	bNetLoadOnClient = true;
+	
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	SetRootComponent(Mesh);
 	static const ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KBD/Generator/Generator.Generator'"));
@@ -75,6 +81,11 @@ void AGenerator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (false == HasAuthority())
+	{
+		return;
+	}
+	
 	if (bPowerOn)
 	{
 		return;
@@ -111,6 +122,15 @@ void AGenerator::Tick(float DeltaTime)
 		PowerOn();
 	}
 }
+
+void AGenerator::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGenerator, bPowerOn);
+	DOREPLIFETIME(AGenerator, PowerGauge);
+}
+
 
 void AGenerator::PowerOn()
 {
@@ -198,7 +218,7 @@ void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActo
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Survivor"));
 		Point->AttachActor(OtherActor, 0, true);
 		RepairingCount++;
-		Camper->StartRepair();
+		Camper->MultiCastRPC_StartRepair();
 	}
 	else if (ACanival* Slasher = Cast<ACanival>(OtherActor))
 	{
@@ -220,7 +240,7 @@ void AGenerator::OnStopInteraction(class UInteractionPoint* Point, AActor* Other
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnStopInteraction Survivor"));
 		Point->DetachActor();
 		RepairingCount--;
-		Camper->EndRepair();
+		Camper->MultiCastRPC_EndRepair();
 	}
 	else
 	{

@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerController.h"
 #include "GameFramework/PlayerController.h"
 #include "CampfirePlayerController.generated.h"
 
+enum class EPlayerRole : uint8;
 /**
  * 
  */
@@ -14,8 +16,17 @@ class DEADHIDAYLIGHT_API ACampfirePlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-public:
+protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
+public:
+	FGuid Guid;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_SelectedRole)
+	EPlayerRole SelectedRole = EPlayerRole::EPR_None;
+	UFUNCTION()
+	void OnRep_SelectedRole() const;
 	
 	UPROPERTY()
 	TObjectPtr<class UUserWidget> CampfireWidget = nullptr;
@@ -26,11 +37,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_SetGuid(const FGuid NewGuid);
 
-	void UpdateSlot(const int SlasherCount, const int CamperCount);
-
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_RequestSelect(const bool bIsSlasher);
+	void ServerRPC_RequestSelect(const EPlayerRole ReqRole);
 
-	UFUNCTION(Client, Reliable)
-	void ClientRPC_UpdateSelectedSlot(const bool bIsSlasher);
+	void UpdateSlot(const int SlasherCount, const int CamperCount);
+	
+	void UpdateSelectedSlot(const bool bIsSlasher);
 };

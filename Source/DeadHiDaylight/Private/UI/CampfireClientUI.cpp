@@ -3,33 +3,41 @@
 
 #include "CampfireClientUI.h"
 
-#include "CampfireGameMode.h"
+#include "CampfirePlayerController.h"
 #include "Components/TextBlock.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 
-void UCampfireClientUI::RequestSelect(const bool bIsSlasher)
+void UCampfireClientUI::RequestSelect(const bool bIsSlasher) const
 {
-	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_RequestSelect_Implementation : %hs"), bIsSlasher ? "Slasher" : "Camper");
+	NET_LOG(LogTemp, Warning, TEXT("UCampfireClientUI::RequestSelect : %hs"), bIsSlasher ? "Slasher" : "Camper");
 
 	auto* PlayerController = Cast<ACampfirePlayerController>(GetOwningPlayer());
-	PlayerController->ServerRPC_RequestSelect(bIsSlasher);
+	const EPlayerRole ReqRole = bIsSlasher ? EPlayerRole::EPR_Slasher : EPlayerRole::EPR_Camper;
+	if (PlayerController->SelectedRole != ReqRole)
+	{
+		PlayerController->ServerRPC_RequestSelect(ReqRole);
+	}
 }
 
-void UCampfireClientUI::UpdateSelectedSlot(const bool bIsSlasher)
+void UCampfireClientUI::UpdateSelectedSlot(const EPlayerRole SelectedRole) const
 {
-	if (bIsSlasher)
+	if (SelectedRole == EPlayerRole::EPR_Slasher)
 	{
-		TextCamperSlot->SetColorAndOpacity(FSlateColor(EStyleColor::White));
 		TextSlasherSlot->SetColorAndOpacity(FSlateColor(EStyleColor::AccentGreen));
+		TextCamperSlot->SetColorAndOpacity(FSlateColor(EStyleColor::White));
+	}
+	else if (SelectedRole == EPlayerRole::EPR_Camper)
+	{
+		TextCamperSlot->SetColorAndOpacity(FSlateColor(EStyleColor::AccentGreen));
+		TextSlasherSlot->SetColorAndOpacity(FSlateColor(EStyleColor::White));
 	}
 	else
 	{
-		TextSlasherSlot->SetColorAndOpacity(FSlateColor(EStyleColor::White));
-		TextCamperSlot->SetColorAndOpacity(FSlateColor(EStyleColor::AccentGreen));
+		//
 	}
 }
 
-void UCampfireClientUI::UpdateSlot(const int SlasherCount, const int CamperCount)
+void UCampfireClientUI::UpdateSlot(const int SlasherCount, const int CamperCount) const
 {
 	if (TextSlasherSlot)
 	{

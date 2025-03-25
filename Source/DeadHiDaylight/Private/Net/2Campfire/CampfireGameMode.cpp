@@ -8,7 +8,6 @@
 #include "DHDGameInstance.h"
 #include "Blueprint/UserWidget.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
-#include "Kismet/GameplayStatics.h"
 
 ACampfireGameMode::ACampfireGameMode()
 {
@@ -21,6 +20,12 @@ void ACampfireGameMode::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ACampfireGameMode::InitGameState()
+{
+	Super::InitGameState();
+	CampfireGameState = Cast<ACampfireGameState>(GameState);
+}
+
 void ACampfireGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -28,42 +33,35 @@ void ACampfireGameMode::PostLogin(APlayerController* NewPlayer)
 
 	auto* Controller = Cast<ACampfirePlayerController>(NewPlayer);
 	const FGuid NewGuid = FGuid::NewGuid();
+	Controller->Guid = NewGuid;
 	Controller->ClientRPC_SetGuid(NewGuid);
 	
 	if (Controller->IsLocalPlayerController())
 	{
+		CampfireGameState->RoleMap.Add(NewGuid, EPlayerRole::EPR_Observer);
+		Controller->SelectedRole = EPlayerRole::EPR_Observer;
 		auto* Widget = CreateWidget(NewPlayer, ObserverWidgetFactory);
 		Widget->AddToViewport();
-		ServerGameInstance->RoleMap.Add(NewGuid, EPlayerRole::EPR_Observer);
 	}
 	else
 	{
+		CampfireGameState->RoleMap.Add(NewGuid, EPlayerRole::EPR_None);
 		Controller->ClientRPC_AddWidget(ClientWidgetFactory);
-		if (Temp <= 0)
-		{
-			ServerGameInstance->RoleMap.Add(NewGuid, EPlayerRole::EPR_Camper);
-		}
-		else
-		{
-			ServerGameInstance->RoleMap.Add(NewGuid, EPlayerRole::EPR_Slasher);
-		}
-
-		Temp++;
 	}
 }
 
-void ACampfireGameMode::GameStart()
+void ACampfireGameMode::StartSacrifice()
 {
-	GetWorld()->ServerTravel("/Game/Common/Maps/SacrificeMap");
-}
-
-bool ACampfireGameMode::RequestSelect(ACampfirePlayerController* PlayerController, bool bIsSlasher)
-{
-	ACampfireGameState* GS = GetGameState<ACampfireGameState>();
-	if (GS)
+	if (CampfireGameState->SlasherCount <= 0)
 	{
-		GS->MulticastRPC_UpdateSlot(FMath::RandRange(0, 1), FMath::RandRange(0, 4));
+		SCREEN_LOG(TEXT("SlasherCount is 0"));
+		return;
 	}
-	PlayerController->ClientRPC_UpdateSelectedSlot(bIsSlasher);
-	return true;
+	if (CampfireGameState->CamperCount <= 0)
+	{
+		SCREEN_LOG(TEXT("CamperCount is 0"));
+		return;
+	}
+	ServerGameInstance->RoleMap = CampfireGameState->RoleMap;
+	GetWorld()->ServerTravel("/Game/Common/Maps/SacrificeMap");
 }

@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "CampfireClientUI.generated.h"
 
+enum class EPlayerRole : uint8;
 /**
  * 
  */
@@ -21,10 +22,10 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<class UTextBlock> TextCamperSlot = nullptr;
 	
+	
 	UFUNCTION(BlueprintCallable)
-	void RequestSelect(const bool bIsSlasher);
+	void RequestSelect(const bool bIsSlasher) const;
 	
-	void UpdateSelectedSlot(const bool bIsSlasher);
-	
-	void UpdateSlot(const int SlasherCount, const int CamperCount);
+	void UpdateSelectedSlot(const EPlayerRole SelectedRole) const;
+	void UpdateSlot(const int SlasherCount, const int CamperCount) const;
 };

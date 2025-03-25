@@ -19,10 +19,13 @@ public:
 	ASacrificeGameMode();
 
 protected:
+	virtual void InitGameState() override;
 	virtual void BeginPlay() override;
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 
 public:
+	UPROPERTY()
+	TObjectPtr<class ASacrificeGameState> SacrificeGameState = nullptr;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class ACamper> CamperFactory;
 	UPROPERTY(EditDefaultsOnly)

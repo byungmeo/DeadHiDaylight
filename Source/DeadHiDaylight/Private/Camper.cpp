@@ -20,7 +20,6 @@ ACamper::ACamper()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 	glassesComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("glassesComp"));
 	glassesComp->SetupAttachment(GetMesh(), TEXT("Glasses"));
 	glassesComp->SetRelativeLocation(FVector(2.2f, -11, 0));

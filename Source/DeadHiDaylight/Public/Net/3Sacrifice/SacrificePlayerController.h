@@ -29,6 +29,10 @@ public:
 	TObjectPtr<class UDHDGameInstance> ServerGameInstance = nullptr;
 	UPROPERTY()
 	TObjectPtr<class ASacrificePlayerState> SacrificePlayerState = nullptr;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class USacrificeCommonHUD> HudFactory;
+	UPROPERTY()
+	TObjectPtr<class USacrificeCommonHUD> Hud = nullptr;
 	
 	bool bIsFreeMode = true;
 	int SpectatorIndex = 0;
@@ -42,4 +46,7 @@ public:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_RequestCreatePawn(FGuid Guid);
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_DisplayHUD();
 };

@@ -24,14 +24,15 @@ void UInteractionPoint::TickComponent(float DeltaTime, enum ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (false == GetOwner()->HasAuthority())
+	// TODO:
+	/*if (false == GetOwner()->HasAuthority())
 	{
 		return;
-	}
+	}*/
 	
 	if (bSkillCheckEnable && AttachedActor)
 	{
-		SCREEN_LOG(TEXT("ASD"));
+		SCREEN_LOG(TEXT("SkillCheckTick"));
 		if (SkillCheckCooldownRemaining > 0.0f)
 		{
 			SkillCheckCooldownRemaining -= DeltaTime;

@@ -7,7 +7,9 @@
 #include "Canival.h"
 #include "Camper.h"
 #include "DHDGameInstance.h"
+#include "SacrificeCommonHUD.h"
 #include "SacrificePlayerState.h"
+#include "Blueprint/UserWidget.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -33,6 +35,7 @@ void ASacrificePlayerController::BeginPlay()
 
 	SacrificePlayerState = Cast<ASacrificePlayerState>(PlayerState);
 	ClientRPC_RequestCallbackWithGuid();
+	ClientRPC_DisplayHUD();
 }
 
 void ASacrificePlayerController::PrevPlayer()
@@ -109,6 +112,11 @@ void ASacrificePlayerController::ToggleCamera()
 			SetViewTargetWithBlend(GameMode->Campers[SpectatorIndex - 1], 0.5f);
 		}
 	}
+}
+
+void ASacrificePlayerController::ClientRPC_DisplayHUD_Implementation()
+{
+	Hud = Cast<USacrificeCommonHUD>(CreateWidget(this, HudFactory));
 }
 
 void ASacrificePlayerController::ClientRPC_RequestCallbackWithGuid_Implementation()

@@ -6,7 +6,10 @@
 #include "Camper.h"
 #include "Canival.h"
 #include "InteractionPoint.h"
+#include "SacrificeCommonHUD.h"
+#include "SacrificePlayerController.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -123,6 +126,17 @@ void AGenerator::OnSkillCheck(AActor* TargetActor)
 	if (ACamper* Camper = Cast<ACamper>(TargetActor))
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AGenerator::OnSkillCheck"));
+		const auto* PlayerController = Cast<ASacrificePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+		if (PlayerController)
+		{
+			const float Min = FMath::RandRange(0.38f, 0.8f);
+			const float Max = Min + 0.15f;
+			const float GreatRange = 0.05f;
+			if (PlayerController->Hud)
+			{
+				PlayerController->Hud->OnSkillCheck(Min, Max, GreatRange);
+			}
+		}
 		// Camper->StartSkillCheck();
 	}
 }

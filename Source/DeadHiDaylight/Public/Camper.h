@@ -25,7 +25,7 @@ public:
 	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 	//Camper 매쉬 등 기본 세팅
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* glassesComp;
@@ -80,9 +80,25 @@ public:
 	
 	// 이동 관련 함수
 	void CamperMove(const FInputActionValue& value); // 캠퍼 움직임 함수
+	
 	void Run(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Run();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_Run();
+
 	void Start_Crouch(const struct FInputActionValue& value); // 앉기 시작 함수 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Start_Crouch();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_Start_Crouch();
+
 	void End_Crouch(const struct FInputActionValue& value); // 앉기 끝 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_End_Crouch();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_End_Crouch();
+	
 	// 카메라 관련 함수
 	void Look(const struct FInputActionValue& value);  // 카메라 움직임 함수
 
@@ -92,11 +108,24 @@ public:
 public:
 	// 발전기 시작 함수
 	void StartRepair();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StartRepair();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StartRepair();
+	
 	// 발전기 끝 함수
 	void EndRepair();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_EndRepair();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_EndRepair();
+	
 	// 주변 상호작용 포인트 탐지 함수
 	void CheckInteractPoint();
-	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_CheckInteractPoint();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_CheckInteractPoint();
 
 
 	void Test();
@@ -107,13 +136,57 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = PerksComponent)
 	class UPerksComponent* perksComp;
 
-	
+	// 대미지 받았을 때 처리하는 함수 RPC
 	void GetDamage();
-	void HitSpeedTimer();
-	void Crawling();
-
-	void StartUnLock();
-	void EndUnLock();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_GetDamage();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_GetDamage();
 	
+	// 맞을 때 속도 증가 함수 RPC
+	void HitSpeedTimer();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_HitSpeedTimer();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_HitSpeedTimer();
+	
+	// 쓰러진 상태 함수 RPC
+	void Crawling();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Crawling();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_Crawling();
+
+	// 문 여는 함수 RPC
+	void StartUnLock();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StartUnLock();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StartUnLock();
+	// 문 닫는 함수 RPC
+	void EndUnLock();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_EndUnLock();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_EndUnLock();
+	// 갈고리 걸리는 함수 RPC
+	void Hooking(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Hooking(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMultiCastRPC_Hooking(FName sectionName);
+	
+	// 갈고리에서 구해주는 RPC
+	void RescueHooking(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_RescueHooking(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMultiCastRPC_RescueHooking(FName sectionName);
+	
+	void PrintNetLog();
+
+	float testCheckTime = 0;
+	bool btest = false;
+	float testRescueTime = 0;
 };
 

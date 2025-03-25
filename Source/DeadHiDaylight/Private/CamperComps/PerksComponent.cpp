@@ -20,6 +20,12 @@ UPerksComponent::UPerksComponent()
 	{
 		IA_DeadHard = tempDeadHard.Object;
 	}
+	ConstructorHelpers::FObjectFinder<UInputAction> tempSelfHealing(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_SelfHealing.IA_SelfHealing'"));
+	if (tempSelfHealing.Succeeded())
+	{
+		IA_SelfHealing = tempSelfHealing.Object;
+	}
+	
 }
 
 
@@ -61,6 +67,16 @@ void UPerksComponent::SetupInputBinding(class UEnhancedInputComponent* pi)
 
 void UPerksComponent::PerksDeadHard()
 {
+	if (bDeadHard == false) ServerRPC_PerksDeadHard();
+}
+
+void UPerksComponent::ServerRPC_PerksDeadHard_Implementation()
+{
+	NetMultiCastRPC_PerksDeadHard();
+}
+
+void UPerksComponent::NetMultiCastRPC_PerksDeadHard_Implementation()
+{
 	// 데드하드 발동
 	if (anim)
 	{
@@ -68,7 +84,7 @@ void UPerksComponent::PerksDeadHard()
 		{
 			bDeadHard = true;
 			// DeadHard 몽타주 실행
-			anim->PlayDeadHardAnimation(TEXT("DeadHard"));
+			anim->ServerRPC_PlayDeadHardAnimation(TEXT("DeadHard"));
 		}
 	}
 }
@@ -83,25 +99,59 @@ void UPerksComponent::DeadHardTimingCheck(float deltaTime)
 		{
 			exTime = 0;
 			bDeadHard = false;
+			ServerRPC_PerksDeadHardTimingCheck(bDeadHard);	
 		}
 		// 40초 동안 탈진상태
 		exTime += deltaTime;
 	}
+	
+}
+void UPerksComponent::ServerRPC_PerksDeadHardTimingCheck_Implementation(bool value)
+{
+	NetMultiCastRPC_PerksDeadHardTimingCheck(value);
 }
 
+void UPerksComponent::NetMultiCastRPC_PerksDeadHardTimingCheck_Implementation(bool value)
+{
+	bDeadHard = value;
+}
 void UPerksComponent::PerksSelfHealing()
 {
-	if (anim == nullptr || Camper->bFindPoints || anim->bSelfHealing || anim->bInjure == false) return;
-	UE_LOG(LogTemp, Warning, TEXT("PerksSelfHealing"));
-
-	anim->PlaySelfHealingAnimation(TEXT("StartSelfHealing"));
+	ServerRPC_PerksSelfHealing();
+}
+void UPerksComponent::ServerRPC_PerksSelfHealing_Implementation()
+{
+	NetMultiCastRPC_PerksSelfHealing();
 }
 
+void UPerksComponent::NetMultiCastRPC_PerksSelfHealing_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("In NetMultCastRPC_PerksSelfHealing"));
+	if (anim == nullptr || Camper->bFindPoints || anim->bSelfHealing || anim->bInjure == false)
+	{
+		FString s = GetOwner()->GetName();
+		UE_LOG(LogTemp, Warning, TEXT("anim = %s, Comper->bFindPoints = %d, anim->bSelfHealing = %d, anim->bInjure = %d 참 = 1 거짓 = 0"), *s, Camper->bFindPoints, anim->bSelfHealing, anim->bInjure);
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("PerksSelfHealing"));
+
+	anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartSelfHealing"));
+}
 void UPerksComponent::StopPerksSelfHealing()
+{
+	ServerRPC_StopPerSelfHealing();
+}
+
+void UPerksComponent::ServerRPC_StopPerSelfHealing_Implementation()
+{
+	NetMultiCastRPC_StopPerSelfHealing();
+}
+
+void UPerksComponent::NetMultiCastRPC_StopPerSelfHealing_Implementation()
 {
 	if (anim == nullptr || Camper->bFindPoints || anim->bSelfHealing == false) return;
 	
-	anim->PlaySelfHealingAnimation(TEXT("EndSelfHealing"));
+	anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndSelfHealing"));
 }
 
 void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
@@ -116,11 +166,22 @@ void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
 			healingTime = 0;
 			Camper->curHP = Camper->maxHP;
 			anim->bInjure = false;
+			ServerRPC_SelfHealingTimingCheck(anim->bInjure);
 		}
 		// 32초동안 치유 해야함.
 		healingTime += deltaTime;
 		UE_LOG(LogTemp, Warning, TEXT("healingTime : %f"), healingTime);
 	}
+}
+
+void UPerksComponent::ServerRPC_SelfHealingTimingCheck_Implementation(bool value)
+{
+	NetMultiCastRPC_SelfHealingTimingCheck(value);
+}
+
+void UPerksComponent::NetMultiCastRPC_SelfHealingTimingCheck_Implementation(bool value)
+{
+	anim->bInjure = value;
 }
 
 

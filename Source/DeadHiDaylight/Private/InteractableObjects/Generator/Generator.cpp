@@ -6,11 +6,8 @@
 #include "Camper.h"
 #include "Canival.h"
 #include "InteractionPoint.h"
-#include "SacrificeCommonHUD.h"
 #include "SacrificePlayerController.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -129,6 +126,7 @@ void AGenerator::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Out
 
 	DOREPLIFETIME(AGenerator, bPowerOn);
 	DOREPLIFETIME(AGenerator, PowerGauge);
+	DOREPLIFETIME(AGenerator, bIsExplosion);
 }
 
 
@@ -152,32 +150,61 @@ void AGenerator::OnSkillCheck(AActor* TargetActor)
 			const float Min = FMath::RandRange(0.38f, 0.8f);
 			const float Max = Min + 0.15f;
 			const float GreatRange = 0.05f;
-			// 이건 무조건 서버에서 실행되는 코드임!!
-			PlayerController->ClientRPC_OnSkillCheck(Min, Max, GreatRange);
+			PlayerController->ClientRPC_OnSkillCheck(this, Min, Max, GreatRange);
 		}
 		// Camper->StartSkillCheck();
 	}
 }
 
+void AGenerator::SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult Result)
+{
+	switch (Result)
+    	{
+    	case ESkillCheckResult::ESCR_Fail:
+    		SkillCheckFail(Camper);
+    		break;
+    	case ESkillCheckResult::ESCR_Success:
+    		SkillCheckSuccess(false);
+    		break;
+    	case ESkillCheckResult::ESCR_GreatSuccess:
+    		SkillCheckSuccess(true);
+    		break;
+    	}
+}
+
 void AGenerator::SkillCheckSuccess(const bool bGreateSuccess)
 {
+	NET_LOG(LogTemp, Warning, TEXT("AGenerator::SkillCheckSuccess %hs"), (bGreateSuccess ? "GREAT!!!" : "SOSO..."));
+	
 	if (true == bGreateSuccess)
 	{
 		PowerGauge += GreateSuccessBonus;
 	}
 }
 
-void AGenerator::SkillCheckFail()
+void AGenerator::SkillCheckFail(ACamper* Camper)
 {
+	NET_LOG(LogTemp, Warning, TEXT("AGenerator::SkillCheckFail"));
+	
 	bIsExplosion = true;
-	PowerGauge -= FMath::Clamp(ImmediateExplosionValue, 0, 1);
+	PowerGauge = FMath::Clamp(PowerGauge - ImmediateExplosionValue, 0, 1);
 	RemainExplosionTime = ExplosionDuration;
+
+	MulticastRPC_SkillCheckFail(Camper);
+}
+
+void AGenerator::MulticastRPC_SkillCheckFail_Implementation(ACamper* Camper)
+{
 	OnExplosion.Broadcast();
+	if (Camper)
+    {
+    	// Camper->GeneratorSkillCheckFail();
+    }
 }
 
 void AGenerator::TestExplosion()
 {
-	SkillCheckFail();
+	SkillCheckFail(nullptr);
 }
 
 void AGenerator::Break()

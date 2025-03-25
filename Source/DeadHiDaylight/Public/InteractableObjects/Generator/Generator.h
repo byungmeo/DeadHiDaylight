@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Camper.h"
 #include "GameFramework/Actor.h"
 #include "Generator.generated.h"
 
@@ -74,14 +75,18 @@ public:
 	 */
 	UFUNCTION()
 	void OnSkillCheck(AActor* TargetActor);
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	void SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult Result);
+	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bIsExplosion = false;
 	void SkillCheckSuccess(const bool bGreateSuccess);
-	void SkillCheckFail();
+	void SkillCheckFail(ACamper* Camper);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SkillCheckFail(ACamper* Camper);
 	UPROPERTY(BlueprintAssignable)
 	FOnExplosion OnExplosion;
 	UFUNCTION(CallInEditor, Category="Test")
     void TestExplosion();
+	
 
 	/*
 	 * Break by Slasher

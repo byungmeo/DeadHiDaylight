@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SacrificePlayerState.h"
 #include "GameFramework/PlayerController.h"
 #include "SacrificePlayerController.generated.h"
 
+enum class ESkillCheckResult : uint8;
 enum class EPlayerRole : uint8;
 /**
  * 
@@ -50,6 +50,12 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_DisplayHUD();
 
+	UPROPERTY()
+	TObjectPtr<AActor> SkillCheckableObject = nullptr;
 	UFUNCTION(Client, Reliable)
-	void ClientRPC_OnSkillCheck(const float Min, const float Max, const float GreatRange);
+	void ClientRPC_OnSkillCheck(AActor* Obj, const float Min, const float Max, const float GreatRange);
+	UFUNCTION(BlueprintCallable)
+	void SkillCheckFinish(const ESkillCheckResult Result);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SkillCheckFinish(AActor* Obj, const ESkillCheckResult Result);
 };

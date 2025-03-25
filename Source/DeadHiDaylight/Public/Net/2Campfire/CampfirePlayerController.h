@@ -24,7 +24,7 @@ public:
 	FGuid Guid;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_SelectedRole)
-	EPlayerRole SelectedRole = EPlayerRole::EPR_None;
+	EPlayerRole SelectedRole;
 	UFUNCTION()
 	void OnRep_SelectedRole() const;
 	

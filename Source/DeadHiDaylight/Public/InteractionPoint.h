@@ -6,13 +6,21 @@
 #include "Components/BoxComponent.h"
 #include "InteractionPoint.generated.h"
 
-UENUM()
+UENUM(BlueprintType)
 enum class EInteractionMode : uint8
 {
 	EIM_None,
 	EIM_Both,
 	EIM_CamperOnly,
 	EIM_SlasherOnly
+};
+
+UENUM(BlueprintType)
+enum class ESkillCheckResult : uint8
+{
+	ESCR_Fail,
+	ESCR_Success,
+	ESCR_GreatSuccess
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteraction, UInteractionPoint*, Point, AActor*, OtherActor);

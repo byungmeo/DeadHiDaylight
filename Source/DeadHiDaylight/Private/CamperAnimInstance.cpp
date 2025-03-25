@@ -137,7 +137,7 @@ void UCamperAnimInstance::MultiCastRPC_PlayHookingAnimation_Implementation(FName
 {
 	PlayHookingAnimation(sectionName);
 }
-
+// 갈고리에서 구해주는 애니메이션 RPC
 void UCamperAnimInstance::ServerRPC_PlayRescueHookingAnimation_Implementation(FName sectionName)
 {
 	MultiCastRPC_PlayRescueHookingAnimation(sectionName);

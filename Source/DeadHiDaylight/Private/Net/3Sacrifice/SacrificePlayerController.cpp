@@ -34,8 +34,12 @@ void ASacrificePlayerController::BeginPlay()
 	}
 
 	SacrificePlayerState = Cast<ASacrificePlayerState>(PlayerState);
-	ClientRPC_RequestCallbackWithGuid();
-	ClientRPC_DisplayHUD();
+	
+	if (IsLocalPlayerController())
+	{
+		ClientRPC_RequestCallbackWithGuid();
+		ClientRPC_DisplayHUD();
+	}
 }
 
 void ASacrificePlayerController::PrevPlayer()
@@ -157,4 +161,13 @@ void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(cons
 
 	NewState.PlayerRole = PlayerRole;
 	SacrificePlayerState->PlayerState = NewState;
+}
+
+void ASacrificePlayerController::ClientRPC_OnSkillCheck_Implementation(const float Min, const float Max, const float GreatRange)
+{
+	if (Hud)
+    {
+		NET_LOG(LogTemp, Warning, TEXT("ClientRPC_OnSkillCheck_Implementation"));
+    	Hud->OnSkillCheck(Min, Max, GreatRange);
+    }
 }

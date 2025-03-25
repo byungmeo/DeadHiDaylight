@@ -49,4 +49,7 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_DisplayHUD();
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_OnSkillCheck(const float Min, const float Max, const float GreatRange);
 };

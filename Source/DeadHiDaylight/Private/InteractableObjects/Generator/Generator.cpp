@@ -146,16 +146,14 @@ void AGenerator::OnSkillCheck(AActor* TargetActor)
 	if (ACamper* Camper = Cast<ACamper>(TargetActor))
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AGenerator::OnSkillCheck"));
-		const auto* PlayerController = Cast<ASacrificePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+		auto* PlayerController = Cast<ASacrificePlayerController>(Camper->GetController());
 		if (PlayerController)
 		{
 			const float Min = FMath::RandRange(0.38f, 0.8f);
 			const float Max = Min + 0.15f;
 			const float GreatRange = 0.05f;
-			if (PlayerController->Hud)
-			{
-				PlayerController->Hud->OnSkillCheck(Min, Max, GreatRange);
-			}
+			// 이건 무조건 서버에서 실행되는 코드임!!
+			PlayerController->ClientRPC_OnSkillCheck(Min, Max, GreatRange);
 		}
 		// Camper->StartSkillCheck();
 	}

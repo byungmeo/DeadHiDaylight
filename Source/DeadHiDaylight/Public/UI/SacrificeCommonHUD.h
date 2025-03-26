@@ -16,6 +16,12 @@ class DEADHIDAYLIGHT_API USacrificeCommonHUD : public UUserWidget
 	
 public:
 	virtual void NativeConstruct() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void AddCamper(const FName Name);
+
+	/*UFUNCTION(BlueprintImplementableEvent)
+	void UpdateCamper(const TArray<struct FCamperState>& StateList);*/
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnSkillCheck(float Min, float Max, float GreatRange);

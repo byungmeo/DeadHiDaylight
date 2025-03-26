@@ -121,7 +121,12 @@ void ASacrificePlayerController::ToggleCamera()
 
 void ASacrificePlayerController::ClientRPC_DisplayHUD_Implementation()
 {
+	NET_LOG(LogTemp, Warning, TEXT("ClientRPC_DisplayHUD_Implementation"));
 	Hud = Cast<USacrificeCommonHUD>(CreateWidget(this, HudFactory));
+	if (Hud)
+	{
+		Hud->AddToViewport();
+	}
 }
 
 void ASacrificePlayerController::ClientRPC_RequestCallbackWithGuid_Implementation()

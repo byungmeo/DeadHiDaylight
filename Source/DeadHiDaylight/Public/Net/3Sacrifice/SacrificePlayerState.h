@@ -37,7 +37,11 @@ USTRUCT(BlueprintType)
 struct FBaseState
 {
 	GENERATED_BODY()
+	
+	UPROPERTY(BlueprintReadOnly)
 	FName Name = FName(NAME_None);
+	
+	UPROPERTY(BlueprintReadOnly)
 	EPlayerRole PlayerRole = EPlayerRole::EPR_None;
 };
 
@@ -52,10 +56,10 @@ struct FCamperState : public FBaseState
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	EStrugglePhase StrugglePhase = EStrugglePhase::ESP_First;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	ECamperHealth Health = ECamperHealth::ECH_Healthy;
 };
 
@@ -74,5 +78,6 @@ class DEADHIDAYLIGHT_API ASacrificePlayerState : public APlayerState
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintReadOnly)
 	FBaseState PlayerState;
 };

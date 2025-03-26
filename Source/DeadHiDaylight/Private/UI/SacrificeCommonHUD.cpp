@@ -4,6 +4,7 @@
 #include "SacrificeCommonHUD.h"
 
 #include "SacrificeGameState.h"
+#include "SacrificePlayerState.h"
 
 void USacrificeCommonHUD::NativeConstruct()
 {
@@ -13,5 +14,17 @@ void USacrificeCommonHUD::NativeConstruct()
 	{
 		GameState->OnRepGeneratorCount.AddDynamic(this, &USacrificeCommonHUD::OnRepGeneratorCount);
 		OnRepGeneratorCount(GameState->ReqGeneratorCount);
+
+		TArray<FCamperState> CamperStates;
+		for (auto PS : GameState->PlayerArray)
+		{
+			if (const auto* SacrificePlayerState = Cast<ASacrificePlayerState>(PS))
+			{
+				if (SacrificePlayerState->PlayerState.PlayerRole == EPlayerRole::EPR_Camper)
+				{
+					AddCamper(SacrificePlayerState->PlayerState.Name);
+				}
+			}
+		}
 	}
 }

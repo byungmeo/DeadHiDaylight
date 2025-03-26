@@ -34,40 +34,28 @@ enum class ECamperHealth : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FBaseState
+struct FUserState
 {
 	GENERATED_BODY()
-	
+
+	/*
+	 * Common
+	 */
 	UPROPERTY(BlueprintReadOnly)
 	FName Name = FName(NAME_None);
-	
 	UPROPERTY(BlueprintReadOnly)
 	EPlayerRole PlayerRole = EPlayerRole::EPR_None;
-};
 
-USTRUCT(BlueprintType)
-struct FObserverState : public FBaseState
-{
-	GENERATED_BODY()
-};
-
-USTRUCT(BlueprintType)
-struct FCamperState : public FBaseState
-{
-	GENERATED_BODY()
-
+	/*
+	 *	Camper
+	 */
 	UPROPERTY(BlueprintReadOnly)
 	EStrugglePhase StrugglePhase = EStrugglePhase::ESP_First;
-
 	UPROPERTY(BlueprintReadOnly)
 	ECamperHealth Health = ECamperHealth::ECH_Healthy;
 };
 
-USTRUCT(BlueprintType)
-struct FSlasherState : public FBaseState
-{
-	GENERATED_BODY()
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpdatedUserState, const FUserState&, UserState);
 
 /**
  * 
@@ -77,7 +65,17 @@ class DEADHIDAYLIGHT_API ASacrificePlayerState : public APlayerState
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 public:
-	UPROPERTY(BlueprintReadOnly)
-	FBaseState PlayerState;
+	UPROPERTY(ReplicatedUsing=OnRep_UserState ,BlueprintReadOnly)
+	FUserState UserState;
+
+	UFUNCTION()
+	void OnRep_UserState();
+	FOnUpdatedUserState OnUpdatedUserState;
+	
+	UFUNCTION(CallInEditor, Category="Test")
+    void ChangeHealth();
 };

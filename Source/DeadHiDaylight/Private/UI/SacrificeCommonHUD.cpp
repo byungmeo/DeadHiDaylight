@@ -15,14 +15,15 @@ void USacrificeCommonHUD::NativeConstruct()
 		GameState->OnRepGeneratorCount.AddDynamic(this, &USacrificeCommonHUD::OnRepGeneratorCount);
 		OnRepGeneratorCount(GameState->ReqGeneratorCount);
 
-		TArray<FCamperState> CamperStates;
+		TArray<FUserState> CamperStates;
 		for (auto PS : GameState->PlayerArray)
 		{
-			if (const auto* SacrificePlayerState = Cast<ASacrificePlayerState>(PS))
+			if (auto* SacrificePlayerState = Cast<ASacrificePlayerState>(PS))
 			{
-				if (SacrificePlayerState->PlayerState.PlayerRole == EPlayerRole::EPR_Camper)
+				if (SacrificePlayerState->UserState.PlayerRole == EPlayerRole::EPR_Camper)
 				{
-					AddCamper(SacrificePlayerState->PlayerState.Name);
+					AddCamper(SacrificePlayerState->UserState.Name);
+					SacrificePlayerState->OnUpdatedUserState.AddDynamic(this, &USacrificeCommonHUD::OnUpdatedUserState);
 				}
 			}
 		}

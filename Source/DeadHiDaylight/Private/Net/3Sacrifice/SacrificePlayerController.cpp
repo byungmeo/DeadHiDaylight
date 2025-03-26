@@ -140,33 +140,10 @@ void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(cons
 	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_RequestCreatePawn_Implementation %s"), *Guid.ToString());
 	const EPlayerRole PlayerRole = GameMode->ServerGameInstance->RoleMap[Guid];
 	GameMode->RequestCreatePawn(this, PlayerRole);
-	FBaseState NewState;
-	switch (PlayerRole)
-	{
-	case EPlayerRole::EPR_None:
-		{
-			NewState = FBaseState();
-			break;
-		}
-	case EPlayerRole::EPR_Observer:
-		{
-			NewState = FBaseState(FObserverState());
-			break;
-		}
-	case EPlayerRole::EPR_Slasher:
-		{
-			NewState = FBaseState(FSlasherState());
-			break;
-		}
-	case EPlayerRole::EPR_Camper:
-		{
-			NewState = FBaseState(FCamperState());
-			break;
-		}
-	}
-
+	
+	FUserState NewState = FUserState();
 	NewState.PlayerRole = PlayerRole;
-	SacrificePlayerState->PlayerState = NewState;
+	SacrificePlayerState->UserState = NewState;
 }
 
 void ASacrificePlayerController::ClientRPC_OnSkillCheck_Implementation(AActor* Obj, const float Min, const float Max,

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerState.h"
 #include "Blueprint/UserWidget.h"
 #include "SacrificeCommonHUD.generated.h"
 
@@ -28,4 +29,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnRepGeneratorCount(int Count);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnUpdatedUserState(const FUserState& UserState);
 };

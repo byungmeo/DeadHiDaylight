@@ -13,8 +13,13 @@ UCLASS()
 class DEADHIDAYLIGHT_API USacrificeCommonHUD : public UUserWidget
 {
 	GENERATED_BODY()
-
+	
 public:
+	virtual void NativeConstruct() override;
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnSkillCheck(float Min, float Max, float GreatRange);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRepGeneratorCount(int Count);
 };

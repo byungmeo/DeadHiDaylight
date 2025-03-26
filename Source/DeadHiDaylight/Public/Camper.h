@@ -106,12 +106,18 @@ public:
 	 * Temp for Interact with Generator
 	 */
 public:
+	// 발전기 시작 / 실패
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_StartRepair();
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_EndRepair();
-	
+
+	void FailRepair(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_FailRepair(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_FailRepair(FName sectionName);
 	// 주변 상호작용 포인트 탐지 함수
 	void CheckInteractPoint();
 	UFUNCTION(Server, Reliable)

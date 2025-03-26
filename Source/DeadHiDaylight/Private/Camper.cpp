@@ -173,6 +173,10 @@ void ACamper::Tick(float DeltaTime)
 		RescueHooking(TEXT("HookRescueIn"));
 		btest = true;
 	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Eight))
+	{
+		FailRepair(TEXT("GenFailFT"));
+	}
 	PrintNetLog();
 }
 
@@ -373,6 +377,24 @@ void ACamper::MultiCastRPC_EndRepair_Implementation()
 	// 다시 애니메이션 idle로 바꾸고 wsad 움직일 수 있게 변경
 	Anim->ServerRPC_PlayRepairAnimation(TEXT("GenOut"));
 }
+
+void ACamper::FailRepair(FName sectionName)
+{
+	ServerRPC_FailRepair(sectionName);
+}
+void ACamper::ServerRPC_FailRepair_Implementation(FName sectionName)
+{
+	MultiCastRPC_FailRepair(sectionName);
+}
+
+void ACamper::MultiCastRPC_FailRepair_Implementation(FName sectionName)
+{
+	if (Anim == nullptr) return;
+
+	// 발전기 가동은 된 상태로 게이지만 줄어들고 다시 고쳐야 한다
+	Anim->ServerRPC_PlayRepairAnimation(sectionName);
+}
+
 // Repair End
 
 void ACamper::StopInteract()

@@ -7,6 +7,7 @@
 #include "Canival.h"
 #include "Camper.h"
 #include "DHDGameInstance.h"
+#include "Generator.h"
 #include "SacrificeCommonHUD.h"
 #include "SacrificePlayerState.h"
 #include "Blueprint/UserWidget.h"
@@ -163,11 +164,32 @@ void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(cons
 	SacrificePlayerState->PlayerState = NewState;
 }
 
-void ASacrificePlayerController::ClientRPC_OnSkillCheck_Implementation(const float Min, const float Max, const float GreatRange)
+void ASacrificePlayerController::ClientRPC_OnSkillCheck_Implementation(AActor* Obj, const float Min, const float Max,
+	const float GreatRange)
 {
 	if (Hud)
-    {
+	{
+		SkillCheckableObject = Obj;
 		NET_LOG(LogTemp, Warning, TEXT("ClientRPC_OnSkillCheck_Implementation"));
-    	Hud->OnSkillCheck(Min, Max, GreatRange);
-    }
+		Hud->OnSkillCheck(Min, Max, GreatRange);
+	}
+}
+
+void ASacrificePlayerController::SkillCheckFinish(const ESkillCheckResult Result)
+{
+	ServerRPC_SkillCheckFinish(SkillCheckableObject, Result);
+}
+
+void ASacrificePlayerController::ServerRPC_SkillCheckFinish_Implementation(AActor* Obj, const ESkillCheckResult Result)
+{
+	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_SkillCheckFinish_Implementation 1"));
+	if (auto* Camper = Cast<ACamper>(GetPawn()))
+	{
+		NET_LOG(LogTemp, Warning, TEXT("ServerRPC_SkillCheckFinish_Implementation 2"));
+		if (auto* Generator = Cast<AGenerator>(Obj))
+		{
+			NET_LOG(LogTemp, Warning, TEXT("ServerRPC_SkillCheckFinish_Implementation 3"));
+			Generator->SkillCheckFinish(Camper, Result);
+		}
+	}
 }

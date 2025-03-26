@@ -32,7 +32,7 @@ void UInteractionPoint::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	
 	if (bSkillCheckEnable && AttachedActor)
 	{
-		SCREEN_LOG(TEXT("SkillCheckTick"));
+		// SCREEN_LOG(TEXT("SkillCheckTick"));
 		if (SkillCheckCooldownRemaining > 0.0f)
 		{
 			SkillCheckCooldownRemaining -= DeltaTime;

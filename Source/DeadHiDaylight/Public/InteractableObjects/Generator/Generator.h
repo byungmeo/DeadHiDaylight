@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Camper.h"
 #include "GameFramework/Actor.h"
 #include "Generator.generated.h"
 
@@ -40,9 +41,11 @@ private:
 	float ExplosionDuration = 3.0f;
 	float RemainExplosionTime = 0;
 	float ImmediateExplosionValue = 0.1f;
-	
+
+protected:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -57,13 +60,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UInteractionPoint> PointBack = nullptr;
 	
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bPowerOn = false;
 	UPROPERTY(BlueprintAssignable)
 	FOnPowerOn OnPowerOn;
 	UPROPERTY(EditInstanceOnly, Category="Test")
 	int RepairingCount = 0;
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	float PowerGauge = 0.0f;
 	void PowerOn();
 
@@ -72,14 +75,18 @@ public:
 	 */
 	UFUNCTION()
 	void OnSkillCheck(AActor* TargetActor);
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	void SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult Result);
+	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bIsExplosion = false;
 	void SkillCheckSuccess(const bool bGreateSuccess);
-	void SkillCheckFail();
+	void SkillCheckFail(ACamper* Camper);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SkillCheckFail(ACamper* Camper);
 	UPROPERTY(BlueprintAssignable)
 	FOnExplosion OnExplosion;
 	UFUNCTION(CallInEditor, Category="Test")
     void TestExplosion();
+	
 
 	/*
 	 * Break by Slasher

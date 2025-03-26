@@ -77,4 +77,73 @@ void UCamperAnimInstance::AnimNotify_EndUnLock()
 	bUnLock = true;
 	Montage_Stop(0.2f);
 }
+// 기어가는 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_HitCrawl_Implementation()
+{
+	MultiCastRPC_HitCrawl();
+}
 
+void UCamperAnimInstance::MultiCastRPC_HitCrawl_Implementation()
+{
+	HitCrawl();
+}
+// 발전기 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_PlayRepairAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlayRepairAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlayRepairAnimation_Implementation(FName sectionName)
+{
+	PlayRepairAnimation(sectionName);
+}
+// 데드하드퍽 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_PlayDeadHardAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlayDeadHardAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlayDeadHardAnimation_Implementation(FName sectionName)
+{
+	PlayDeadHardAnimation(sectionName);
+}
+// 자가치유퍽 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_PlaySelfHealingAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlaySelfHealingAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlaySelfHealingAnimation_Implementation(FName sectionName)
+{
+	PlaySelfHealingAnimation(sectionName);
+}
+// 문여는 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_PlayUnLockAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlayUnLockAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlayUnLockAnimation_Implementation(FName sectionName)
+{
+	PlayUnLockAnimation(sectionName);
+}
+// 갈고리 거는 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_PlayHookingAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlayHookingAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlayHookingAnimation_Implementation(FName sectionName)
+{
+	PlayHookingAnimation(sectionName);
+}
+// 갈고리에서 구해주는 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_PlayRescueHookingAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PlayRescueHookingAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PlayRescueHookingAnimation_Implementation(FName sectionName)
+{
+	PlayRescueHookingAnimation(sectionName);
+}

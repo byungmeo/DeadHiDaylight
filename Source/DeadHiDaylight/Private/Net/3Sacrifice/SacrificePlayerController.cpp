@@ -7,7 +7,10 @@
 #include "Canival.h"
 #include "Camper.h"
 #include "DHDGameInstance.h"
+#include "Generator.h"
+#include "SacrificeCommonHUD.h"
 #include "SacrificePlayerState.h"
+#include "Blueprint/UserWidget.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -32,7 +35,12 @@ void ASacrificePlayerController::BeginPlay()
 	}
 
 	SacrificePlayerState = Cast<ASacrificePlayerState>(PlayerState);
-	ClientRPC_RequestCallbackWithGuid();
+	
+	if (IsLocalPlayerController())
+	{
+		ClientRPC_RequestCallbackWithGuid();
+		ClientRPC_DisplayHUD();
+	}
 }
 
 void ASacrificePlayerController::PrevPlayer()
@@ -111,6 +119,11 @@ void ASacrificePlayerController::ToggleCamera()
 	}
 }
 
+void ASacrificePlayerController::ClientRPC_DisplayHUD_Implementation()
+{
+	Hud = Cast<USacrificeCommonHUD>(CreateWidget(this, HudFactory));
+}
+
 void ASacrificePlayerController::ClientRPC_RequestCallbackWithGuid_Implementation()
 {
 	const auto* ClientGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
@@ -149,4 +162,34 @@ void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(cons
 
 	NewState.PlayerRole = PlayerRole;
 	SacrificePlayerState->PlayerState = NewState;
+}
+
+void ASacrificePlayerController::ClientRPC_OnSkillCheck_Implementation(AActor* Obj, const float Min, const float Max,
+	const float GreatRange)
+{
+	if (Hud)
+	{
+		SkillCheckableObject = Obj;
+		NET_LOG(LogTemp, Warning, TEXT("ClientRPC_OnSkillCheck_Implementation"));
+		Hud->OnSkillCheck(Min, Max, GreatRange);
+	}
+}
+
+void ASacrificePlayerController::SkillCheckFinish(const ESkillCheckResult Result)
+{
+	ServerRPC_SkillCheckFinish(SkillCheckableObject, Result);
+}
+
+void ASacrificePlayerController::ServerRPC_SkillCheckFinish_Implementation(AActor* Obj, const ESkillCheckResult Result)
+{
+	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_SkillCheckFinish_Implementation 1"));
+	if (auto* Camper = Cast<ACamper>(GetPawn()))
+	{
+		NET_LOG(LogTemp, Warning, TEXT("ServerRPC_SkillCheckFinish_Implementation 2"));
+		if (auto* Generator = Cast<AGenerator>(Obj))
+		{
+			NET_LOG(LogTemp, Warning, TEXT("ServerRPC_SkillCheckFinish_Implementation 3"));
+			Generator->SkillCheckFinish(Camper, Result);
+		}
+	}
 }

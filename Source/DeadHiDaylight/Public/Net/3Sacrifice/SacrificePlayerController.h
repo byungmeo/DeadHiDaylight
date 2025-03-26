@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SacrificePlayerState.h"
 #include "GameFramework/PlayerController.h"
 #include "SacrificePlayerController.generated.h"
 
+enum class ESkillCheckResult : uint8;
 enum class EPlayerRole : uint8;
 /**
  * 
@@ -29,6 +29,10 @@ public:
 	TObjectPtr<class UDHDGameInstance> ServerGameInstance = nullptr;
 	UPROPERTY()
 	TObjectPtr<class ASacrificePlayerState> SacrificePlayerState = nullptr;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class USacrificeCommonHUD> HudFactory;
+	UPROPERTY()
+	TObjectPtr<class USacrificeCommonHUD> Hud = nullptr;
 	
 	bool bIsFreeMode = true;
 	int SpectatorIndex = 0;
@@ -42,4 +46,16 @@ public:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_RequestCreatePawn(FGuid Guid);
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_DisplayHUD();
+
+	UPROPERTY()
+	TObjectPtr<AActor> SkillCheckableObject = nullptr;
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_OnSkillCheck(AActor* Obj, const float Min, const float Max, const float GreatRange);
+	UFUNCTION(BlueprintCallable)
+	void SkillCheckFinish(const ESkillCheckResult Result);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SkillCheckFinish(AActor* Obj, const ESkillCheckResult Result);
 };

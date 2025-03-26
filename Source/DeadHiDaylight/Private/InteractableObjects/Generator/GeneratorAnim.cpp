@@ -4,6 +4,7 @@
 #include "GeneratorAnim.h"
 
 #include "Generator.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 
 void UGeneratorAnim::NativeBeginPlay()
 {

@@ -6,7 +6,9 @@
 #include "Camper.h"
 #include "Canival.h"
 #include "InteractionPoint.h"
+#include "SacrificePlayerController.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "Net/UnrealNetwork.h"
 
 
 // Sets default values
@@ -14,6 +16,10 @@ AGenerator::AGenerator()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+	bAlwaysRelevant = true;
+	bNetLoadOnClient = true;
+	
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	SetRootComponent(Mesh);
 	static const ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KBD/Generator/Generator.Generator'"));
@@ -72,6 +78,11 @@ void AGenerator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (false == HasAuthority())
+	{
+		return;
+	}
+	
 	if (bPowerOn)
 	{
 		return;
@@ -109,6 +120,16 @@ void AGenerator::Tick(float DeltaTime)
 	}
 }
 
+void AGenerator::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGenerator, bPowerOn);
+	DOREPLIFETIME(AGenerator, PowerGauge);
+	DOREPLIFETIME(AGenerator, bIsExplosion);
+}
+
+
 void AGenerator::PowerOn()
 {
 	bPowerOn = true;
@@ -123,28 +144,67 @@ void AGenerator::OnSkillCheck(AActor* TargetActor)
 	if (ACamper* Camper = Cast<ACamper>(TargetActor))
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AGenerator::OnSkillCheck"));
+		auto* PlayerController = Cast<ASacrificePlayerController>(Camper->GetController());
+		if (PlayerController)
+		{
+			const float Min = FMath::RandRange(0.38f, 0.8f);
+			const float Max = Min + 0.15f;
+			const float GreatRange = 0.05f;
+			PlayerController->ClientRPC_OnSkillCheck(this, Min, Max, GreatRange);
+		}
+		// Camper->StartSkillCheck();
 	}
+}
+
+void AGenerator::SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult Result)
+{
+	switch (Result)
+    	{
+    	case ESkillCheckResult::ESCR_Fail:
+    		SkillCheckFail(Camper);
+    		break;
+    	case ESkillCheckResult::ESCR_Success:
+    		SkillCheckSuccess(false);
+    		break;
+    	case ESkillCheckResult::ESCR_GreatSuccess:
+    		SkillCheckSuccess(true);
+    		break;
+    	}
 }
 
 void AGenerator::SkillCheckSuccess(const bool bGreateSuccess)
 {
+	NET_LOG(LogTemp, Warning, TEXT("AGenerator::SkillCheckSuccess %hs"), (bGreateSuccess ? "GREAT!!!" : "SOSO..."));
+	
 	if (true == bGreateSuccess)
 	{
 		PowerGauge += GreateSuccessBonus;
 	}
 }
 
-void AGenerator::SkillCheckFail()
+void AGenerator::SkillCheckFail(ACamper* Camper)
 {
+	NET_LOG(LogTemp, Warning, TEXT("AGenerator::SkillCheckFail"));
+	
 	bIsExplosion = true;
-	PowerGauge -= FMath::Clamp(ImmediateExplosionValue, 0, 1);
+	PowerGauge = FMath::Clamp(PowerGauge - ImmediateExplosionValue, 0, 1);
 	RemainExplosionTime = ExplosionDuration;
+
+	MulticastRPC_SkillCheckFail(Camper);
+}
+
+void AGenerator::MulticastRPC_SkillCheckFail_Implementation(ACamper* Camper)
+{
 	OnExplosion.Broadcast();
+	if (Camper)
+    {
+    	// Camper->GeneratorSkillCheckFail();
+    }
 }
 
 void AGenerator::TestExplosion()
 {
-	SkillCheckFail();
+	SkillCheckFail(nullptr);
 }
 
 void AGenerator::Break()
@@ -183,7 +243,7 @@ void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActo
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Survivor"));
 		Point->AttachActor(OtherActor, 0, true);
 		RepairingCount++;
-		Camper->StartRepair();
+		Camper->MultiCastRPC_StartRepair();
 	}
 	else if (ACanival* Slasher = Cast<ACanival>(OtherActor))
 	{
@@ -205,7 +265,7 @@ void AGenerator::OnStopInteraction(class UInteractionPoint* Point, AActor* Other
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnStopInteraction Survivor"));
 		Point->DetachActor();
 		RepairingCount--;
-		Camper->EndRepair();
+		Camper->MultiCastRPC_EndRepair();
 	}
 	else
 	{

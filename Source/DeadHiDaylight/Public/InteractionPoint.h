@@ -6,13 +6,21 @@
 #include "Components/BoxComponent.h"
 #include "InteractionPoint.generated.h"
 
-UENUM()
+UENUM(BlueprintType)
 enum class EInteractionMode : uint8
 {
 	EIM_None,
 	EIM_Both,
 	EIM_CamperOnly,
 	EIM_SlasherOnly
+};
+
+UENUM(BlueprintType)
+enum class ESkillCheckResult : uint8
+{
+	ESCR_Fail,
+	ESCR_Success,
+	ESCR_GreatSuccess
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteraction, UInteractionPoint*, Point, AActor*, OtherActor);
@@ -65,7 +73,7 @@ public:
 	// 이 InteractionPoint에 Attach된 Actor에 스킬체크가 발동할 수 있는지 여부
 	bool bSkillCheckEnable = false;
 	// 1초가 지났을 때 스킬 체크가 발동 될 확률
-	float SkillCheckChancePerSecond = 0.08f;
+	float SkillCheckChancePerSecond = 0.2f;
 	// 스킬체크 쿨타임
 	float SkillCheckCooldown = 2.0f;
 	float SkillCheckCooldownRemaining = 0.0f;

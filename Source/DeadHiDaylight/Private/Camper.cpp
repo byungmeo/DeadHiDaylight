@@ -10,6 +10,7 @@
 #include "InteractionPoint.h"
 #include "Camera/CameraComponent.h"
 #include "CamperComps/PerksComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -20,7 +21,27 @@ ACamper::ACamper()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+	bAlwaysRelevant = true;
+	bNetLoadOnClient = true;
+	
+	GetCapsuleComponent()->SetCapsuleHalfHeight(212.173325f);
+	GetCapsuleComponent()->SetCapsuleRadius(70);
 
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -210), FRotator(0, -90, 0));
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/JS/Assets/Camper/Character/Claudette/Claudette.Claudette'"));
+
+	if (tempMesh.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(tempMesh.Object);
+	}
+
+	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnimInstance(TEXT("/Script/Engine.AnimBlueprint'/Game/JS/Blueprints/Animation/ABP_Player.ABP_Player_C'"));
+	if (tempAnimInstance.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(tempAnimInstance.Class);
+	}
+	
 	glassesComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("glassesComp"));
 	glassesComp->SetupAttachment(GetMesh(), TEXT("Glasses"));
 	glassesComp->SetRelativeLocation(FVector(2.2f, -11, 0));
@@ -57,6 +78,8 @@ ACamper::ACamper()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("PerksComp"));
+
+	bUseControllerRotationYaw = false;
 }
 
 // Called when the game starts or when spawned
@@ -89,6 +112,28 @@ void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	if (btest)
+	{
+		// 갈고리 자가 탈출 테스트
+		// testCheckTime += DeltaTime;
+		// UE_LOG(LogTemp, Warning, TEXT("%f"), testCheckTime);
+		// if (testCheckTime > 3.0f)
+		// {
+		// 	Hooking(TEXT("HookFree"));
+		// 	btest = false;
+		// 	testCheckTime = 0.0f;
+		// }
+		// 갈고리 구출 테스트
+		testRescueTime += DeltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("%f"), testRescueTime);
+		if (testRescueTime > 1.12f)
+		{
+			RescueHooking(TEXT("HookRescueEnd"));
+			btest = false;
+			testRescueTime = 0.0f;
+		}
+	}
+	
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		GetDamage();
@@ -106,7 +151,33 @@ void ACamper::Tick(float DeltaTime)
 		moveComp->MaxWalkSpeed = moveSpeed;
 		UE_LOG(LogTemp, Warning, TEXT("%d"), Anim->bInjure);
 	}
-	
+	// Hook 걸리는 거 테스트 용
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Four))
+	{
+		Hooking(TEXT("HookIn"));
+	}
+	// Hook 자가 탈출 테스트 용
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Five))
+	{
+		Hooking(TEXT("HookStruggle"));
+		btest = true;
+	}
+	// Hook 구해지는 거 테스트
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Six))
+	{
+		Hooking(TEXT("HookRescuedEnd"));
+	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Seven))
+	{
+		
+		RescueHooking(TEXT("HookRescueIn"));
+		btest = true;
+	}
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Eight))
+	{
+		FailRepair(TEXT("GenFailFT"));
+	}
+	PrintNetLog();
 }
 
 // Called to bind functionality to input
@@ -123,9 +194,12 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &ACamper::End_Crouch);
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
 		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::CheckInteractPoint);
-		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::Test);
+		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::StopInteract);
 
-		perksComp->SetupInputBinding(input);
+		if (perksComp)
+		{
+			perksComp->SetupInputBinding(input);	
+		}
 	}
 }
 
@@ -157,6 +231,16 @@ void ACamper::Look(const struct FInputActionValue& value)
 
 void ACamper::Run(const struct FInputActionValue& value)
 {
+	ServerRPC_Run();
+}
+
+
+void ACamper::ServerRPC_Run_Implementation()
+{
+	MultiCastRPC_Run();
+}
+void ACamper::MultiCastRPC_Run_Implementation()
+{
 	if (Anim->bSelfHealing || Anim->bCrawl) return; // 자가 치유 중이라면 리턴
 	
 	if (Anim)
@@ -169,9 +253,20 @@ void ACamper::Run(const struct FInputActionValue& value)
 	// UE_LOG(LogTemp, Warning, TEXT("ACamper::Run %f"), movement->MaxWalkSpeed);
 }
 
+// Crouch
 void ACamper::Start_Crouch(const struct FInputActionValue& value)
 {
+	ServerRPC_Start_Crouch();
+}
+void ACamper::ServerRPC_Start_Crouch_Implementation()
+{
+	MultiCastRPC_Start_Crouch();
+}
+
+void ACamper::MultiCastRPC_Start_Crouch_Implementation()
+{
 	if (Anim->bSelfHealing || Anim->bCrawl) return; // 자가 치유 중이라면 리턴
+	
 	if (Anim) Anim->IsCrouch(true);
 	
 	if (Anim)
@@ -181,8 +276,17 @@ void ACamper::Start_Crouch(const struct FInputActionValue& value)
 	}
 	// UE_LOG(LogTemp, Warning, TEXT("ACamper::StartCrouch %f"), moveComp->MaxWalkSpeed);
 }
-
 void ACamper::End_Crouch(const struct FInputActionValue& value)
+{
+	ServerRPC_End_Crouch();
+}
+
+void ACamper::ServerRPC_End_Crouch_Implementation()
+{
+	MultiCastRPC_End_Crouch();
+}
+
+void ACamper::MultiCastRPC_End_Crouch_Implementation()
 {
 	if (Anim) Anim->IsCrouch(false);
 	
@@ -193,7 +297,14 @@ void ACamper::End_Crouch(const struct FInputActionValue& value)
 	}
 	// UE_LOG(LogTemp, Warning, TEXT("ACamper::EndCrouch %f"), moveComp->MaxWalkSpeed);
 }
+// Crouch End
+
 void ACamper::CheckInteractPoint()
+{
+	ServerRPC_CheckInteractPoint();
+}
+
+void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 {
 	if (Anim->bSelfHealing || Anim->bCrawl) return; // 자가 치유 중이라면 리턴
 	
@@ -222,11 +333,13 @@ void ACamper::CheckInteractPoint()
 			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
 			{
 				if (Anim == nullptr || Anim->bStartRepair) return;
-				
 				UE_LOG(LogTemp, Warning, TEXT("%s, %d"), *HitResult.GetComponent()->GetName(), Anim->bStartRepair);
-				interact->Interaction(this);
-				SaveInteract = interact;
-				break;
+				if(interact->bCanInteract)
+				{
+					interact->Interaction(this);
+					SaveInteract = interact;
+					break;
+				}
 			}
 		}
 	}
@@ -236,7 +349,7 @@ void ACamper::CheckInteractPoint()
 	}
 }
 
-void ACamper::StartRepair()
+void ACamper::MultiCastRPC_StartRepair_Implementation()
 {
 	if (Anim == nullptr || Anim->bStartRepair || Anim->bSelfHealing || Anim->bCrawl)
 	{
@@ -244,11 +357,14 @@ void ACamper::StartRepair()
 		return;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
+
+	GetCharacterMovement()->StopMovementImmediately();
+	
 	// 시작 애니메이션 몽타주 실행
-	Anim->PlayRepairAnimation(TEXT("GenIn"));
+	Anim->ServerRPC_PlayRepairAnimation(TEXT("GenIn"));
 }
 
-void ACamper::EndRepair()
+void ACamper::MultiCastRPC_EndRepair_Implementation()
 {
 	if (Anim == nullptr || Anim->bEndRepair == false)
 	{
@@ -259,11 +375,34 @@ void ACamper::EndRepair()
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
 	
 	// 다시 애니메이션 idle로 바꾸고 wsad 움직일 수 있게 변경
-	Anim->PlayRepairAnimation(TEXT("GenOut"));
+	Anim->ServerRPC_PlayRepairAnimation(TEXT("GenOut"));
 }
 
+void ACamper::FailRepair(FName sectionName)
+{
+	ServerRPC_FailRepair(sectionName);
+}
+void ACamper::ServerRPC_FailRepair_Implementation(FName sectionName)
+{
+	MultiCastRPC_FailRepair(sectionName);
+}
 
-void ACamper::Test()
+void ACamper::MultiCastRPC_FailRepair_Implementation(FName sectionName)
+{
+	if (Anim == nullptr) return;
+
+	// 발전기 가동은 된 상태로 게이지만 줄어들고 다시 고쳐야 한다
+	Anim->ServerRPC_PlayRepairAnimation(sectionName);
+}
+
+// Repair End
+
+void ACamper::StopInteract()
+{
+	ServerRPC_StopInteract();
+}
+
+void ACamper::ServerRPC_StopInteract_Implementation()
 {
 	if (SaveInteract)
 	{
@@ -273,7 +412,16 @@ void ACamper::Test()
 
 void ACamper::GetDamage()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f "), curHP);
+	ServerRPC_GetDamage();
+}
+
+void ACamper::ServerRPC_GetDamage_Implementation()
+{
+	MultiCastRPC_GetDamage();
+}
+
+void ACamper::MultiCastRPC_GetDamage_Implementation()
+{
 	if (curHP > 1)
 	{
 		// HP를 줄이고
@@ -285,7 +433,7 @@ void ACamper::GetDamage()
 		beforeSpeed = moveComp->MaxWalkSpeed;
 		// 다쳤을 때 2초동안 스피드가 2배 증가
 		moveComp->MaxWalkSpeed = moveComp->MaxWalkSpeed * 2;
-		
+	
 		// 2초 후 다시 이전 속도로 복귀
 		FTimerHandle hitTimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, this, &ACamper::HitSpeedTimer, 2.0f, false);
@@ -298,27 +446,109 @@ void ACamper::GetDamage()
 
 void ACamper::HitSpeedTimer()
 {
+	ServerRPC_HitSpeedTimer();
+}
+void ACamper::ServerRPC_HitSpeedTimer_Implementation()
+{
+	MultiCastRPC_HitSpeedTimer();
+}
+void ACamper::MultiCastRPC_HitSpeedTimer_Implementation()
+{
 	if (Anim->bCrawl) return;
 	moveComp->MaxWalkSpeed = beforeSpeed;
 }
 
 void ACamper::Crawling()
 {
-	Anim->HitCrawl();
+	ServerRPC_Crawling();
+}
+void ACamper::ServerRPC_Crawling_Implementation()
+{
+	MultiCastRPC_Crawling();
+}
+
+void ACamper::MultiCastRPC_Crawling_Implementation()
+{
+	Anim->ServerRPC_HitCrawl();
 	Anim->bCrawl = true;
 	moveComp->MaxWalkSpeed = crawlSpeed;
 }
 
 void ACamper::StartUnLock()
 {
+	ServerRPC_StartUnLock();
+}
+
+void ACamper::ServerRPC_StartUnLock_Implementation()
+{
+	MultiCastRPC_StartUnLock();
+}
+
+void ACamper::MultiCastRPC_StartUnLock_Implementation()
+{
 	if (Anim == nullptr || Anim->bUnLocking) return;
 
-	Anim->PlayUnLockAnimation(TEXT("StartUnLock"));
+	Anim->ServerRPC_PlayUnLockAnimation(TEXT("StartUnLock"));
 }
 
 void ACamper::EndUnLock()
 {
+	ServerRPC_EndUnLock();
+}
+void ACamper::ServerRPC_EndUnLock_Implementation()
+{
+	MultiCastRPC_EndUnLock();
+}
+
+void ACamper::MultiCastRPC_EndUnLock_Implementation()
+{
 	if (Anim == nullptr) return;
 	
-	Anim->PlayUnLockAnimation(TEXT("OpenDoor"));
+	Anim->ServerRPC_PlayUnLockAnimation(TEXT("OpenDoor"));
 }
+
+void ACamper::Hooking(FName sectionName)
+{
+	ServerRPC_Hooking(sectionName);
+}
+
+void ACamper::ServerRPC_Hooking_Implementation(FName sectionName)
+{
+	NetMultiCastRPC_Hooking(sectionName);
+}
+
+void ACamper::NetMultiCastRPC_Hooking_Implementation(FName sectionName)
+{
+	if (Anim == nullptr) return;
+	Anim->ServerRPC_PlayHookingAnimation(sectionName);
+}
+
+void ACamper::RescueHooking(FName sectionName)
+{
+	ServerRPC_RescueHooking(sectionName);
+}
+
+void ACamper::ServerRPC_RescueHooking_Implementation(FName sectionName)
+{
+	NetMultiCastRPC_RescueHooking(sectionName);
+}
+
+void ACamper::NetMultiCastRPC_RescueHooking_Implementation(FName sectionName)
+{
+	if (Anim == nullptr) return;
+
+	Anim->ServerRPC_PlayRescueHookingAnimation(sectionName);
+}
+
+void ACamper::PrintNetLog()
+{
+	FString conStr = GetNetConnection() != nullptr ? TEXT("Valid Connection") : TEXT("Invalid Connection");
+	FString ownerStr = GetOwner() != nullptr ? GetOwner()->GetActorNameOrLabel() : TEXT("No Owner");
+	FString mineStr = IsLocallyControlled() ? TEXT("내 것") : TEXT("남의 것"); // 컨트롤러가 있냐 없냐, 내거냐 아니냐를 판단하는 함수
+
+	FString logStr = FString::Printf(TEXT("Connection : %s \r\nOwner : %s\r\nMine : %s"), *conStr, *ownerStr, *mineStr);
+	
+	DrawDebugString(GetWorld(), GetActorLocation(), logStr, nullptr, FColor::Red, 0, true);
+}
+
+

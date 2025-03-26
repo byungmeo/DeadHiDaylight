@@ -4,7 +4,7 @@
 #include "CampfireGameState.h"
 
 #include "CampfirePlayerController.h"
-#include "SacrificePlayerController.h"
+#include "DHDGameInstance.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Net/UnrealNetwork.h"
 

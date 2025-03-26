@@ -24,14 +24,15 @@ void UInteractionPoint::TickComponent(float DeltaTime, enum ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (false == GetOwner()->HasAuthority())
+	// TODO:
+	/*if (false == GetOwner()->HasAuthority())
 	{
 		return;
-	}
+	}*/
 	
 	if (bSkillCheckEnable && AttachedActor)
 	{
-		SCREEN_LOG(TEXT("ASD"));
+		// SCREEN_LOG(TEXT("SkillCheckTick"));
 		if (SkillCheckCooldownRemaining > 0.0f)
 		{
 			SkillCheckCooldownRemaining -= DeltaTime;
@@ -40,7 +41,6 @@ void UInteractionPoint::TickComponent(float DeltaTime, enum ELevelTick TickType,
 		{
 			if (FMath::RandRange(0.0f, 1.0f) <= SkillCheckChancePerSecond * DeltaTime)
 			{
-				NET_LOG(LogTemp, Warning, TEXT("Skill Check!!!"));
 				// 스킬체크는 생존자한테만 일어나지만 InteractionPoint 입장에서는 고려하지 않고, OnSkillCheck를 바인딩 한 쪽에서 관리
 				OnSkillCheck.Broadcast(AttachedActor);
 				// 스킬체크 중에는 중복으로 발생하지 않도록 함

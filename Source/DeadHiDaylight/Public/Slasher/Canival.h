@@ -21,7 +21,13 @@ protected:
 	void Move(const struct FInputActionValue& inputValue);
 	void Look(const FInputActionValue& InputActionValue);
 	UFUNCTION(CallInEditor)
-	void LeftClick();
+	void LeftClick_Start();
+	UFUNCTION(CallInEditor)
+	void LeftClick_Complet();
+	UFUNCTION(CallInEditor)
+	void RightClick_Start();
+	UFUNCTION(CallInEditor)
+	void RightClick_Complet();
 	
 public:	
 	// Called every frame
@@ -36,6 +42,9 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	class USkeletalMeshComponent* Hammer = nullptr;
 
+	UPROPERTY(EditDefaultsOnly )
+	class USkeletalMeshComponent* ChainSaw = nullptr;
+
 	UPROPERTY(EditDefaultsOnly, Category=Input)
 	class UInputMappingContext* imc_carnival;
 	
@@ -48,21 +57,39 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=Input)
 	const UInputAction* ia_leftClick;
 
+	UPROPERTY(EditDefaultsOnly, Category=Input)
+	const UInputAction* ia_rightClick;
+	
 	UPROPERTY()
 	class UCanivalAnim* AnimInstance = nullptr;
 	TObjectPtr<UInputAction> ia_Kick;
 	
 
-public:
 	UFUNCTION()
 	void OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void FindPoint();
 	void Kick();
+
 	
+	//공격 타이머
+	FTimerHandle RigthAttackTimerHandle;
+	UPROPERTY(EditDefaultsOnly, Category=Attack)
+	float RigthAttackDelay = 3.0f;
+	
+	bool bIsAttacking; //공격 실행되었는지
+	bool bIsCharging; //공격 실행되었는지
+	
+	//공격실행
+	UFUNCTION()
+	void RightAttack();
 	
 
 	UPROPERTY(EditAnywhere)
 	class UCanivalAnim* Anim;
+
+	UFUNCTION()
+	void OnChainSawHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
+					   UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 };
 

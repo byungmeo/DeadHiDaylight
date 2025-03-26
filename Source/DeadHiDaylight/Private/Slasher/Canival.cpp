@@ -51,6 +51,12 @@ ACanival::ACanival()
 		ia_leftClick = TempIALeftClick.Object;
 	}
 	
+	ConstructorHelpers::FObjectFinder<UInputAction> TempIARightClick(TEXT("/Script/EnhancedInput.InputAction'/Game/KHA/Carnival/Inputs/IA_CanivalRightClick.IA_CanivalRightClick'"));
+	if (TempIARightClick.Succeeded())
+	{
+		ia_rightClick = TempIARightClick.Object;
+	}
+	
 	ConstructorHelpers::FObjectFinder<UInputAction> TempIAKick(TEXT("/Script/EnhancedInput.InputAction'/Game/KHA/Carnival/Inputs/IA_CanivalKick.IA_CanivalKick'"));
 	if (TempIAKick.Succeeded())
 	{
@@ -78,6 +84,23 @@ ACanival::ACanival()
 	Hammer->SetRelativeRotation(FRotator(7.372038, 110.272844, 92.284188));
 	Hammer->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.3f));
 	Hammer->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+
+
+	ChainSaw = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChainSaw"));
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> ChainSawObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Weapon/ChainSaw/ChainSaw.ChainSaw'"));
+	if (ChainSawObj.Succeeded())
+	{
+		ChainSaw->SetSkeletalMesh(ChainSawObj.Object);
+	}
+	ChainSaw->SetupAttachment(GetMesh(), TEXT("joint_Hand_LT_01_IK"));
+	ChainSaw->SetRelativeLocation(FVector(-5.087162,-38.401025,-16.493918));
+	ChainSaw->SetRelativeRotation(FRotator(-9.846553,88.246217,-169.848918));
+	ChainSaw->SetRelativeScale3D(FVector(0.500000,0.500000,0.500000));
+	ChainSaw->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+	bIsCharging = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -97,6 +120,12 @@ void ACanival::BeginPlay()
 
 	AnimInstance = Cast<UCanivalAnim>(GetMesh()->GetAnimInstance());
 	Hammer->OnComponentBeginOverlap.AddDynamic(this, &ACanival::OnHammerBeginOverlap);
+	
+	
+	if (ChainSaw)
+	{
+		ChainSaw->OnComponentHit.AddDynamic(this, &ACanival::OnChainSawHit);
+	}
 }
 
 
@@ -122,7 +151,10 @@ void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputCompo
 	{
 		pi->BindAction(ia_move, ETriggerEvent::Triggered,this, &ACanival::Move);
 		pi->BindAction(ia_look, ETriggerEvent::Triggered,this, &ACanival::Look);
-		pi->BindAction(ia_leftClick, ETriggerEvent::Started,this, &ACanival::LeftClick);
+		pi->BindAction(ia_leftClick, ETriggerEvent::Started,this, &ACanival::LeftClick_Start);
+		pi->BindAction(ia_leftClick, ETriggerEvent::Completed ,this, &ACanival::LeftClick_Complet);
+		pi->BindAction(ia_rightClick, ETriggerEvent::Started,this, &ACanival::RightClick_Start);
+		pi->BindAction(ia_rightClick, ETriggerEvent::Completed ,this, &ACanival::RightClick_Complet);
 		pi->BindAction(ia_Kick, ETriggerEvent::Started,this, &ACanival::FindPoint);
 	}
 }
@@ -144,17 +176,76 @@ void ACanival::Look(const FInputActionValue& InputActionValue)
 	AddControllerPitchInput(Value.Y);
 }
 
-void ACanival::LeftClick()
+void ACanival::LeftClick_Start()
 {
-	AnimInstance->PlayLeftClickAnimation();
+	AnimInstance->PlayHammrInAnimation();
+	Hammer->SetGenerateOverlapEvents(false);
+}
+
+void ACanival::LeftClick_Complet()
+{
+	
+	AnimInstance->PlayHammerSwingAnimation();
 	Hammer->SetGenerateOverlapEvents(true);
 }
+
+void ACanival::RightClick_Start()
+{
+	bIsCharging = true;
+	bIsAttacking=false;
+	
+	AnimInstance->PlayChainSawAttackAnimation();
+	GetWorld()->GetTimerManager().SetTimer(RigthAttackTimerHandle,this, &ACanival::RightAttack, RigthAttackDelay,false);
+}
+
+void ACanival::RightAttack()
+{
+	bIsCharging = false;
+	//타이머가 만료되면 공격
+	bIsAttacking=true;
+	AnimInstance->PlayChainSawRunAnimation();
+}
+
+void ACanival::OnChainSawHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (!OtherActor || OtherActor == this)
+	{
+		return;
+	}
+
+	if (OtherActor->ActorHasTag("Generator"))
+	{
+		// 충돌로 인한 차징 취소
+		GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);
+		bIsCharging = false;
+		bIsAttacking = false;
+		
+		AnimInstance->PlayChainSawCollisionReaction();
+	}
+
+}
+
+
+void ACanival::RightClick_Complet()
+{
+	//버튼 떼었을 때 타이머가 아직 실행중이면
+	if (!bIsAttacking)
+	{
+		
+		GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);//타이머 취소
+		//AnimInstance->PlayChainSawRunAnimation(); //아이들상태로 (코드 변경해야함)
+		
+	}
+}
+
 
 void ACanival::Kick()
 {
 	AnimInstance->PlayKickAnimation();
 	UE_LOG(LogTemp, Warning, TEXT("Kick"));
 }
+
 
 
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -177,6 +268,8 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	// 벽이냐
 	// 그 외냐
 }
+
+
 
 void ACanival::FindPoint()
 {

@@ -4,7 +4,9 @@
 #include "SacrificeGameState.h"
 
 #include "Generator.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 void ASacrificeGameState::BeginPlay()
 {
@@ -21,10 +23,20 @@ void ASacrificeGameState::BeginPlay()
 	}
 }
 
+void ASacrificeGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASacrificeGameState, ReqGeneratorCount);
+}
+
 void ASacrificeGameState::OnPowerOn()
 {
-	ReqGeneratorCount--;
-	UE_LOG(LogTemp, Display, TEXT("ASacrificeGameState::OnPowerOn : ReqGeneratorCount=%d"), ReqGeneratorCount);
+	ReqGeneratorCount = FMath::Clamp(ReqGeneratorCount - 1, 0, 5);
+	NET_LOG(LogTemp, Warning, TEXT("ASacrificeGameState::OnPowerOn : ReqGeneratorCount=%d"), ReqGeneratorCount);
+}
 
-	// TODO: 탈출구 활성화 UI 사운드 재생
+void ASacrificeGameState::OnRep_ReqGeneratorCount() const
+{
+	OnRepGeneratorCount.Broadcast(ReqGeneratorCount);
 }

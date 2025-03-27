@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerState.h"
 #include "Animation/AnimInstance.h"
 #include "CamperAnimInstance.generated.h"
 
@@ -24,6 +25,9 @@ public:
 	// Camper 저장 변수
 	UPROPERTY(EditAnywhere)
 	class ACamper* camper;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
+	ECamperHealth animHealthState = ECamperHealth::ECH_Healthy;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	float moveSpeed; // 현재 속도

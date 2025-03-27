@@ -27,8 +27,10 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
-	ECamperHealth curState = ECamperHealth::ECH_Healthy;
+	ECamperHealth curHealthState = ECamperHealth::ECH_Healthy;
 
+	UPROPERTY()
+	class UCamperAnimInstance* anim;
 	void HealthyState();
 	void InjureyState();
 	void CrawlState();

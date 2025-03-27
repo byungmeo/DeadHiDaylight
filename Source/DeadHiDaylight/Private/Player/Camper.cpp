@@ -10,6 +10,7 @@
 #include "InputMappingContext.h"
 #include "InteractionPoint.h"
 #include "Camera/CameraComponent.h"
+#include "CamperComps/CamperFSM.h"
 #include "CamperComps/PerksComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -164,8 +165,9 @@ ACamper::ACamper()
 	// CharacterMovement 컴포넌트
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("PerksComp"));
-
+	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("PerksComp")); // 퍽 컴포넌트
+	camperFSMComp = CreateDefaultSubobject<UCamperFSM>(TEXT("camperFSMComp")); // FSM 컴포넌트
+	
 	bUseControllerRotationYaw = false;
 }
 
@@ -206,6 +208,7 @@ void ACamper::Tick(float DeltaTime)
 		// UE_LOG(LogTemp, Warning, TEXT("%f"), testCheckTime);
 		// if (testCheckTime > 3.0f)
 		// {
+		// camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
 		// 	Hooking(TEXT("HookFree"));
 		// 	btest = false;
 		// 	testCheckTime = 0.0f;
@@ -215,6 +218,7 @@ void ACamper::Tick(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("%f"), testRescueTime);
 		if (testRescueTime > 1.12f)
 		{
+			camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
 			RescueHooking(TEXT("HookRescueEnd"));
 			btest = false;
 			testRescueTime = 0.0f;
@@ -227,17 +231,15 @@ void ACamper::Tick(float DeltaTime)
 	}
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
 	{
-		Anim->bInjure = false;
+		camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 	}
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Three))
 	{
 		// 쓰러진 상태에서 돌아갈 때 Crawlhealing이 끝나면
 		curHP = maxHP;
-		Anim->bCrawl = false;
-		Anim->bInjure = false;
+		camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 		moveComp->MaxWalkSpeed = moveSpeed;
 		StopInjureSound();
-		UE_LOG(LogTemp, Warning, TEXT("%d"), Anim->bInjure);
 	}
 	// Hook 걸리는 거 테스트 용
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Four))
@@ -253,11 +255,11 @@ void ACamper::Tick(float DeltaTime)
 	// Hook 구해지는 거 테스트
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Six))
 	{
+		camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
 		Hooking(TEXT("HookRescuedEnd"));
 	}
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Seven))
 	{
-		
 		RescueHooking(TEXT("HookRescueIn"));
 		btest = true;
 	}
@@ -267,6 +269,8 @@ void ACamper::Tick(float DeltaTime)
 	}
 	PrintNetLog();
 
+	if (curHP == maxHP) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
+	
 	if (!bPlayInjureSound)
 	{
 		StopInjureSound();
@@ -528,8 +532,11 @@ void ACamper::MultiCastRPC_GetDamage_Implementation()
 		// 다쳤을 때 2초동안 스피드가 2배 증가
 		moveComp->MaxWalkSpeed = moveComp->MaxWalkSpeed * 2;
 
+		camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
+		
 		// 맞을 때 비명 지르는 부분
 		if (injuredScreamCue) PlayScreamSound();
+
 		// 2초 후 다시 이전 속도로 복귀
 		FTimerHandle hitTimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, this, &ACamper::HitSpeedTimer, 2.0f, false);
@@ -572,6 +579,7 @@ void ACamper::ServerRPC_Crawling_Implementation()
 
 void ACamper::MultiCastRPC_Crawling_Implementation()
 {
+	camperFSMComp->curHealthState = ECamperHealth::ECH_Crawl;
 	Anim->ServerRPC_HitCrawl();
 	Anim->bCrawl = true;
 	moveComp->MaxWalkSpeed = crawlSpeed;
@@ -623,6 +631,7 @@ void ACamper::ServerRPC_Hooking_Implementation(FName sectionName)
 void ACamper::NetMultiCastRPC_Hooking_Implementation(FName sectionName)
 {
 	if (Anim == nullptr) return;
+	camperFSMComp->curHealthState = ECamperHealth::ECH_Hook;
 	Anim->ServerRPC_PlayHookingAnimation(sectionName);
 }
 
@@ -639,7 +648,7 @@ void ACamper::ServerRPC_RescueHooking_Implementation(FName sectionName)
 void ACamper::NetMultiCastRPC_RescueHooking_Implementation(FName sectionName)
 {
 	if (Anim == nullptr) return;
-
+	camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 	Anim->ServerRPC_PlayRescueHookingAnimation(sectionName);
 }
 

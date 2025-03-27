@@ -162,7 +162,9 @@ public:
 public:
 	UPROPERTY(VisibleAnywhere, Category = PerksComponent)
 	class UPerksComponent* perksComp;
-
+	
+	UPROPERTY(VisibleAnywhere, Category = PerksComponent)
+	class UCamperFSM* camperFSMComp;
 	// 대미지 받았을 때 처리하는 함수 RPC
 	void GetDamage();
 	UFUNCTION(Server, Reliable)

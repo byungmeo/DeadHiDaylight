@@ -19,7 +19,10 @@ void ASacrificeGameState::BeginPlay()
 	{
 		AGenerator* Generator = Cast<AGenerator>(Actor);
 		Generators.Add(Generator);
-		Generator->OnPowerOn.AddDynamic(this, &ASacrificeGameState::OnPowerOn);
+		if (HasAuthority())
+		{
+			Generator->OnPowerOn.AddDynamic(this, &ASacrificeGameState::OnPowerOn);
+		}
 	}
 }
 
@@ -32,11 +35,16 @@ void ASacrificeGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 void ASacrificeGameState::OnPowerOn()
 {
+	if (false == HasAuthority())
+	{
+		return;
+	}
 	ReqGeneratorCount = FMath::Clamp(ReqGeneratorCount - 1, 0, 5);
 	NET_LOG(LogTemp, Warning, TEXT("ASacrificeGameState::OnPowerOn : ReqGeneratorCount=%d"), ReqGeneratorCount);
 }
 
-void ASacrificeGameState::OnRep_ReqGeneratorCount() const
+void ASacrificeGameState::OnRep_ReqGeneratorCount()
 {
+	NET_LOG(LogTemp, Warning, TEXT("ASacrificeGameState::OnRep_ReqGeneratorCount = %d"), ReqGeneratorCount);
 	OnRepGeneratorCount.Broadcast(ReqGeneratorCount);
 }

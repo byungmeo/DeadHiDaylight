@@ -136,8 +136,13 @@ void AGenerator::PowerOn()
 	bPowerOn = true;
 	DetachAll();
 	DestroyPointsAll();
-	OnPowerOn.Broadcast();
+	MulticastRPC_PowerOn();
 	SetActorTickEnabled(false);
+}
+
+void AGenerator::MulticastRPC_PowerOn_Implementation()
+{
+	OnPowerOn.Broadcast();
 }
 
 void AGenerator::OnSkillCheck(AActor* TargetActor)
@@ -183,11 +188,11 @@ void AGenerator::SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult
     	}
 }
 
-void AGenerator::SkillCheckSuccess(const bool bGreateSuccess)
+void AGenerator::SkillCheckSuccess(const bool bGreatSuccess)
 {
-	NET_LOG(LogTemp, Warning, TEXT("AGenerator::SkillCheckSuccess %hs"), (bGreateSuccess ? "GREAT!!!" : "SOSO..."));
+	NET_LOG(LogTemp, Warning, TEXT("AGenerator::SkillCheckSuccess %hs"), (bGreatSuccess ? "GREAT!!!" : "SOSO..."));
 	
-	if (true == bGreateSuccess)
+	if (true == bGreatSuccess)
 	{
 		PowerGauge += GreateSuccessBonus;
 	}

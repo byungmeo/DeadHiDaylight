@@ -25,12 +25,12 @@ public:
 	TArray<class AGenerator*> Generators;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_ReqGeneratorCount)
-	int ReqGeneratorCount = 5;
+	int ReqGeneratorCount = 2;
 
 	UFUNCTION()
 	void OnPowerOn();
 	
 	UFUNCTION()
-    void OnRep_ReqGeneratorCount() const;
+    void OnRep_ReqGeneratorCount();
 	FOnRepGeneratorCount OnRepGeneratorCount;
 };

@@ -28,6 +28,8 @@ public:
 	UPROPERTY()
 	TObjectPtr<class UDHDGameInstance> ServerGameInstance = nullptr;
 	UPROPERTY()
+	TObjectPtr<class UDHDGameInstance> LocalGameInstance = nullptr;
+	UPROPERTY()
 	TObjectPtr<class ASacrificePlayerState> SacrificePlayerState = nullptr;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class USacrificeCommonHUD> HudFactory;
@@ -41,14 +43,10 @@ public:
 	void NextPlayer();
 	void ToggleCamera();
 	
-	UFUNCTION(Client, Reliable)
-	void ClientRPC_RequestCallbackWithGuid();
+	void RequestCallbackWithGuid();
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_RequestCreatePawn(FGuid Guid);
-
-	UFUNCTION(Client, Reliable)
-	void ClientRPC_DisplayHUD();
 
 	UPROPERTY()
 	TObjectPtr<AActor> SkillCheckableObject = nullptr;
@@ -58,4 +56,7 @@ public:
 	void SkillCheckFinish(const ESkillCheckResult Result);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_SkillCheckFinish(AActor* Obj, const ESkillCheckResult Result);
+
+	void DisplayHud();
+	void OnCreatedNewCamperState(class ASacrificePlayerState* CamperState);
 };

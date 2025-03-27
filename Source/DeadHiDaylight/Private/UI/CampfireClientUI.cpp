@@ -4,6 +4,7 @@
 #include "CampfireClientUI.h"
 
 #include "CampfirePlayerController.h"
+#include "DHDGameInstance.h"
 #include "Components/TextBlock.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 

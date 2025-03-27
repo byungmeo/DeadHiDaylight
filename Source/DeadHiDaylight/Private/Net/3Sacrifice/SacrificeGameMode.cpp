@@ -83,7 +83,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Camper"));
 			if (ACamper* Camper = GetWorld()->SpawnActor<ACamper>(CamperFactory))
 			{
-				Camper->SetActorLocation(FVector(-1620, 1580, 250));
+				Camper->SetActorLocation(FVector(-1620, 1580, 250), false, nullptr, ETeleportType::TeleportPhysics);
 				Controller->Possess(Camper);
 				Campers.Add(Camper);
 			}

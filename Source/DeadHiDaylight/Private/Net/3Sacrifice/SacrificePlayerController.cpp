@@ -26,20 +26,36 @@ void ASacrificePlayerController::SetupInputComponent()
 	}
 }
 
+void ASacrificePlayerController::DisplayHud()
+{
+	Hud = Cast<USacrificeCommonHUD>(CreateWidget(this, HudFactory));
+	if (Hud)
+	{
+		Hud->AddToViewport();
+	}
+}
+
+void ASacrificePlayerController::OnCreatedNewCamperState(class ASacrificePlayerState* CamperState)
+{
+	Hud->AddCamperState(CamperState);
+}
+
 void ASacrificePlayerController::BeginPlay()
 {
+	NET_LOG(LogTemp, Warning, TEXT("ASacrificePlayerController::BeginPlay"));
 	Super::BeginPlay();
 	if (HasAuthority())
 	{
 		GameMode = Cast<ASacrificeGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	}
 
+	LocalGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
 	SacrificePlayerState = Cast<ASacrificePlayerState>(PlayerState);
 	
 	if (IsLocalPlayerController())
 	{
-		ClientRPC_RequestCallbackWithGuid();
-		ClientRPC_DisplayHUD();
+		RequestCallbackWithGuid();
+		DisplayHud();
 	}
 }
 
@@ -119,17 +135,7 @@ void ASacrificePlayerController::ToggleCamera()
 	}
 }
 
-void ASacrificePlayerController::ClientRPC_DisplayHUD_Implementation()
-{
-	NET_LOG(LogTemp, Warning, TEXT("ClientRPC_DisplayHUD_Implementation"));
-	Hud = Cast<USacrificeCommonHUD>(CreateWidget(this, HudFactory));
-	if (Hud)
-	{
-		Hud->AddToViewport();
-	}
-}
-
-void ASacrificePlayerController::ClientRPC_RequestCallbackWithGuid_Implementation()
+void ASacrificePlayerController::RequestCallbackWithGuid()
 {
 	const auto* ClientGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
 	ServerRPC_RequestCreatePawn(ClientGameInstance->Guid);
@@ -142,8 +148,10 @@ void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(cons
 	GameMode->RequestCreatePawn(this, PlayerRole);
 	
 	FUserState NewState = FUserState();
+	NewState.Name = FName(*Guid.ToString().Left(10));
 	NewState.PlayerRole = PlayerRole;
 	SacrificePlayerState->UserState = NewState;
+	SacrificePlayerState->OnRep_UserState();
 }
 
 void ASacrificePlayerController::ClientRPC_OnSkillCheck_Implementation(AActor* Obj, const float Min, const float Max,

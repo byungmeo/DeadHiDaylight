@@ -17,10 +17,7 @@ class DEADHIDAYLIGHT_API USacrificeCommonHUD : public UUserWidget
 	
 public:
 	virtual void NativeConstruct() override;
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void AddCamper(const FName Name);
-
+	
 	/*UFUNCTION(BlueprintImplementableEvent)
 	void UpdateCamper(const TArray<struct FCamperState>& StateList);*/
 	
@@ -29,7 +26,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnRepGeneratorCount(int Count);
+
+	void AddCamperState(class ASacrificePlayerState* CamperState);
 	
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnUpdatedUserState(const FUserState& UserState);
+	void OnUpdatedCamperState(const FUserState& UserState);
 };

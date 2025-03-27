@@ -41,17 +41,17 @@ struct FUserState
 	/*
 	 * Common
 	 */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FName Name = FName(NAME_None);
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	EPlayerRole PlayerRole = EPlayerRole::EPR_None;
 
 	/*
 	 *	Camper
 	 */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	EStrugglePhase StrugglePhase = EStrugglePhase::ESP_First;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	ECamperHealth Health = ECamperHealth::ECH_Healthy;
 };
 
@@ -66,10 +66,13 @@ class DEADHIDAYLIGHT_API ASacrificePlayerState : public APlayerState
 	GENERATED_BODY()
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 public:
-	UPROPERTY(ReplicatedUsing=OnRep_UserState ,BlueprintReadOnly)
+	bool bIsInit = false;
+	
+	UPROPERTY(ReplicatedUsing=OnRep_UserState ,BlueprintReadOnly, VisibleAnywhere)
 	FUserState UserState;
 
 	UFUNCTION()

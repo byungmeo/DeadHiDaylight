@@ -5,6 +5,7 @@
 
 #include "SacrificeGameState.h"
 #include "SacrificePlayerState.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 
 void USacrificeCommonHUD::NativeConstruct()
 {
@@ -12,20 +13,14 @@ void USacrificeCommonHUD::NativeConstruct()
 
 	if (auto* GameState = Cast<ASacrificeGameState>(GetWorld()->GetGameState()))
 	{
-		GameState->OnRepGeneratorCount.AddDynamic(this, &USacrificeCommonHUD::OnRepGeneratorCount);
 		OnRepGeneratorCount(GameState->ReqGeneratorCount);
-
-		TArray<FUserState> CamperStates;
-		for (auto PS : GameState->PlayerArray)
-		{
-			if (auto* SacrificePlayerState = Cast<ASacrificePlayerState>(PS))
-			{
-				if (SacrificePlayerState->UserState.PlayerRole == EPlayerRole::EPR_Camper)
-				{
-					AddCamper(SacrificePlayerState->UserState.Name);
-					SacrificePlayerState->OnUpdatedUserState.AddDynamic(this, &USacrificeCommonHUD::OnUpdatedUserState);
-				}
-			}
-		}
+		GameState->OnRepGeneratorCount.AddDynamic(this, &USacrificeCommonHUD::OnRepGeneratorCount);
 	}
+}
+
+void USacrificeCommonHUD::AddCamperState(class ASacrificePlayerState* CamperState)
+{
+	NET_LOG(LogTemp, Warning, TEXT("USacrificeCommonHUD::AddCamperState Role=%d"), CamperState->UserState.PlayerRole);
+	OnUpdatedCamperState(CamperState->UserState);
+	CamperState->OnUpdatedUserState.AddDynamic(this, &USacrificeCommonHUD::OnUpdatedCamperState);
 }

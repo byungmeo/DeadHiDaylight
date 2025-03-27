@@ -15,9 +15,9 @@ enum class EPlayerRole : uint8;
 UENUM(BlueprintType)
 enum class EStrugglePhase : uint8
 {
-	ESP_First,
-	ESP_Second,
-	ESP_Third
+	ESP_First		UMETA(DisplayName = "First"),
+	ESP_Second		UMETA(DisplayName = "Second"),
+	ESP_Third		UMETA(DisplayName = "Third")
 };
 
 /**
@@ -26,11 +26,12 @@ enum class EStrugglePhase : uint8
 UENUM(BlueprintType)
 enum class ECamperHealth : uint8
 {
-	ECH_Healthy,
-	ECH_Injury,
-	ECH_Endurance,
-	ECH_Moribund,
-	ECH_Dead
+	ECH_Healthy		UMETA(DisplayName = "Healthy"),
+	ECH_Injury		UMETA(DisplayName = "Injury"),
+	ECH_Crawl		UMETA(DisplayName = "Crawl"),
+	ECH_Carry		UMETA(DisplayName = "Carry"),
+	ECH_Hook		UMETA(DisplayName = "Hook"),
+	ECH_Dead		UMETA(DisplayName = "Dead")
 };
 
 USTRUCT(BlueprintType)

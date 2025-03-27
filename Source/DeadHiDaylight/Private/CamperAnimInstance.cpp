@@ -4,13 +4,21 @@
 #include "CamperAnimInstance.h"
 
 #include "Camper.h"
+#include "Kismet/GameplayStatics.h"
 
+
+void UCamperAnimInstance::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+
+	camper = Cast<ACamper>(TryGetPawnOwner());
+}
 
 void UCamperAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (auto player = Cast<ACamper>(TryGetPawnOwner()))
+	if (auto* player = Cast<ACamper>(TryGetPawnOwner()))
 	{
 		// 전방방향 벡터 구하기
 		FVector velocity = player->GetVelocity();
@@ -77,6 +85,7 @@ void UCamperAnimInstance::AnimNotify_EndUnLock()
 	bUnLock = true;
 	Montage_Stop(0.2f);
 }
+
 // 기어가는 애니메이션 RPC
 void UCamperAnimInstance::ServerRPC_HitCrawl_Implementation()
 {
@@ -146,4 +155,24 @@ void UCamperAnimInstance::ServerRPC_PlayRescueHookingAnimation_Implementation(FN
 void UCamperAnimInstance::MultiCastRPC_PlayRescueHookingAnimation_Implementation(FName sectionName)
 {
 	PlayRescueHookingAnimation(sectionName);
+}
+
+void UCamperAnimInstance::AnimNotify_LeftFoot()
+{
+	camper->PlayLeftSound();
+}
+
+void UCamperAnimInstance::AnimNotify_RightFoot()
+{
+	camper->PlayRightSound();
+}
+
+void UCamperAnimInstance::AnimNotify_InjureLeftFoot()
+{
+	camper->PlayLeftSound();
+}
+
+void UCamperAnimInstance::AnimNotify_InjureRightFoot()
+{
+	camper->PlayRightSound();
 }

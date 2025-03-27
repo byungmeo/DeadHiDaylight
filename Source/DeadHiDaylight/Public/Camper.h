@@ -35,14 +35,43 @@ public:
 	class USpringArmComponent* springArmComp;
 	UPROPERTY(EditAnywhere)
 	class UCameraComponent* cameraComp;
+
+	// Sound
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundCue* leftFootCue;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundAttenuation* leftFootAttenuation;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundCue* rightFootCue;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundAttenuation* rightFootAttenuation;
+
+	// Injure Sound
+	UPROPERTY()
+	class UAudioComponent* injuredAudioComp;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundCue* injureCue;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundAttenuation* injureAttenuation;
 	
+	bool bPlayInjureSound = false;
+	
+	// Injure Scream Sound
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundCue* injuredScreamCue;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundAttenuation* injuredScreamAttenuation;
+	
+	
+	// moveComp
 	UPROPERTY()
 	class UCharacterMovementComponent* moveComp; // 캐릭터 움직임 컴포넌트
 	UPROPERTY(EditAnywhere)
 	class UCamperAnimInstance* Anim;
 	
 	// Input 변수
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	class UInputMappingContext* IMC_Camper; //Input IMC 변수
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_Move; 
@@ -180,6 +209,20 @@ public:
 	void ServerRPC_RescueHooking(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMultiCastRPC_RescueHooking(FName sectionName);
+
+	// 뛸 때 왼발, 오른 발 사운드 재생 함수
+	void PlayLeftSound();
+	void PlayRightSound();
+
+	// 다친 상태일 때 사운드 랜덤 반복 재생
+	void PlayInjureSound();
+	UFUNCTION()
+	void OnInjureSoundFinished(); // 사운드 반복재생하는 델리게이트
+	void StopInjureSound(); // 사운드 멈추는 함수
+
+	// 맞을 때 소리 지르는 함수
+	void PlayScreamSound();
+
 	
 	void PrintNetLog();
 

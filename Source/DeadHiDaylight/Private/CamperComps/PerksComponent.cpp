@@ -3,7 +3,7 @@
 
 #include "CamperComps/PerksComponent.h"
 
-#include "Camper.h"
+#include "Player/Camper.h"
 #include "CamperAnimInstance.h"
 #include "EnhancedInputComponent.h"
 
@@ -150,7 +150,8 @@ void UPerksComponent::ServerRPC_StopPerSelfHealing_Implementation()
 void UPerksComponent::NetMultiCastRPC_StopPerSelfHealing_Implementation()
 {
 	if (anim == nullptr || Camper->bFindPoints || anim->bSelfHealing == false) return;
-	
+
+	Camper->StopInjureSound();
 	anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndSelfHealing"));
 }
 

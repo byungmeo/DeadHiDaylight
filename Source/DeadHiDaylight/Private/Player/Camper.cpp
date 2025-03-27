@@ -1,19 +1,23 @@
 
 
 
-#include "DeadHiDaylight/Public/Camper.h"
+#include "DeadHiDaylight/Public/Player/Camper.h"
 
 #include "CamperAnimInstance.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
 #include "InteractionPoint.h"
 #include "Camera/CameraComponent.h"
 #include "CamperComps/PerksComponent.h"
+#include "Components/AudioComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Sound/SoundCue.h"
 
 
 // Sets default values
@@ -75,6 +79,89 @@ ACamper::ACamper()
 	cameraComp->SetRelativeRotation(FRotator(-10, 0, 0));
 
 	
+	// IA
+	ConstructorHelpers::FObjectFinder<UInputMappingContext> tempIMC(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/JS/Input/IMC_FirstCamper.IMC_FirstCamper'"));
+	if (tempIMC.Succeeded())
+	{
+		IMC_Camper = tempIMC.Object;
+	}
+	ConstructorHelpers::FObjectFinder<UInputAction> tempIAMove(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_CamperMove.IA_CamperMove'"));
+	if (tempIAMove.Succeeded())
+	{
+		IA_Move = tempIAMove.Object;
+	}
+	ConstructorHelpers::FObjectFinder<UInputAction> tempIALook(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Look.IA_Look'"));
+	if (tempIALook.Succeeded())
+	{
+		IA_Look = tempIALook.Object;
+	}
+	ConstructorHelpers::FObjectFinder<UInputAction> tempIARun(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Run.IA_Run'"));
+	if (tempIARun.Succeeded())
+	{
+		IA_Run = tempIARun.Object;
+	}
+	ConstructorHelpers::FObjectFinder<UInputAction> tempIACrouch(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Crouch.IA_Crouch'"));
+	if (tempIACrouch.Succeeded())
+	{
+		IA_Crouch = tempIACrouch.Object;
+	}
+	ConstructorHelpers::FObjectFinder<UInputAction> tempIARepair(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Repair.IA_Repair'"));
+	if (tempIARepair.Succeeded())
+	{
+		IA_Repair = tempIARepair.Object;
+	}
+	ConstructorHelpers::FObjectFinder<UInputAction> tempIAUnLock(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_UnLock.IA_UnLock'"));
+	if (tempIAUnLock.Succeeded())
+	{
+		IA_UnLock = tempIAUnLock.Object;
+	}
+	
+	// Sound
+	ConstructorHelpers::FObjectFinder<USoundCue> tempLeftSound(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/run/SC_LeftFoot.SC_LeftFoot'"));
+	if (tempLeftSound.Succeeded())
+	{
+		leftFootCue = tempLeftSound.Object;
+	}
+	ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationLeftObj(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/run/SA_LeftFoot.SA_LeftFoot'"));
+	if (AttenuationLeftObj.Succeeded())
+	{
+		leftFootAttenuation = AttenuationLeftObj.Object;
+	}
+	
+	ConstructorHelpers::FObjectFinder<USoundCue> tempRightSound(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/run/SC_RightFoot.SC_RightFoot'"));
+	if (tempRightSound.Succeeded())
+	{
+		rightFootCue = tempRightSound.Object;
+	}
+	ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationRightObj(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/run/SA_RightFoot.SA_RightFoot'"));
+	if (AttenuationRightObj.Succeeded())
+	{
+		rightFootAttenuation = AttenuationRightObj.Object;
+	}
+	
+	ConstructorHelpers::FObjectFinder<USoundCue> tempinjureCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/injurewav/SC_Injure.SC_Injure'"));
+	if (tempinjureCue.Succeeded())
+	{
+		injureCue = tempinjureCue.Object;
+	}
+	ConstructorHelpers::FObjectFinder<USoundAttenuation> tempinjureAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/injurewav/SA_Injure.SA_Injure'"));
+	if (tempinjureAttenuation.Succeeded())
+	{
+		injureAttenuation = tempinjureAttenuation.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<USoundCue> tempInjureScreamCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/hit/SC_Scream.SC_Scream'"));
+	if (tempInjureScreamCue.Succeeded())
+	{
+		injuredScreamCue = tempInjureScreamCue.Object;
+	}
+	ConstructorHelpers::FObjectFinder<USoundAttenuation> tempInjureScreamAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/hit/SA_Scream.SA_Scream'"));
+	if (tempInjureScreamAttenuation.Succeeded())
+	{
+		injuredScreamAttenuation = tempInjureScreamAttenuation.Object;
+	}
+
+	// CharacterMovement 컴포넌트
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("PerksComp"));
@@ -149,6 +236,7 @@ void ACamper::Tick(float DeltaTime)
 		Anim->bCrawl = false;
 		Anim->bInjure = false;
 		moveComp->MaxWalkSpeed = moveSpeed;
+		StopInjureSound();
 		UE_LOG(LogTemp, Warning, TEXT("%d"), Anim->bInjure);
 	}
 	// Hook 걸리는 거 테스트 용
@@ -178,6 +266,11 @@ void ACamper::Tick(float DeltaTime)
 		FailRepair(TEXT("GenFailFT"));
 	}
 	PrintNetLog();
+
+	if (!bPlayInjureSound)
+	{
+		StopInjureSound();
+	}
 }
 
 // Called to bind functionality to input
@@ -422,6 +515,7 @@ void ACamper::ServerRPC_GetDamage_Implementation()
 
 void ACamper::MultiCastRPC_GetDamage_Implementation()
 {
+	
 	if (curHP > 1)
 	{
 		// HP를 줄이고
@@ -433,13 +527,18 @@ void ACamper::MultiCastRPC_GetDamage_Implementation()
 		beforeSpeed = moveComp->MaxWalkSpeed;
 		// 다쳤을 때 2초동안 스피드가 2배 증가
 		moveComp->MaxWalkSpeed = moveComp->MaxWalkSpeed * 2;
-	
+
+		// 맞을 때 비명 지르는 부분
+		if (injuredScreamCue) PlayScreamSound();
 		// 2초 후 다시 이전 속도로 복귀
 		FTimerHandle hitTimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, this, &ACamper::HitSpeedTimer, 2.0f, false);
 	}
 	else
 	{
+		// 맞을 때 비명 지르는 부분
+		if (injuredScreamCue) PlayScreamSound();
+		// 기어다니는 상태로 전환
 		Crawling();
 	}
 }
@@ -456,6 +555,10 @@ void ACamper::MultiCastRPC_HitSpeedTimer_Implementation()
 {
 	if (Anim->bCrawl) return;
 	moveComp->MaxWalkSpeed = beforeSpeed;
+
+	bPlayInjureSound = true;
+	
+	PlayInjureSound();
 }
 
 void ACamper::Crawling()
@@ -538,6 +641,103 @@ void ACamper::NetMultiCastRPC_RescueHooking_Implementation(FName sectionName)
 	if (Anim == nullptr) return;
 
 	Anim->ServerRPC_PlayRescueHookingAnimation(sectionName);
+}
+
+void ACamper::PlayLeftSound()
+{
+	if (leftFootCue)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			leftFootCue,
+			GetActorLocation(),
+			1.0f,
+			1.0f,
+			0.0f,
+			leftFootAttenuation
+		);
+	}
+}
+
+void ACamper::PlayRightSound()
+{
+	if (rightFootCue)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			rightFootCue,
+			GetActorLocation(),
+			1.0f,
+			1.0f,
+			0.0f,
+			rightFootAttenuation
+		);
+	}
+}
+
+void ACamper::PlayInjureSound()
+{
+	if (!injureCue || !bPlayInjureSound) return;
+	
+	// 기존 사운드가 있으면 정지 후 해제
+	if (injuredAudioComp)
+	{
+		injuredAudioComp->Stop();
+		injuredAudioComp = nullptr;
+	}
+
+	injuredAudioComp = UGameplayStatics::SpawnSoundAttached(
+		injureCue,
+		GetRootComponent(),
+		NAME_None,
+		FVector::ZeroVector,
+		EAttachLocation::KeepRelativeOffset,
+		false
+		);
+	if (injuredAudioComp)
+	{
+		injuredAudioComp->OnAudioFinished.AddDynamic(this, &ACamper::OnInjureSoundFinished);
+		injuredAudioComp->Play();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT(" InjuredAudioComp Fail"));
+	}
+}
+
+void ACamper::OnInjureSoundFinished()
+{
+	if (bPlayInjureSound)
+	{
+		PlayInjureSound();
+	}
+}
+
+void ACamper::StopInjureSound()
+{
+	bPlayInjureSound = false;
+
+	if (injuredAudioComp)
+	{
+		injuredAudioComp->Stop();
+		injuredAudioComp = nullptr;
+	}
+}
+
+void ACamper::PlayScreamSound()
+{
+	if (injuredScreamCue)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			injuredScreamCue,
+			GetActorLocation(),
+			1.5f,
+			1.0f,
+			0.0f,
+			injuredScreamAttenuation
+		);
+	}
 }
 
 void ACamper::PrintNetLog()

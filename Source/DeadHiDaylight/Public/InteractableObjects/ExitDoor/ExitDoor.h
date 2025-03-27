@@ -21,9 +21,10 @@ private:
 	// 전원 공급까지 20초 소요
 	float BasePowerValue = 0.05f;
 	
-public:
+protected:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -32,13 +33,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UInteractionPoint> CamperPoint = nullptr;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bIsDoorOpened = false;
-	UPROPERTY(BlueprintAssignable)
-	FOnOpenExitDoor OnOpenExitDoor;
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bIsActivating = false;
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
+	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	float PowerGauge = 0.0f;
 	void OpenExitDoor();
 	

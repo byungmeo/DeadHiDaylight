@@ -26,6 +26,7 @@ AGenerator::AGenerator()
 	if (MeshObj.Succeeded())
 	{
 		Mesh->SetSkeletalMeshAsset(MeshObj.Object);
+		Mesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	}
 	ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Script/Engine.AnimBlueprint'/Game/KBD/Generator/ABP_Generator.ABP_Generator_C'"));
 	if (AnimClass.Succeeded())

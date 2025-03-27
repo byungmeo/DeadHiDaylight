@@ -10,10 +10,6 @@ void UExitDoorAnim::NativeBeginPlay()
 	Super::NativeBeginPlay();
 	
 	ExitDoor = Cast<AExitDoor>(GetOwningActor());
-	if (ExitDoor)
-	{
-		ExitDoor->OnOpenExitDoor.AddDynamic(this, &UExitDoorAnim::OnOpenExitDoor);
-	}
 }
 
 void UExitDoorAnim::NativeUpdateAnimation(float DeltaSeconds)
@@ -22,10 +18,6 @@ void UExitDoorAnim::NativeUpdateAnimation(float DeltaSeconds)
 	if (ExitDoor)
 	{
 		bIsActivating = ExitDoor->bIsActivating;
+		bIsDoorOpened = ExitDoor->bIsDoorOpened;
 	}
-}
-
-void UExitDoorAnim::OnOpenExitDoor()
-{
-	bIsDoorOpened = true;
 }

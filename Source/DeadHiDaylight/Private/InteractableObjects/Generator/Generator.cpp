@@ -3,7 +3,7 @@
 
 #include "Generator.h"
 
-#include "Camper.h"
+#include "Player/Camper.h"
 #include "Canival.h"
 #include "InteractionPoint.h"
 #include "SacrificePlayerController.h"

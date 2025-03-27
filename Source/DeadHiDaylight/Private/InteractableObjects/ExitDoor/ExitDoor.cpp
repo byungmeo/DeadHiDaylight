@@ -3,7 +3,7 @@
 
 #include "ExitDoor.h"
 
-#include "Camper.h"
+#include "Player/Camper.h"
 #include "InteractionPoint.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 

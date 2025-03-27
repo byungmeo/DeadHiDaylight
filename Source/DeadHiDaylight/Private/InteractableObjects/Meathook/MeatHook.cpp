@@ -3,7 +3,7 @@
 
 #include "MeatHook.h"
 
-#include "Camper.h"
+#include "Player/Camper.h"
 #include "InteractionPoint.h"
 
 

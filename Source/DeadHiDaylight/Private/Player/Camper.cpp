@@ -1,7 +1,7 @@
 
 
 
-#include "DeadHiDaylight/Public/Camper.h"
+#include "DeadHiDaylight/Public/Player/Camper.h"
 
 #include "CamperAnimInstance.h"
 #include "EnhancedInputComponent.h"

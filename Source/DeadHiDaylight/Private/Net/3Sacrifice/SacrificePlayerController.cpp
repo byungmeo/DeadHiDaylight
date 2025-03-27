@@ -5,7 +5,7 @@
 
 #include "SacrificeGameMode.h"
 #include "Canival.h"
-#include "Camper.h"
+#include "Player/Camper.h"
 #include "DHDGameInstance.h"
 #include "Generator.h"
 #include "SacrificeCommonHUD.h"

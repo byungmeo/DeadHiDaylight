@@ -3,7 +3,7 @@
 
 #include "CamperComps/PerksComponent.h"
 
-#include "Camper.h"
+#include "Player/Camper.h"
 #include "CamperAnimInstance.h"
 #include "EnhancedInputComponent.h"
 

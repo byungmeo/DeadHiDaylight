@@ -3,7 +3,7 @@
 
 #include "CamperComps/CamperBaseComponent.h"
 
-#include "Camper.h"
+#include "Player/Camper.h"
 
 
 // Sets default values for this component's properties

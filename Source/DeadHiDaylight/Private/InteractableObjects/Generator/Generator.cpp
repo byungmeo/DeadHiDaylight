@@ -141,6 +141,11 @@ void AGenerator::PowerOn()
 
 void AGenerator::OnSkillCheck(AActor* TargetActor)
 {
+	if (bPowerOn)
+	{
+		return;
+	}
+	
 	if (ACamper* Camper = Cast<ACamper>(TargetActor))
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AGenerator::OnSkillCheck"));
@@ -158,6 +163,11 @@ void AGenerator::OnSkillCheck(AActor* TargetActor)
 
 void AGenerator::SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult Result)
 {
+	if (bPowerOn)
+	{
+		return;
+	}
+	
 	switch (Result)
     	{
     	case ESkillCheckResult::ESCR_Fail:
@@ -209,6 +219,11 @@ void AGenerator::TestExplosion()
 
 void AGenerator::Break()
 {
+	if (bPowerOn)
+	{
+		return;
+	}
+	
 	bIsBreak = true;
 	PowerGauge -= FMath::Clamp(ImmediateBreakValue, 0, 1);
 	RemainBreakShield = InitBreakShield;

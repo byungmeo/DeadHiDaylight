@@ -101,6 +101,8 @@ void UCanivalAnim::NativeUpdateAnimation(float DeltaSeconds)
 	}
 }
 
+
+
 void UCanivalAnim::CompletedKickAnimation()
 {
 	// Canival->CompletedKick();

@@ -56,7 +56,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayChainSawCollisionReaction();
 
-	
+
 	UFUNCTION(BlueprintCallable)
 	void CompletedKickAnimation();
 };

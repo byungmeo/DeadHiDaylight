@@ -62,8 +62,8 @@ public:
 	
 	UPROPERTY()
 	class UCanivalAnim* AnimInstance = nullptr;
-	TObjectPtr<UInputAction> ia_Kick;
 	
+	TObjectPtr<UInputAction> ia_Kick;
 
 	UFUNCTION()
 	void OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -91,5 +91,30 @@ public:
 	UFUNCTION()
 	void OnChainSawHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
 					   UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	//죽은 생존자 관련 코드
+	//생존자 어깨에 붙었는지 안붙었는지 체크
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class ACamper* AttachedSurvivor=nullptr;
+	
+	//범위 체크
+	UPROPERTY(VisibleAnywhere)
+	float distanceToSurvivor  = 500.0f;
+	
+	UFUNCTION()
+	void CheckAndAttachSurvivor();
+	
+	//죽은 생존자 어깨에 붙이기
+	UFUNCTION()
+	void AttachSurvivorToShourder(class ACamper* Survivor);
+	
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UCanivalUI> WidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	UCanivalUI* ChainsawWidgetInstance;
+	
 };
 

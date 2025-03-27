@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Camper.h"
+#include "Player/Camper.h"
 #include "GameFramework/Actor.h"
 #include "Generator.generated.h"
 

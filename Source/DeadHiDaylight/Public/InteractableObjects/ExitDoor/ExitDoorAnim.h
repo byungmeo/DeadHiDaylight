@@ -25,7 +25,4 @@ public:
 	
 	virtual void NativeBeginPlay() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-
-	UFUNCTION()
-	void OnOpenExitDoor();
 };

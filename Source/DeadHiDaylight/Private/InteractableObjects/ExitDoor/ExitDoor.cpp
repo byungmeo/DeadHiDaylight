@@ -3,9 +3,10 @@
 
 #include "ExitDoor.h"
 
-#include "Camper.h"
+#include "Player/Camper.h"
 #include "InteractionPoint.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "Net/UnrealNetwork.h"
 
 
 // Sets default values
@@ -47,6 +48,11 @@ void AExitDoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (false == HasAuthority())
+	{
+		return;
+	}
+
 	if (true == bIsDoorOpened || false == bIsActivating)
 	{
 		return;
@@ -59,13 +65,21 @@ void AExitDoor::Tick(float DeltaTime)
 	}
 }
 
+void AExitDoor::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AExitDoor, bIsDoorOpened);
+	DOREPLIFETIME(AExitDoor, bIsActivating);
+	DOREPLIFETIME(AExitDoor, PowerGauge);
+}
+
 void AExitDoor::OpenExitDoor()
 {
 	NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OpenExitDoor"));
 	bIsDoorOpened = true;
 	OnStopInteraction(CamperPoint, CamperPoint->AttachedActor);
 	CamperPoint->DestroyComponent();
-	OnOpenExitDoor.Broadcast();
 	SetActorTickEnabled(false);
 }
 

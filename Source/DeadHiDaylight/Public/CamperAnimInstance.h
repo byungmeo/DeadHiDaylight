@@ -16,7 +16,14 @@ class DEADHIDAYLIGHT_API UCamperAnimInstance : public UAnimInstance
 
 public:
 
+	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+
+public:
+	// Camper 저장 변수
+	UPROPERTY(EditAnywhere)
+	class ACamper* camper;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	float moveSpeed; // 현재 속도
@@ -113,4 +120,13 @@ public:
 	void AnimNotify_StartUnLock();
 	UFUNCTION()
 	void AnimNotify_EndUnLock();
+
+	UFUNCTION()
+	void AnimNotify_LeftFoot();
+	UFUNCTION()
+	void AnimNotify_RightFoot();
+	UFUNCTION()
+	void AnimNotify_InjureLeftFoot();
+	UFUNCTION()
+	void AnimNotify_InjureRightFoot();
 };

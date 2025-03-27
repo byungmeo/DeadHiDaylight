@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerState.h"
 #include "Blueprint/UserWidget.h"
 #include "SacrificeCommonHUD.generated.h"
 
@@ -13,8 +14,21 @@ UCLASS()
 class DEADHIDAYLIGHT_API USacrificeCommonHUD : public UUserWidget
 {
 	GENERATED_BODY()
-
+	
 public:
+	virtual void NativeConstruct() override;
+	
+	/*UFUNCTION(BlueprintImplementableEvent)
+	void UpdateCamper(const TArray<struct FCamperState>& StateList);*/
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnSkillCheck(float Min, float Max, float GreatRange);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRepGeneratorCount(int Count);
+
+	void AddCamperState(class ASacrificePlayerState* CamperState);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnUpdatedCamperState(const FUserState& UserState);
 };

@@ -3,7 +3,9 @@
 
 #include "Canival.h"
 #include "CamperAnimInstance.h"
-#include "Camper.h"
+
+
+#include "Player/Camper.h"
 #include "CanivalAnim.h"
 #include "CanivalUI.h"
 #include "EnhancedInputComponent.h"

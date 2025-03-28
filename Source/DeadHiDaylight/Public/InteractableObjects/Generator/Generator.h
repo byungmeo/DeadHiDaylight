@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Player/Camper.h"
 #include "GameFramework/Actor.h"
 #include "Generator.generated.h"
 
+enum class ESkillCheckResult : uint8;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPowerOn);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnExplosion);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBreak);
@@ -29,15 +29,15 @@ private:
 	float InitBreakShield = 0.05f;
 	float RemainBreakShield = 0;
 	
-	// 1명 기준 초당 1.25% 수리할 수 있음
+	// 1명 기준 초당 2%(고증 1.25%) 수리할 수 있음
 	// 인원 수가 늘어날 때마다 기본 효율의 10% 수치만큼 인당 수리 효율이 깎임
-	float BaseRepairValue = 0.0125f;
+	float BaseRepairValue = 0.02f;
 	float ReductionRepairEfficiency = 0.1f;
 
 	// 발전기 수리 시 각 생존자는 각자 랜덤한 주기로 스킬 체크를 해야 한다.
-	// 스킬체크 대성공 시 즉시 1%의 수리 보너스를 얻음.
+	// 스킬체크 대성공 시 즉시 3%(고증 1%)의 수리 보너스를 얻음.
 	// 실패하면 발전기가 폭발하면서 즉시 10%만큼의 진행도가 깎이고, 3초간 수리가 불가능 하다.
-	float GreateSuccessBonus = 0.01f;
+	float GreateSuccessBonus = 0.03f;
 	float ExplosionDuration = 3.0f;
 	float RemainExplosionTime = 0;
 	float ImmediateExplosionValue = 0.1f;
@@ -69,6 +69,8 @@ public:
 	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	float PowerGauge = 0.0f;
 	void PowerOn();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_PowerOn();
 
 	/*
 	 *	Skill Check
@@ -78,7 +80,7 @@ public:
 	void SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult Result);
 	UPROPERTY(Replicated, EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bIsExplosion = false;
-	void SkillCheckSuccess(const bool bGreateSuccess);
+	void SkillCheckSuccess(const bool bGreatSuccess);
 	void SkillCheckFail(ACamper* Camper);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_SkillCheckFail(ACamper* Camper);
@@ -89,7 +91,7 @@ public:
 	
 
 	/*
-	 * Break by Slasher
+	 *	Break by Slasher
 	 */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bIsBreak = false;

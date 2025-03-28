@@ -72,7 +72,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Slasher"));
 			if (ACanival* Canival = GetWorld()->SpawnActor<ACanival>(SlasherFactory))
 			{
-				Canival->SetActorLocation(FVector(1410, 3440, 250));
+				Canival->SetActorLocation(FVector(1450, 0, 250));
 				Controller->Possess(Canival);
 				Slasher = Canival;
 			}
@@ -83,7 +83,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Camper"));
 			if (ACamper* Camper = GetWorld()->SpawnActor<ACamper>(CamperFactory))
 			{
-				Camper->SetActorLocation(FVector(-1620, 1580, 250), false, nullptr, ETeleportType::TeleportPhysics);
+				Camper->SetActorLocation(FVector(0, 0, 250), false, nullptr, ETeleportType::TeleportPhysics);
 				Controller->Possess(Camper);
 				Campers.Add(Camper);
 			}

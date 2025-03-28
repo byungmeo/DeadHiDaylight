@@ -73,7 +73,8 @@ public:
 	// 이 InteractionPoint에 Attach된 Actor에 스킬체크가 발동할 수 있는지 여부
 	bool bSkillCheckEnable = false;
 	// 1초가 지났을 때 스킬 체크가 발동 될 확률
-	float SkillCheckChancePerSecond = 0.2f;
+	// 고증 0.08f
+	float SkillCheckChancePerSecond = 0.16f;
 	// 스킬체크 쿨타임
 	float SkillCheckCooldown = 2.0f;
 	float SkillCheckCooldownRemaining = 0.0f;

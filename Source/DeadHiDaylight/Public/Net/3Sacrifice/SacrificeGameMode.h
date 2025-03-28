@@ -36,5 +36,5 @@ public:
 	TArray<class AGenerator*> Generators;
 	TArray<class AMeatHook*> MeatHooks;
 
-	void RequestCreatePawn(ASacrificePlayerController* Controller, EPlayerRole PlayerRole);
+	void RequestCreatePawn(ASacrificePlayerController* Controller, const EPlayerRole PlayerRole);
 };

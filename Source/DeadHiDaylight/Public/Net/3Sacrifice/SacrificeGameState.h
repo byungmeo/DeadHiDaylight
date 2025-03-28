@@ -21,15 +21,24 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 public:
-	// TODO: GameMode 등을 통해서 전달받도록 변경하기
 	TArray<class AGenerator*> Generators;
-	
+
+	/*
+	 *	남은 발전기 개수
+	 */
 	UPROPERTY(ReplicatedUsing = OnRep_ReqGeneratorCount)
 	int ReqGeneratorCount = 2;
 
+	/*
+	 *	발전기 중 하나가 켜지면 발생하는 이벤트 (서버에서만 로직 실행)
+	 */
 	UFUNCTION()
 	void OnPowerOn();
-	
+
+	/*
+	 *	발전기 개수가 변경되면 호출되는 이벤트
+	 *	OnRepGeneratorCount.Broadcast() 호출
+	 */
 	UFUNCTION()
     void OnRep_ReqGeneratorCount();
 	FOnRepGeneratorCount OnRepGeneratorCount;

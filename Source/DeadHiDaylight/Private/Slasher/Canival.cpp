@@ -133,21 +133,21 @@ void ACanival::BeginPlay()
 	}
 
 	//전기톱 UI
-	FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
-	UE_LOG(LogTemp, Warning, TEXT("현재 레벨에서 UI나옴1"));
-	if (CurrentLevelName.Equals("KHATestMap"))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("현재 레벨에서 UI나옴2"));
-		if (WidgetClass)
-		{
-			
-			ChainsawWidgetInstance = CreateWidget<UCanivalUI>(GetWorld(), WidgetClass);
-			if (ChainsawWidgetInstance)
-			{
-				ChainsawWidgetInstance->AddToViewport();
-			}
-		}
-	}
+	// FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
+	// UE_LOG(LogTemp, Warning, TEXT("현재 레벨에서 UI나옴1"));
+	// if (CurrentLevelName.Equals("KHATestMap"))
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("현재 레벨에서 UI나옴2"));
+	// 	if (WidgetClass)
+	// 	{
+	// 		
+	// 		ChainsawWidgetInstance = CreateWidget<UCanivalUI>(GetWorld(), WidgetClass);
+	// 		if (ChainsawWidgetInstance)
+	// 		{
+	// 			ChainsawWidgetInstance->AddToViewport();
+	// 		}
+	// 	}
+	// }
 
 }
 
@@ -163,6 +163,10 @@ void ACanival::Tick(float DeltaTime)
 	}
 
 	// UE_LOG(LogTemp, Display, TEXT("%s"), *GetVelocity().ToString());
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
+	{
+		CheckAndAttachSurvivor();
+	}
 }
 
 void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -251,51 +255,94 @@ void ACanival::OnChainSawHit(UPrimitiveComponent* HitComponent, AActor* OtherAct
 
 void ACanival::CheckAndAttachSurvivor()
 {
-	//이미 어깨에 생존자 있으면 붙이지 않음
-	if (AttachedSurvivor!=nullptr)
+	// 이미 부착된 생존자가 있으면 새로 찾지 않음
+	if (AttachedSurvivor != nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Already attached a survivor."));
 		return;
 	}
-	TArray<AActor*> allSurvivors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACamper::StaticClass(),allSurvivors);
-
-	float closetDist = std::numeric_limits<float>::max();
-	ACamper* closestCamper = nullptr;
-	
-	//생존자인지 체크
-	//생존자가 bcrawl=true인지 체크
-	//거리 체크
-	for (AActor* Actor : allSurvivors)
+    
+	// 모든 ACamper 액터를 검색
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACamper::StaticClass(), FoundActors);
+    
+	float ClosestDistance = FLT_MAX;
+	ACamper* NearestCamper = nullptr;
+    
+	for (AActor* Actor : FoundActors)
 	{
 		ACamper* Camper = Cast<ACamper>(Actor);
-		if (!Camper)
+		if (Camper)
 		{
-			continue;
-		}
-		// 생존자의 애님이 유효하고, bCrawl이 true인지 확인 
-		if (!(Camper->Anim && Camper->Anim->bCrawl))
-		{
-			continue;
-		}
-		float dist = FVector::Distance(GetActorLocation(), Camper->GetActorLocation());
-		// 설정한 범위(distanceToSurvivor) 내에 있는지 확인하고 최단 거리 업데이트
-		if (dist <= distanceToSurvivor  && dist < closetDist)
-		{
-			closetDist = dist;
-			closestCamper = Camper;
+			// 생존자가 죽어서 크롤링 상태인지 확인 (Anim 인스턴스가 있고 bCrawl이 true)
+			if (!(Camper->Anim && Camper->Anim->bCrawl))
+			{
+				continue;
+			}
+            
+			float Dist = FVector::Distance(GetActorLocation(), Camper->GetActorLocation());
+			if (Dist < ClosestDistance && Dist <= distanceToSurvivor)
+			{
+				ClosestDistance = Dist;
+				NearestCamper = Camper;
+			}
 		}
 	}
     
-	if (closestCamper != nullptr)
+	if (NearestCamper)
 	{
-		AttachSurvivorToShourder(closestCamper);
-		AttachedSurvivor = closestCamper;
-		UE_LOG(LogTemp, Warning, TEXT("Attached survivor %s to shoulder."), *closestCamper->GetName());
+		// 가장 가까운 생존자를 어깨 소켓에 부착
+		AttachSurvivorToShourder(NearestCamper);
+		AttachedSurvivor = NearestCamper;
+		UE_LOG(LogTemp, Warning, TEXT("Attached survivor %s to shoulder."), *NearestCamper->GetName());
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No crawl state survivor found within range."));
 	}
+	
+	//죽은 생존자 찾기
+	// if (AttachedSurvivor!=nullptr)
+	// {
+	// 	return;
+	// }
+	// TArray<AActor*> allSurvivors;
+	// UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACamper::StaticClass(),allSurvivors);
+	//
+	// float closetDist = std::numeric_limits<float>::max();
+	// ACamper* closestCamper = nullptr;
+
+	// for (AActor* Actor : allSurvivors)
+	// {
+	// 	ACamper* Camper = Cast<ACamper>(Actor);
+	// 	if (!Camper)
+	// 	{
+	// 		continue;
+	// 	}
+	// 	// 생존자의 애님이 유효하고, bCrawl이 true인지 확인 
+	// 	if (!(Camper->Anim && Camper->Anim->bCrawl))
+	// 	{
+	// 		continue;
+	// 	}
+	// 	float dist = FVector::Distance(GetActorLocation(), Camper->GetActorLocation());
+	// 	// 설정한 범위(distanceToSurvivor) 내에 있는지 확인하고 최단 거리 업데이트
+	// 	if (dist <= distanceToSurvivor  && dist < closetDist)
+	// 	{
+	// 		closetDist = dist;
+	// 		closestCamper = Camper;
+	// 	}
+	// }
+ //    
+	// if (closestCamper != nullptr)
+	// {
+	// 	AttachSurvivorToShourder(closestCamper);
+	// 	AttachedSurvivor = closestCamper;
+	// 	UE_LOG(LogTemp, Warning, TEXT("Attached survivor %s to shoulder."), *closestCamper->GetName());
+	// }
+	// else
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("No crawl state survivor found within range."));
+	// }
 	
 }
 
@@ -305,7 +352,7 @@ void ACanival::AttachSurvivorToShourder(class ACamper* Survivor)
 	if (Survivor && Survivor->GetMesh())
 	{
 		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
-		UE_LOG(LogTemp, Warning, TEXT("Survivor %s attached to shoulder socket."), *Survivor->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("어깨에 붙음"));
 	}
 }
 

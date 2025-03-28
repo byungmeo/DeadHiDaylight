@@ -2,7 +2,6 @@
 
 
 #include "TestCamper.h"
-#include "Camper.h"
 #include "CamperAnimInstance.h" 
 
 // Sets default values
@@ -17,20 +16,20 @@ void ATestCamper::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (!Anim)
-	{
-		Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
-	}
-    
-	if (Anim)
-	{
-		Anim->bCrawl = true;
-		UE_LOG(LogTemp, Warning, TEXT("죽은상태"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("TestCamper BeginPlay: Animation instance is null."));
-	}
+	// if (!Anim)
+	// {
+	// 	Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
+	// }
+ //    
+	// if (Anim)
+	// {
+	// 	Anim->bCrawl = true;
+	// 	UE_LOG(LogTemp, Warning, TEXT("죽은상태"));
+	// }
+	// else
+	// {
+	// 	UE_LOG(LogTemp, Error, TEXT("TestCamper BeginPlay: Animation instance is null."));
+	// }
 	
 }
 

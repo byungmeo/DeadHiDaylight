@@ -27,7 +27,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation")
-	class UCamperAnimInstance* Anim;
-	
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation")
+	// class UCamperAnimInstance* Anim;
+	//
 };

@@ -18,6 +18,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	
 	void Move(const struct FInputActionValue& inputValue);
 	void Look(const FInputActionValue& InputActionValue);
 	UFUNCTION(CallInEditor)
@@ -110,11 +112,11 @@ public:
 	
 
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<UCanivalUI> WidgetClass;
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	// TSubclassOf<UCanivalUI> WidgetClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-	UCanivalUI* ChainsawWidgetInstance;
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	// UCanivalUI* ChainsawWidgetInstance;
 	
 };
 

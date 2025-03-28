@@ -82,6 +82,8 @@ public:
 	bool bIsAttacking; //공격 실행되었는지
 	bool bIsCharging; //공격 실행되었는지
 	
+	bool bIsIdleAndMove; //idle move 상태
+	
 	//공격실행
 	UFUNCTION()
 	void RightAttack();

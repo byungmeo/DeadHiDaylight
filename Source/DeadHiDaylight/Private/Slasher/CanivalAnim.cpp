@@ -24,13 +24,7 @@ void UCanivalAnim::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		FVector Velocity = Canival->GetVelocity();
 		Speed = Velocity.Size2D();
-
-
-		if (Canival->bIsCharging)
-		{
-			Speed*= 0.5f;
-			UE_LOG(LogTemp, Warning, TEXT("%f"), Speed);
-		}
+		
 		bIsMoving = (Speed > 0.1f);
 		UE_LOG(LogTemp, Warning, TEXT("%f"), Speed);
 		

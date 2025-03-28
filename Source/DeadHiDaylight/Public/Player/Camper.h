@@ -94,6 +94,8 @@ public:
 	
 	// 속도 변수
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
+	float curSpeed = 0; // 현재 속도
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
 	float moveSpeed = 226; // 걷는 속도
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
 	float maxSpeed = 400; // 뛰는 속도
@@ -106,16 +108,26 @@ public:
 	
 	// 포인트 찾았는지 체크하는 변수
 	bool bFindPoints = false;
+
+	// 이동 관련 불 변수
+	bool bIsRuning = false;
+	bool bIsCrouching = false;
 	
 	// 이동 관련 함수
 	void CamperMove(const FInputActionValue& value); // 캠퍼 움직임 함수
 	
-	void Run(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
+	void StartRun(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_Run();
+	void ServerRPC_StartRun();
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_Run();
+	void MultiCastRPC_StartRun();
 
+	void StopRun(const struct FInputActionValue& value);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StopRun();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StopRun();
+	
 	void Start_Crouch(const struct FInputActionValue& value); // 앉기 시작 함수 
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_Start_Crouch();
@@ -127,7 +139,8 @@ public:
 	void ServerRPC_End_Crouch();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_End_Crouch();
-	
+
+	void UpdateStateSpeed();
 	// 카메라 관련 함수
 	void Look(const struct FInputActionValue& value);  // 카메라 움직임 함수
 
@@ -232,4 +245,6 @@ public:
 	bool btest = false;
 	float testRescueTime = 0;
 };
+
+
 

@@ -7,7 +7,20 @@
 #include "GameFramework/PlayerState.h"
 #include "SacrificePlayerState.generated.h"
 
+
 enum class EPlayerRole : uint8;
+
+/*
+ * Camper 이동 상태
+ */
+UENUM(BlueprintType)
+enum class ECamperState : uint8
+{
+	ECS_Idle UMETA(DisplayName = "Idle"),
+	ECS_Move UMETA(DisplayName = "Move"),
+	ECS_Run UMETA(DisplayName = "Run"),
+	ECS_Crouch UMETA(DisplayName = "Crouch")
+};
 
 /**
  * 잠식 단계
@@ -29,10 +42,24 @@ enum class ECamperHealth : uint8
 	ECH_Healthy		UMETA(DisplayName = "Healthy"),
 	ECH_Injury		UMETA(DisplayName = "Injury"),
 	ECH_Crawl		UMETA(DisplayName = "Crawl"),
-	ECH_Carry		UMETA(DisplayName = "Carry"),
-	ECH_Hook		UMETA(DisplayName = "Hook"),
 	ECH_Dead		UMETA(DisplayName = "Dead")
 };
+/*
+ * 생존자 상호작용 상태
+ */
+UENUM(BlueprintType)
+enum class ECamperInteraction : uint8
+{
+	ECI_NONE		UMETA(DisplayName = "None"),
+	ECI_Repair		UMETA(DisplayName = "Repair"),
+	ECI_DeadHard		UMETA(DisplayName = "DeadHard"),
+	ECI_SelfHealing		UMETA(DisplayName = "SelfHealing"),
+	ECI_Carry		UMETA(DisplayName = "Carry"),
+	ECI_Hook		UMETA(DisplayName = "Hook"),
+	ECI_HookRescue		UMETA(DisplayName = "HookRescue"),
+	ECI_UnLock		UMETA(DisplayName = "UnLock")
+};
+
 
 USTRUCT(BlueprintType)
 struct FUserState

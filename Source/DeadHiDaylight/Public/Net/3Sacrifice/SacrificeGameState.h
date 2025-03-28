@@ -27,7 +27,7 @@ public:
 	 *	남은 발전기 개수
 	 */
 	UPROPERTY(ReplicatedUsing = OnRep_ReqGeneratorCount)
-	int ReqGeneratorCount = 2;
+	int ReqGeneratorCount = 4;
 
 	/*
 	 *	발전기 중 하나가 켜지면 발생하는 이벤트 (서버에서만 로직 실행)

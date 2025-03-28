@@ -201,7 +201,11 @@ void ACanival::Look(const FInputActionValue& InputActionValue)
 {
 	FVector2D Value = InputActionValue.Get<FVector2D>();
 	AddControllerYawInput(Value.X);
-	AddControllerPitchInput(Value.Y);
+	if (GetVelocity().Size2D()<0.1f)
+	{
+		AddControllerPitchInput(Value.Y);
+		
+	}
 }
 
 void ACanival::LeftClick_Start()
@@ -262,7 +266,7 @@ void ACanival::CheckAndAttachSurvivor()
 	// 이미 부착된 생존자가 있으면 새로 찾지 않음
 	if (AttachedSurvivor != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Already attached a survivor."));
+		UE_LOG(LogTemp, Warning, TEXT("생존자 임니 붙어있음"));
 		return;
 	}
     

@@ -11,15 +11,25 @@
 enum class EPlayerRole : uint8;
 
 /*
+ * Camper 자세 상태
+ */
+UENUM(BlueprintType)
+enum class ECamperStanceState : uint8
+{
+	ECSS_Idle UMETA(DisplayName = "Idle"),
+	ECSS_Crawl UMETA(DisplayName = "Crawl"),
+	ECSS_Crouch UMETA(DisplayName = "Crouch")
+};
+
+/*
  * Camper 이동 상태
  */
 UENUM(BlueprintType)
-enum class ECamperState : uint8
+enum class ECamperMoveState : uint8
 {
-	ECS_Idle UMETA(DisplayName = "Idle"),
+	ECS_NONE UMETA(DisplayName = "NONE"),
 	ECS_Move UMETA(DisplayName = "Move"),
-	ECS_Run UMETA(DisplayName = "Run"),
-	ECS_Crouch UMETA(DisplayName = "Crouch")
+	ECS_Run UMETA(DisplayName = "Run")
 };
 
 /**
@@ -41,7 +51,6 @@ enum class ECamperHealth : uint8
 {
 	ECH_Healthy		UMETA(DisplayName = "Healthy"),
 	ECH_Injury		UMETA(DisplayName = "Injury"),
-	ECH_Crawl		UMETA(DisplayName = "Crawl"),
 	ECH_Dead		UMETA(DisplayName = "Dead")
 };
 /*

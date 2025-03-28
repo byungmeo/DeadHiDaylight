@@ -239,6 +239,7 @@ void ACamper::Tick(float DeltaTime)
 		curHP = maxHP;
 		camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 		moveComp->MaxWalkSpeed = curSpeed;
+		bIsCrawling = false;
 		StopInjureSound();
 	}
 	// Hook 걸리는 거 테스트 용
@@ -275,8 +276,6 @@ void ACamper::Tick(float DeltaTime)
 	{
 		StopInjureSound();
 	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("%f"), curSpeed);
 }
 
 // Called to bind functionality to input
@@ -287,6 +286,7 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	if (UEnhancedInputComponent* input = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ACamper::CamperMove);
+		input->BindAction(IA_Move, ETriggerEvent::Completed, this, &ACamper::StopCamperMove);
 		input->BindAction(IA_Run, ETriggerEvent::Started, this, &ACamper::StartRun);
 		input->BindAction(IA_Run, ETriggerEvent::Completed, this, &ACamper::StopRun);
 		input->BindAction(IA_Crouch, ETriggerEvent::Started, this, &ACamper::Start_Crouch);
@@ -321,7 +321,14 @@ void ACamper::CamperMove(const FInputActionValue& value)
 	AddMovementInput(RightDirection, dir.X);
 
 	curSpeed = moveComp->Velocity.Size();
-	UpdateStateSpeed();
+	UpdateStanceState();
+	UpdateMovementState();
+}
+
+void ACamper::StopCamperMove(const FInputActionValue& value)
+{
+	curSpeed = 0;
+	UpdateMovementState();
 }
 
 void ACamper::Look(const struct FInputActionValue& value)
@@ -344,11 +351,12 @@ void ACamper::ServerRPC_StartRun_Implementation()
 }
 void ACamper::MultiCastRPC_StartRun_Implementation()
 {
-	if (Anim && (Anim->animCamperInteractionState == ECamperInteraction::ECI_SelfHealing)) return; // 자가 치유 중이라면 리턴
+	if (Anim && (camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing)) return; // 자가 치유 중이라면 리턴
 	
 	if (bIsRuning)
 	{
-		camperFSMComp->curState = ECamperState::ECS_Run;
+		UpdateStanceState();
+		UpdateMovementState();
 		// 달리면 달리는 이동속도로 변경
 		curSpeed = maxSpeed * 2;
 		moveComp->MaxWalkSpeed = curSpeed;
@@ -370,9 +378,8 @@ void ACamper::ServerRPC_StopRun_Implementation()
 void ACamper::MultiCastRPC_StopRun_Implementation()
 {
 	bIsRuning = false;
-	curSpeed = moveSpeed * 2;
-	moveComp->MaxWalkSpeed = curSpeed;
-	UpdateStateSpeed();
+	UpdateStanceState();
+	UpdateMovementState();
 }
 
 // Crouch
@@ -393,7 +400,8 @@ void ACamper::MultiCastRPC_Start_Crouch_Implementation()
 	if (bIsCrouching)
 	{
 		// 상태를 변경하고
-		camperFSMComp->curState = ECamperState::ECS_Crouch;
+		UpdateStanceState();
+		UpdateMovementState();
 		springArmComp->SetRelativeLocation(FVector(0, 0, 160)); // 카메라 위치 변경
 	
 		// 기어가는 걸로 속도 변경 
@@ -405,6 +413,7 @@ void ACamper::MultiCastRPC_Start_Crouch_Implementation()
 }
 void ACamper::End_Crouch(const struct FInputActionValue& value)
 {
+	bIsCrouching = false;
 	ServerRPC_End_Crouch();
 }
 
@@ -415,21 +424,47 @@ void ACamper::ServerRPC_End_Crouch_Implementation()
 
 void ACamper::MultiCastRPC_End_Crouch_Implementation()
 {
-	bIsCrouching = false;
-	UpdateStateSpeed();
+	UpdateStanceState();
+	UpdateMovementState();
 }
 // Crouch End
 
-void ACamper::UpdateStateSpeed()
+void ACamper::UpdateStanceState()
 {
-	if (bIsCrouching == false && bIsRuning == false && curSpeed >= 3.0f) 
+	if (bIsCrouching)
 	{
-		camperFSMComp->curState = ECamperState::ECS_Move;
+		camperFSMComp->curStanceState = ECamperStanceState::ECSS_Crouch;
+	}
+	else if (bIsCrawling)
+	{
+		camperFSMComp->curStanceState = ECamperStanceState::ECSS_Crawl;
 	}
 	else if (curSpeed < 3.0f)
 	{
-		camperFSMComp->curState = ECamperState::ECS_Idle;
+		camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
 	}
+	
+}
+
+void ACamper::UpdateMovementState()
+{
+	
+	if (bIsRuning)
+	{
+		camperFSMComp->curMoveState = ECamperMoveState::ECS_Run;
+	}
+	else if (bIsRuning == false && curSpeed >= 10.0f) 
+	{
+		curSpeed = moveSpeed * 2;
+		moveComp->MaxWalkSpeed = curSpeed;
+		camperFSMComp->curMoveState = ECamperMoveState::ECS_Move;
+	}
+	else
+	{
+		curSpeed = 0;
+		camperFSMComp->curMoveState = ECamperMoveState::ECS_NONE;
+	}
+	
 }
 
 void ACamper::CheckInteractPoint()
@@ -607,6 +642,7 @@ void ACamper::MultiCastRPC_HitSpeedTimer_Implementation()
 
 void ACamper::Crawling()
 {
+	bIsCrawling = true;
 	ServerRPC_Crawling();
 }
 void ACamper::ServerRPC_Crawling_Implementation()
@@ -616,9 +652,7 @@ void ACamper::ServerRPC_Crawling_Implementation()
 
 void ACamper::MultiCastRPC_Crawling_Implementation()
 {
-	camperFSMComp->curHealthState = ECamperHealth::ECH_Crawl;
-	Anim->ServerRPC_HitCrawl();
-	// Anim->bCrawl = true;
+	UpdateStanceState();
 	moveComp->MaxWalkSpeed = crawlSpeed;
 }
 
@@ -792,7 +826,14 @@ void ACamper::PrintNetLog()
 	FString ownerStr = GetOwner() != nullptr ? GetOwner()->GetActorNameOrLabel() : TEXT("No Owner");
 	FString mineStr = IsLocallyControlled() ? TEXT("내 것") : TEXT("남의 것"); // 컨트롤러가 있냐 없냐, 내거냐 아니냐를 판단하는 함수
 
-	FString logStr = FString::Printf(TEXT("Connection : %s \r\nOwner : %s\r\nMine : %s"), *conStr, *ownerStr, *mineStr);
+	// FString stateStr = UEnum::GetValueAsString(curHealthState);
+	// GEngine->AddOnScreenDebugMessage(0, 2, FColor::Cyan, *stateStr);
+	FString stanceStateStr = UEnum::GetValueAsString(camperFSMComp->curStanceState);
+	FString moveStateStr = UEnum::GetValueAsString(camperFSMComp->curMoveState);
+	FString healthStateStr = UEnum::GetValueAsString(camperFSMComp->curHealthState);
+	FString InteractionStateStr = UEnum::GetValueAsString(camperFSMComp->curInteractionState);
+	
+	FString logStr = FString::Printf(TEXT("Connection : %s \r\nOwner : %s\r\nMine : %s\r\nStanceState : %s\r\nMoveState : %s\r\nHealthState : %s\r\nInteractionState : %s"), *conStr, *ownerStr, *mineStr, *stanceStateStr, *moveStateStr, *healthStateStr, *InteractionStateStr);
 	
 	DrawDebugString(GetWorld(), GetActorLocation(), logStr, nullptr, FColor::Red, 0, true);
 }

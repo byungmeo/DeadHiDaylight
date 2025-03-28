@@ -26,12 +26,18 @@ public:
 	// Camper 저장 변수
 	UPROPERTY(EditAnywhere)
 	class ACamper* camper;
+	// 생존자 자세 상태 애니메이션 스테이트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
+	ECamperStanceState animCamperStanceState = ECamperStanceState::ECSS_Idle;
+
+	// 생존자 움직임 상태 애니메이션 스테이트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
+	ECamperMoveState animCamperMoveState = ECamperMoveState::ECS_NONE;
+	
 	// 건강 상태 애니메이션 스테이트
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
 	ECamperHealth animHealthState = ECamperHealth::ECH_Healthy;
-	// 생존자 기본 상태 애니메이션 스테이트
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
-	ECamperState animCamperState = ECamperState::ECS_Idle;
+	
 	// 생존자 상호작용 스테이트
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
 	ECamperInteraction animCamperInteractionState = ECamperInteraction::ECI_NONE;

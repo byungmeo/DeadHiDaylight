@@ -35,37 +35,49 @@ void UCamperFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// FString stateStr = UEnum::GetValueAsString(curHealthState);
-	FString stateStr = UEnum::GetValueAsString(curState);
-	GEngine->AddOnScreenDebugMessage(0, 2, FColor::Cyan, *stateStr);
-
-
-	SetCamperState(curState); // 상태 스테이트
+	SetCamperStanceState(curStanceState); // 자세 상태 스테이트
+	SetCamperMoveState(curMoveState); // 상태 스테이트
 	SetCamperHealthState(curHealthState); // 건강 스테이트
 	SetCamperInteractionState(curInteractionState); // 상호작용 스테이트
 }
-
-void UCamperFSM::SetCamperState(ECamperState newState)
+// 자세 업데이트 함수
+void UCamperFSM::SetCamperStanceState(ECamperStanceState newState)
 {
 	switch (newState)
 	{
-	case ECamperState::ECS_Idle:
+	case ECamperStanceState::ECSS_Idle:
 		IdleState();
 		break;
-	case ECamperState::ECS_Move:
+	case ECamperStanceState::ECSS_Crouch:
+		CrouchState();
+		break;
+	case ECamperStanceState::ECSS_Crawl:
+		CrawlState();
+		break;
+
+	default:
+		break;
+	}
+}
+// 이동 상태 함수
+void UCamperFSM::SetCamperMoveState(ECamperMoveState newState)
+{
+	switch (newState)
+	{
+	case ECamperMoveState::ECS_NONE:
+		NoneMoveState();
+		break;
+	case ECamperMoveState::ECS_Move:
 		MoveState();
 		break;
-	case ECamperState::ECS_Run:
+	case ECamperMoveState::ECS_Run:
 		RunState();
-		break;
-	case ECamperState::ECS_Crouch:
-		CrouchState();
 		break;
 	default:
 		break;
 	}
 }
-
+// 건강 상태 함수
 void UCamperFSM::SetCamperHealthState(ECamperHealth newHealthState)
 {
 	switch (newHealthState)
@@ -76,9 +88,6 @@ void UCamperFSM::SetCamperHealthState(ECamperHealth newHealthState)
 	case ECamperHealth::ECH_Injury:
 		InjureyState();
 		break;
-	case ECamperHealth::ECH_Crawl:
-		CrawlState();
-		break;
 	case ECamperHealth::ECH_Dead:
 		DeadState();
 		break;
@@ -86,10 +95,10 @@ void UCamperFSM::SetCamperHealthState(ECamperHealth newHealthState)
 		break;
 	}
 }
-
+// 상호작용 상태 함수
 void UCamperFSM::SetCamperInteractionState(ECamperInteraction newInteractionState)
 {
-	switch (curInteractionState)
+	switch (newInteractionState)
 	{
 	case ECamperInteraction::ECI_NONE:
 		NONEState();
@@ -119,80 +128,79 @@ void UCamperFSM::SetCamperInteractionState(ECamperInteraction newInteractionStat
 		break;
 	}
 }
-
-void UCamperFSM::IdleState()
+// 기본 상태 함수
+void UCamperFSM::IdleState() // 기본 상태 함수
 {
 	if (anim == nullptr) return;
-	anim->animCamperState = ECamperState::ECS_Idle;
-}
-
-void UCamperFSM::MoveState()
-{
-	if (anim == nullptr) return;
-	anim->animCamperState = ECamperState::ECS_Move;
-}
-
-void UCamperFSM::RunState()
-{
-	if (anim == nullptr) return;
-	anim->animCamperState = ECamperState::ECS_Run;
+	anim->animCamperStanceState = ECamperStanceState::ECSS_Idle;
 }
 
 void UCamperFSM::CrouchState()
 {
 	if (anim == nullptr) return;
-	anim->animCamperState = ECamperState::ECS_Crouch;
+	anim->animCamperStanceState = ECamperStanceState::ECSS_Crouch;
+}
+
+void UCamperFSM::CrawlState() // 기어다니는 상태
+{
+	anim->animCamperStanceState = ECamperStanceState::ECSS_Crawl;
+}
+
+// 이동 상태 함수
+void UCamperFSM::NoneMoveState()
+{
+	if (anim == nullptr) return;
+	anim->animCamperMoveState = ECamperMoveState::ECS_NONE;
+}
+
+void UCamperFSM::MoveState()
+{
+	if (anim == nullptr) return;
+	anim->animCamperMoveState = ECamperMoveState::ECS_Move;
+}
+
+void UCamperFSM::RunState()
+{
+	if (anim == nullptr) return;
+	anim->animCamperMoveState = ECamperMoveState::ECS_Run;
 }
 
 // 건강한 상태
 void UCamperFSM::HealthyState()
 {
 	anim->animHealthState = ECamperHealth::ECH_Healthy;
-	
 }
-// 다친 상태
-void UCamperFSM::InjureyState()
+void UCamperFSM::InjureyState() // 다친 상태
 {
 	anim->animHealthState = ECamperHealth::ECH_Injury;
 }
-// 기어다니는 상태
-void UCamperFSM::CrawlState()
-{
-	anim->animHealthState = ECamperHealth::ECH_Crawl;
-}
-// 죽은 상태
-void UCamperFSM::DeadState()
+void UCamperFSM::DeadState()// 죽은 상태
 {
 	anim->animHealthState = ECamperHealth::ECH_Dead;
 }
 
-
+// 상호작용 상태
 void UCamperFSM::NONEState()
 {
 	anim->animCamperInteractionState = ECamperInteraction::ECI_NONE;
 }
-
 void UCamperFSM::RepairState()
 {
 	anim->animCamperInteractionState =	ECamperInteraction::ECI_Repair;
 }
-
 void UCamperFSM::DeadHardState()
 {
 	anim->animCamperInteractionState =	ECamperInteraction::ECI_DeadHard;
 }
-
 void UCamperFSM::SelfHealingState()
 {
 	anim->animCamperInteractionState = ECamperInteraction::ECI_SelfHealing;	
 }
-// 살인마한테 얹힌 상태
-void UCamperFSM::CarryState()
+void UCamperFSM::CarryState() // 살인마한테 얹힌 상태
 {
 	anim->animCamperInteractionState = ECamperInteraction::ECI_Carry;
 }
-// 갈고리에 걸린 상태
-void UCamperFSM::HookState()
+void UCamperFSM::HookState() // 갈고리에 걸린 상태
 {
 	anim->animCamperInteractionState = ECamperInteraction::ECI_Hook;
 }

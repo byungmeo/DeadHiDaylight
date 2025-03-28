@@ -26,30 +26,38 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
-	ECamperState curState = ECamperState::ECS_Idle;
+	UPROPERTY()
+	class UCamperAnimInstance* anim;
 	
+	// 자세 상태 변수
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
+	ECamperStanceState curStanceState = ECamperStanceState::ECSS_Idle;
+	// 이동 상태 변수
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
+	ECamperMoveState curMoveState = ECamperMoveState::ECS_NONE;
+	// 건강 상태 변수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
 	ECamperHealth curHealthState = ECamperHealth::ECH_Healthy;
-	
+	// 상호작용 상태 변수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
 	ECamperInteraction curInteractionState = ECamperInteraction::ECI_NONE;
 	
-	UPROPERTY()
-	class UCamperAnimInstance* anim;
-
-	// 이동 상태 함수
-	void SetCamperState(ECamperState newState);
+	// 자세 상태 함수
+	void SetCamperStanceState(ECamperStanceState newState);
 	void IdleState();
+	void CrouchState();
+	void CrawlState();
+	
+	// 이동 상태 함수
+	void SetCamperMoveState(ECamperMoveState newState);
+	void NoneMoveState();
 	void MoveState();
 	void RunState();
-	void CrouchState();
 	
 	// 건강 상태 함수
 	void SetCamperHealthState(ECamperHealth newHealthState);
 	void HealthyState();
 	void InjureyState();
-	void CrawlState();
 	void DeadState();
 
 	// 상호작용 함수

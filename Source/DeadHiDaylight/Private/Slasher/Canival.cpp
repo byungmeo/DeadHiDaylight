@@ -15,6 +15,7 @@
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -206,7 +207,7 @@ void ACanival::Look(const FInputActionValue& InputActionValue)
 void ACanival::LeftClick_Start()
 {
 	AnimInstance->PlayHammrInAnimation();
-	Hammer->SetGenerateOverlapEvents(false);
+	Hammer->SetGenerateOverlapEvents(true);
 }
 
 void ACanival::LeftClick_Complet()
@@ -218,15 +219,18 @@ void ACanival::LeftClick_Complet()
 
 void ACanival::RightClick_Start()
 {
+	GetCharacterMovement()->MaxWalkSpeed *= 0.8f;
+	
 	bIsCharging = true;
 	bIsAttacking=false;
-	
 	AnimInstance->PlayChainSawAttackAnimation();
 	GetWorld()->GetTimerManager().SetTimer(RigthAttackTimerHandle,this, &ACanival::RightAttack, RigthAttackDelay,false);
 }
 
 void ACanival::RightAttack()
 {
+	GetCharacterMovement()->MaxWalkSpeed *= 2;
+	
 	bIsCharging = false;
 	//타이머가 만료되면 공격
 	bIsAttacking=true;
@@ -362,7 +366,7 @@ void ACanival::RightClick_Complet()
 	//버튼 떼었을 때 타이머가 아직 실행중이면
 	if (!bIsAttacking)
 	{
-		
+		GetCharacterMovement()->MaxWalkSpeed *= 2;
 		GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);//타이머 취소
 		//AnimInstance->PlayChainSawRunAnimation(); //아이들상태로 (코드 변경해야함)
 		
@@ -394,6 +398,7 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		Hammer->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
 		AnimInstance->PlayWipeAnimation();
+		Camper->GetDamage();
 	}
 	// 벽이냐
 	// 그 외냐

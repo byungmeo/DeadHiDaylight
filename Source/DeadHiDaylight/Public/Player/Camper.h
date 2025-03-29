@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "InteractionPoint.h"
+#include "SacrificePlayerState.h"
 #include "GameFramework/Character.h"
 #include "Camper.generated.h"
 
@@ -110,6 +111,7 @@ public:
 	bool bFindPoints = false;
 
 	// 이동 관련 불 변수
+	bool bIsMoveing = false;
 	bool bIsRuning = false;
 	bool bIsCrouching = false;
 	bool bIsCrawling = false;
@@ -141,7 +143,9 @@ public:
 	void ServerRPC_End_Crouch();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_End_Crouch();
-
+	
+	void SetStanceState(ECamperStanceState NewState);
+	void SetMovementState(ECamperMoveState NewState);
 	// 자세 상태 업데이트 함수
 	void UpdateStanceState();
 	// 이동 상태 업데이트 함수

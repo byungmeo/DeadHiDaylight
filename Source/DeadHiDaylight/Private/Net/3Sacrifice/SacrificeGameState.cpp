@@ -41,6 +41,7 @@ void ASacrificeGameState::OnPowerOn()
 	}
 	ReqGeneratorCount = FMath::Clamp(ReqGeneratorCount - 1, 0, 5);
 	NET_LOG(LogTemp, Warning, TEXT("ASacrificeGameState::OnPowerOn : ReqGeneratorCount=%d"), ReqGeneratorCount);
+	OnRep_ReqGeneratorCount();
 }
 
 void ASacrificeGameState::OnRep_ReqGeneratorCount()

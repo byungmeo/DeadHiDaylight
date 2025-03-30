@@ -30,20 +30,33 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FRotator CamRotator = FRotator::ZeroRotator;
 	
-	UPROPERTY(BlueprintReadOnly)
-	double Speed = 0.0;
-	UPROPERTY(BlueprintReadOnly)
-	int Direction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=Anim)
+	float Speed = 0.0;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=Anim)
+	int Direction= 0.0;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void PlayLeftClickAnimation();
+	void PlayHammrInAnimation();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayHammerSwingAnimation();
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayWipeAnimation();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayChainSawAttackAnimation();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayChainSawRunAnimation();
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayKickAnimation();
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayChainSawCollisionReaction();
+
+
 	UFUNCTION(BlueprintCallable)
 	void CompletedKickAnimation();
 };

@@ -23,12 +23,11 @@ void UInteractionPoint::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// TODO:
-	/*if (false == GetOwner()->HasAuthority())
+	
+	if (false == GetOwner()->HasAuthority())
 	{
 		return;
-	}*/
+	}
 	
 	if (bSkillCheckEnable && AttachedActor)
 	{

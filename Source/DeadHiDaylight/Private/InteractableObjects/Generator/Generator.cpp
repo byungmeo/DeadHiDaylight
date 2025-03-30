@@ -26,6 +26,7 @@ AGenerator::AGenerator()
 	if (MeshObj.Succeeded())
 	{
 		Mesh->SetSkeletalMeshAsset(MeshObj.Object);
+		Mesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	}
 	ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Script/Engine.AnimBlueprint'/Game/KBD/Generator/ABP_Generator.ABP_Generator_C'"));
 	if (AnimClass.Succeeded())
@@ -135,12 +136,22 @@ void AGenerator::PowerOn()
 	bPowerOn = true;
 	DetachAll();
 	DestroyPointsAll();
-	OnPowerOn.Broadcast();
+	MulticastRPC_PowerOn();
 	SetActorTickEnabled(false);
+}
+
+void AGenerator::MulticastRPC_PowerOn_Implementation()
+{
+	OnPowerOn.Broadcast();
 }
 
 void AGenerator::OnSkillCheck(AActor* TargetActor)
 {
+	if (bPowerOn)
+	{
+		return;
+	}
+	
 	if (ACamper* Camper = Cast<ACamper>(TargetActor))
 	{
 		NET_LOG(LogTemp, Warning, TEXT("AGenerator::OnSkillCheck"));
@@ -158,6 +169,11 @@ void AGenerator::OnSkillCheck(AActor* TargetActor)
 
 void AGenerator::SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult Result)
 {
+	if (bPowerOn)
+	{
+		return;
+	}
+	
 	switch (Result)
     	{
     	case ESkillCheckResult::ESCR_Fail:
@@ -172,11 +188,11 @@ void AGenerator::SkillCheckFinish(class ACamper* Camper, const ESkillCheckResult
     	}
 }
 
-void AGenerator::SkillCheckSuccess(const bool bGreateSuccess)
+void AGenerator::SkillCheckSuccess(const bool bGreatSuccess)
 {
-	NET_LOG(LogTemp, Warning, TEXT("AGenerator::SkillCheckSuccess %hs"), (bGreateSuccess ? "GREAT!!!" : "SOSO..."));
+	NET_LOG(LogTemp, Warning, TEXT("AGenerator::SkillCheckSuccess %hs"), (bGreatSuccess ? "GREAT!!!" : "SOSO..."));
 	
-	if (true == bGreateSuccess)
+	if (true == bGreatSuccess)
 	{
 		PowerGauge += GreateSuccessBonus;
 	}
@@ -209,6 +225,11 @@ void AGenerator::TestExplosion()
 
 void AGenerator::Break()
 {
+	if (bPowerOn)
+	{
+		return;
+	}
+	
 	bIsBreak = true;
 	PowerGauge -= FMath::Clamp(ImmediateBreakValue, 0, 1);
 	RemainBreakShield = InitBreakShield;

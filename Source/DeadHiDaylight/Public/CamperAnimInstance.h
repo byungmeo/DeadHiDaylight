@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerState.h"
 #include "Animation/AnimInstance.h"
+#include "CamperComps/CamperFSM.h"
 #include "CamperAnimInstance.generated.h"
 
 /**
@@ -24,6 +26,21 @@ public:
 	// Camper 저장 변수
 	UPROPERTY(EditAnywhere)
 	class ACamper* camper;
+	// 생존자 자세 상태 애니메이션 스테이트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
+	ECamperStanceState animCamperStanceState = ECamperStanceState::ECSS_Idle;
+
+	// 생존자 움직임 상태 애니메이션 스테이트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
+	ECamperMoveState animCamperMoveState = ECamperMoveState::ECS_NONE;
+	
+	// 건강 상태 애니메이션 스테이트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
+	ECamperHealth animHealthState = ECamperHealth::ECH_Healthy;
+	
+	// 생존자 상호작용 스테이트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
+	ECamperInteraction animCamperInteractionState = ECamperInteraction::ECI_NONE;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	float moveSpeed; // 현재 속도
@@ -59,11 +76,11 @@ public:
 
 	// 기어가는 불 값 변경하는 함수 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
-	void HitCrawl();
+	void PlayHitCrawlAnimation(FName sectionName);
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_HitCrawl();
+	void ServerRPC_PlayHitCrawlAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_HitCrawl();
+	void MultiCastRPC_PlayHitCrawlAnimation(FName sectionName);
 	// 발전기 고치는 애니메이션 몽타주 실행하는 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayRepairAnimation(FName sectionName);

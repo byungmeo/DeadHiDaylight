@@ -119,8 +119,8 @@ public:
 	// 이동 관련 함수
 	void CamperMove(const FInputActionValue& value); // 캠퍼 움직임 함수
 	void StopCamperMove(const FInputActionValue& value);
-	void StartRun(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
 
+	void StartRun(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_StartRun();
 	UFUNCTION(NetMulticast, Reliable)
@@ -145,7 +145,17 @@ public:
 	void MultiCastRPC_End_Crouch();
 	
 	void SetStanceState(ECamperStanceState NewState);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SetStanceState(ECamperStanceState NewState);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_SetStanceState(ECamperStanceState NewState);
+	
 	void SetMovementState(ECamperMoveState NewState);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SetMovementState(ECamperMoveState NewState);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_SetMovementState(ECamperMoveState NewState);
+	
 	// 자세 상태 업데이트 함수
 	void UpdateStanceState();
 	// 이동 상태 업데이트 함수

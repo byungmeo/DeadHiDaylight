@@ -76,11 +76,11 @@ public:
 
 	// 기어가는 불 값 변경하는 함수 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
-	void HitCrawl();
+	void PlayHitCrawlAnimation(FName sectionName);
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_HitCrawl();
+	void ServerRPC_PlayHitCrawlAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_HitCrawl();
+	void MultiCastRPC_PlayHitCrawlAnimation(FName sectionName);
 	// 발전기 고치는 애니메이션 몽타주 실행하는 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayRepairAnimation(FName sectionName);

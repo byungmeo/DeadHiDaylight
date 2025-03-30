@@ -1,5 +1,4 @@
-
-
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "DeadHiDaylight/Public/Player/Camper.h"
 
@@ -225,17 +224,18 @@ void ACamper::Tick(float DeltaTime)
 		}
 	}
 	
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		GetDamage();
 	}
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
 	{
 		if (camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 	}
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Three))
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Three))
 	{
 		// 쓰러진 상태에서 돌아갈 때 Crawlhealing이 끝나면
+		Anim->bHitCrawl = false;
 		curHP = maxHP;
 		camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 		moveComp->MaxWalkSpeed = 0;
@@ -243,28 +243,28 @@ void ACamper::Tick(float DeltaTime)
 		StopInjureSound();
 	}
 	// Hook 걸리는 거 테스트 용
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Four))
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Four))
 	{
 		Hooking(TEXT("HookIn"));
 	}
 	// Hook 자가 탈출 테스트 용
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Five))
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Five))
 	{
 		Hooking(TEXT("HookStruggle"));
 		btest = true;
 	}
 	// Hook 구해지는 거 테스트
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Six))
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Six))
 	{
 		camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
 		Hooking(TEXT("HookRescuedEnd"));
 	}
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Seven))
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Seven))
 	{
 		RescueHooking(TEXT("HookRescueIn"));
 		btest = true;
 	}
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Eight))
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Eight))
 	{
 		FailRepair(TEXT("GenFailFT"));
 	}
@@ -305,7 +305,7 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACamper::CamperMove(const FInputActionValue& value)
 {
-	if (Anim->bStartRepair || Anim->bSelfHealing) return;
+	if (Anim->bStartRepair || Anim->bSelfHealing || GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) == true) return;
 
 	FVector2D dir = value.Get<FVector2D>();
 	
@@ -346,6 +346,8 @@ void ACamper::StartRun(const struct FInputActionValue& value)
 {
 	ServerRPC_StartRun();
 }
+
+
 void ACamper::ServerRPC_StartRun_Implementation()
 {
 	MultiCastRPC_StartRun();
@@ -408,6 +410,7 @@ void ACamper::ServerRPC_End_Crouch_Implementation()
 void ACamper::MultiCastRPC_End_Crouch_Implementation()
 {
 	bIsCrouching = false;
+	springArmComp->SetRelativeLocation(FVector(0, 0, 210));
 	UpdateStanceState();
 	UpdateMovementState();
 }
@@ -447,8 +450,18 @@ void ACamper::UpdateMovementState()
 
 void ACamper::SetStanceState(ECamperStanceState NewState)
 {
-	camperFSMComp->curStanceState = NewState;
+	ServerRPC_SetStanceState(NewState);
+}
 
+void ACamper::ServerRPC_SetStanceState_Implementation(ECamperStanceState NewState)
+{
+	MultiCastRPC_SetStanceState(NewState);
+}
+
+void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewState)
+{
+	camperFSMComp->curStanceState = NewState;
+	
 	switch (NewState)
 	{
 	case ECamperStanceState::ECSS_Idle:
@@ -461,12 +474,28 @@ void ACamper::SetStanceState(ECamperStanceState NewState)
 		springArmComp->SetRelativeLocation(FVector(0, 0, 160));
 		break;
 	case ECamperStanceState::ECSS_Crawl:
+		if (Anim && Anim->bHitCrawl == false)
+		{
+			Anim->bHitCrawl = true;
+			Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
+		}
 		curSpeed = crawlSpeed;
 		moveComp->MaxWalkSpeed = crawlSpeed;
 		break;
 	}
 }
+
 void ACamper::SetMovementState(ECamperMoveState NewState)
+{
+	ServerRPC_SetMovementState(NewState);
+}
+
+void ACamper::ServerRPC_SetMovementState_Implementation(ECamperMoveState NewState)
+{
+	MultiCastRPC_SetMovementState(NewState);
+}
+
+void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewState)
 {
 	camperFSMComp->curMoveState = NewState;
 
@@ -477,17 +506,17 @@ void ACamper::SetMovementState(ECamperMoveState NewState)
 		moveComp->StopMovementImmediately();
 		break;
 	case ECamperMoveState::ECS_Move:
+		if (camperFSMComp && camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch || camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl) return;
 		curSpeed = moveSpeed * 2;
 		moveComp->MaxWalkSpeed = curSpeed;
 		break;
 	case ECamperMoveState::ECS_Run:
+		if (camperFSMComp && camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch || camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl) return;
 		curSpeed = maxSpeed * 2;
 		moveComp->MaxWalkSpeed = curSpeed;
 		break;
 	}
 }
-
-
 
 void ACamper::CheckInteractPoint()
 {
@@ -613,6 +642,7 @@ void ACamper::ServerRPC_GetDamage_Implementation()
 
 void ACamper::MultiCastRPC_GetDamage_Implementation()
 {
+	if (camperFSMComp == nullptr) return;
 	
 	if (curHP > 1)
 	{

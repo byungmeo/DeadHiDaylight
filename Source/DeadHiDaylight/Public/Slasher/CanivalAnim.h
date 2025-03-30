@@ -52,11 +52,10 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayKickAnimation();
-	
+
 	UFUNCTION(BlueprintImplementableEvent)
-	void PlayChainSawCollisionReaction();
+	void PlayHangAnimation();
 
-
-	UFUNCTION(BlueprintCallable)
-	void CompletedKickAnimation();
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayAttackShoulderAnimation();
 };

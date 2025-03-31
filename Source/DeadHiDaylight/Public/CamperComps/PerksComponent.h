@@ -36,7 +36,7 @@ public:
 	// anim 저장용 변수
 	UCamperAnimInstance* anim;
 	
-	AActor* owner;
+	UCamperFSM* fsm;
 	
 	// 데드하드 사용 가능한지 판단하는 변수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Perks")

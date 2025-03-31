@@ -30,6 +30,8 @@ protected:
 	void RightClick_Start();
 	UFUNCTION(CallInEditor)
 	void RightClick_Complet();
+	UFUNCTION(CallInEditor)
+	void HangOnHook();
 	
 public:	
 	// Called every frame
@@ -66,9 +68,12 @@ public:
 	class UCanivalAnim* AnimInstance = nullptr;
 	
 	TObjectPtr<UInputAction> ia_Kick;
+	
+	TObjectPtr<UInputAction> ia_hang;
 
 	UFUNCTION()
 	void OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void FindPoint();
 	void Kick();
@@ -81,6 +86,8 @@ public:
 	
 	bool bIsAttacking; //공격 실행되었는지
 	bool bIsCharging; //공격 실행되었는지
+	
+	bool bIsIdleAndMove; //idle move 상태
 	
 	//공격실행
 	UFUNCTION()
@@ -108,7 +115,7 @@ public:
 	
 	//죽은 생존자 어깨에 붙이기
 	UFUNCTION()
-	void AttachSurvivorToShourder(class ACamper* Survivor);
+	void AttachSurvivorToShoulder(class ACamper* Survivor);
 	
 
 

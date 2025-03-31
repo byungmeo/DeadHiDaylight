@@ -40,6 +40,12 @@ AExitDoor::AExitDoor()
 		CamperPoint->OnInteraction.AddDynamic(this, &AExitDoor::OnInteraction);
 		CamperPoint->OnStopInteraction.AddDynamic(this, &AExitDoor::OnStopInteraction);
 		CamperPoint->InteractionMode = EInteractionMode::EIM_CamperOnly;
+
+		ExitArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ExitArea"));
+		ExitArea->SetupAttachment(Mesh);
+		ExitArea->SetRelativeLocation(FVector(500, 0, 0));
+		ExitArea->SetBoxExtent(FVector(200, 1000, 1000));
+		ExitArea->OnComponentBeginOverlap.AddDynamic(this, &AExitDoor::OnExitAreaBeginOverlap);
 	}
 }
 
@@ -112,5 +118,14 @@ void AExitDoor::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherA
 		bIsActivating = false;
 		Point->DetachActor();
 		Camper->EndUnLock(); // 정솔 추가 부분
+	}
+}
+
+void AExitDoor::OnExitAreaBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (auto* Camper = Cast<ACamper>(OtherActor))
+	{
+		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnExitAreaBeginOverlap : 생존자 탈출 성공"));
 	}
 }

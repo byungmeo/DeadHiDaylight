@@ -13,12 +13,16 @@
 #include "InputMappingContext.h"
 #include "SacrificeCommonHUD.h"
 #include "SacrificePlayerController.h"
+#include "Audio/AudioDebug.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Player/Camper.h"
+#include "Sound/SoundBase.h"
+
+
 
 // Sets default values
 ACanival::ACanival()
@@ -109,6 +113,13 @@ ACanival::ACanival()
 	ChainSaw->SetRelativeRotation(FRotator(-66.141346,18.747237,143.994784));
 	ChainSaw->SetRelativeScale3D(FVector(0.7f,0.7f,0.7f));
 	ChainSaw->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+
+	ConstructorHelpers::FObjectFinder<USoundBase> SoundObj(TEXT("/Script/Engine.SoundWave'/Game/KHA/Carnival/Character/Audio/K09_WEAPON/AudioEvent_K09_WPN_Default_SledgeHammer_Impact_Survivor__r_.AudioEvent_K09_WPN_Default_SledgeHammer_Impact_Survivor__r_'"));
+	if (SoundObj.Succeeded())
+	{
+		HammerHitSound = SoundObj.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -441,6 +452,7 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		Hammer->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
 		AnimInstance->PlayWipeAnimation();
+		UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
 		Camper->GetDamage(TEXT(""));
 	}
 	// 벽이냐

@@ -54,7 +54,7 @@ public:
 	void PlayKickAnimation();
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void PlayHangAnimation();
+	void PlayHangAnimation(class AMeatHook* Hook);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayAttackShoulderAnimation();

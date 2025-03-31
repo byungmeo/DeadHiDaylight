@@ -82,7 +82,7 @@ ACanival::ACanival()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(GetMesh(), TEXT("joint_Cam_01"));
-	//Camera-> bUsePawnControlRotation = true;
+	Camera->bUsePawnControlRotation = true;
 
 	Hammer = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hammer"));
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> HammerObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Weapon/Hammer/Hammer.Hammer'"));
@@ -165,12 +165,6 @@ void ACanival::Tick(float DeltaTime)
 		FindPoint();
 		CheckAndAttachSurvivor();
 	}
-
-	// UE_LOG(LogTemp, Display, TEXT("%s"), *GetVelocity().ToString());
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
-	{
-		
-	}
 	
 	if (bChainSawCharging || ChainSawGauge > 0)
 	{
@@ -218,7 +212,7 @@ void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputCompo
 		pi->BindAction(ia_rightClick, ETriggerEvent::Started,this, &ACanival::RightClick_Start);
 		pi->BindAction(ia_rightClick, ETriggerEvent::Completed ,this, &ACanival::RightClick_Complet);
 		pi->BindAction(ia_Kick, ETriggerEvent::Started,this, &ACanival::FindPoint);
-		pi->BindAction(ia_hang, ETriggerEvent::Started,this, &ACanival::HangOnHook);
+		// pi->BindAction(ia_hang, ETriggerEvent::Started,this, &ACanival::HangOnHook);
 	}
 }
 
@@ -236,11 +230,8 @@ void ACanival::Look(const FInputActionValue& InputActionValue)
 {
 	FVector2D Value = InputActionValue.Get<FVector2D>();
 	AddControllerYawInput(Value.X);
-	if (GetVelocity().Size2D()<0.1f)
-	{
-		AddControllerPitchInput(Value.Y);
-		
-	}
+	AddControllerPitchInput(Value.Y);
+	
 }
 
 void ACanival::LeftClick_Start()
@@ -282,15 +273,6 @@ void ACanival::RightAttack()
 	AnimInstance->PlayChainSawRunAnimation();
 }
 
-void ACanival::OnChainSawHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse, const FHitResult& Hit)
-{
-	if (!OtherActor || OtherActor == this)
-	{
-		return;
-	}
-}
-
 void ACanival::CheckAndAttachSurvivor()
 {
 	// 이미 부착된 생존자가 있으면 새로 찾지 않음
@@ -313,7 +295,7 @@ void ACanival::CheckAndAttachSurvivor()
 		if (Camper)
 		{
 			// 생존자가 죽어서 크롤링 상태인지 확인 (Anim 인스턴스가 있고 bCrawl이 true)
-			if (!(Camper->Anim && Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl))
+			if (!(Camper->Anim && Camper->camperFSMComp && Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl))
 			{
 				continue;
 			}
@@ -393,7 +375,8 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 	{
 		// AActor* ParentActor, FName SocketName, EAttachmentRule LocationRule, EAttachmentRule RotationRule, EAttachmentRule ScaleRule, bool bWeldSimulatedBodies
 		// Survivor->K2_AttachToActor(this, TEXT("joint_ShoulderLT_01Socket"), );
-		Survivor->GetMesh()->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
+		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
+		Survivor->GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));
 
 		Survivor->SetActorEnableCollision(false);
 		Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
@@ -422,9 +405,9 @@ void ACanival::RightClick_Complet()
 	}
 }
 
-void ACanival::HangOnHook()
+void ACanival::HangOnHook(class AMeatHook* Hook)
 {
-	AnimInstance->PlayHangAnimation();
+	AnimInstance->PlayHangAnimation(Hook);
 	UE_LOG(LogTemp, Warning, TEXT("Hang"));
 }
 

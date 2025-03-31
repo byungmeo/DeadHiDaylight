@@ -15,7 +15,7 @@ public:
 	// Sets default values for this character's properties
 	ACanival();
 
-protected:
+public:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -27,7 +27,7 @@ protected:
 	UFUNCTION(CallInEditor)
 	void LeftClick_Complet();
 	UFUNCTION(CallInEditor)
-	void HangOnHook();
+	void HangOnHook(class AMeatHook* Hook);
 	
 public:	
 	// Called every frame

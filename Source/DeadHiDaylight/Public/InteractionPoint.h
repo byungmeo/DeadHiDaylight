@@ -35,6 +35,9 @@ class DEADHIDAYLIGHT_API UInteractionPoint : public UBoxComponent
 public:
 	// Sets default values for this component's properties
 	UInteractionPoint();
+	static UInteractionPoint* FindInteractionPoint(const UWorld* WorldContext, const FVector& Start, const FVector& End, EInteractionMode FindMode);
+
+protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;

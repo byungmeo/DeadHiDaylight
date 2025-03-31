@@ -4,6 +4,7 @@
 #include "InteractionPoint.h"
 
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 // Sets default values for this component's properties
@@ -11,6 +12,39 @@ UInteractionPoint::UInteractionPoint()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	BoxExtent = FVector(1, 1, 1);
+}
+
+UInteractionPoint* UInteractionPoint::FindInteractionPoint(const UWorld* WorldContext, const FVector& Start, const FVector& End, const EInteractionMode FindMode)
+{
+	TArray<AActor*> ActorsToIgnore;
+    TArray<FHitResult> OutHits;
+    const bool bHit = UKismetSystemLibrary::SphereTraceMultiByProfile(
+    	WorldContext,
+    	Start,
+    	End,
+    	500,
+    	TEXT("InteractionPoint"),
+    	false,
+    	ActorsToIgnore,
+    	EDrawDebugTrace::ForOneFrame,
+    	OutHits,
+    	false
+    );
+	if (bHit)
+	{
+		for (int i = 0; i < OutHits.Num(); i++)
+		{
+			auto* Point = Cast<UInteractionPoint>(OutHits[i].Component);
+			bool bA = Point->bCanInteract;
+			if (false == Point->bCanInteract)
+			{
+				
+			}
+		}
+		Algo::SortBy(OutHits, &FHitResult::Distance);
+		return Cast<UInteractionPoint>(OutHits[0].Component);
+	}
+	return nullptr;
 }
 
 void UInteractionPoint::BeginPlay()

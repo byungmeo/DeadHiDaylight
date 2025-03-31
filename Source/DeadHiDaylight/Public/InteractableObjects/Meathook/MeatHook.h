@@ -37,4 +37,8 @@ public:
 	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);
 	UFUNCTION()
 	void OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor);
+
+	void OnHooked(class ACamper* HookedCamper);
+	void OnRescued();
+	void OnSacrificed();
 };

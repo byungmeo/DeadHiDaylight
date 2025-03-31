@@ -81,16 +81,8 @@ void UPerksComponent::ServerRPC_PerksDeadHard_Implementation()
 
 void UPerksComponent::NetMultiCastRPC_PerksDeadHard_Implementation()
 {
-	// 데드하드 발동
-	// if (anim)
-	// {
-	// 	if (anim->bInjure && anim->bRun && bDeadHard == false)
-	// 	{
-	// 		bDeadHard = true;
-	// 	}
-	// }
-	// DeadHard 몽타주 실행
-	if (bDeadHard == true && fsm->curHealthState != ECamperHealth::ECH_Injury) return;
+	// 데드하드를 사용했고, 다친 상태가 아니고 달리는 상태가 아니면 return
+	if (bDeadHard == true || fsm->curHealthState != ECamperHealth::ECH_Injury || fsm->curMoveState != ECamperMoveState::ECS_Run) return;
 	
 	bDeadHard = true;
 	fsm->curInteractionState = ECamperInteraction::ECI_DeadHard;

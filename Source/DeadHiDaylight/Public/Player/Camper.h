@@ -16,11 +16,8 @@ public:
 	// Sets default values for this character's properties
 	ACamper();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 public:
+	virtual void OnConstruction(const FTransform& Transform) override;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
@@ -64,6 +61,9 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
 	class USoundAttenuation* injuredScreamAttenuation;
 	
+	// 몽타주
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	UAnimMontage* deadHardMontage;
 	
 	// moveComp
 	UPROPERTY()
@@ -86,6 +86,9 @@ public:
 	class UInputAction* IA_Repair;
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_UnLock;
+
+	// 타이머 핸들 변수
+	FTimerHandle hitTimerHandle;
 	
 	// 체력 변수
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Camper)
@@ -204,13 +207,6 @@ public:
 	void ServerRPC_GetDamage();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_GetDamage();
-	
-	// 맞을 때 속도 증가 함수 RPC
-	void HitSpeedTimer();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_HitSpeedTimer();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_HitSpeedTimer();
 	
 	// 쓰러진 상태 함수 RPC
 	void Crawling();

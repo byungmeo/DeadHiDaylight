@@ -16,12 +16,11 @@ class DEADHIDAYLIGHT_API UCamperFSM : public UCamperBaseComponent
 public:
 	// Sets default values for this component's properties
 	UCamperFSM();
-
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
-
 public:
+	virtual void InitializeComponent() override;
+	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
@@ -56,6 +55,10 @@ public:
 	
 	// 건강 상태 함수
 	void SetCamperHealthState(ECamperHealth newHealthState);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SetCamperHealthState(ECamperHealth newHealthState);
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_SetCamperHealthState(ECamperHealth newHealthState);
 	void HealthyState();
 	void InjureyState();
 	void DeadState();

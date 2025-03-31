@@ -170,12 +170,15 @@ ACamper::ACamper()
 	springArmComp->bEnableCameraLag = true;
 	springArmComp->CameraLagSpeed = 10;
 	bUseControllerRotationYaw = false;
+	
+	// 캐릭터 움직임 컴포넌트 세팅
+	moveComp = GetCharacterMovement();
+	moveComp->MaxWalkSpeed = moveSpeed;
 }
 
-// Called when the game starts or when spawned
-void ACamper::BeginPlay()
+void ACamper::OnConstruction(const FTransform& Transform)
 {
-	Super::BeginPlay();
+	Super::OnConstruction(Transform);
 
 	Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
 
@@ -192,9 +195,6 @@ void ACamper::BeginPlay()
 	}
 }, 0.1f, false);
 
-	// 캐릭터 움직임 컴포넌트 세팅
-	moveComp = GetCharacterMovement();
-	moveComp->MaxWalkSpeed = moveSpeed;
 }
 
 // Called every frame
@@ -274,7 +274,7 @@ void ACamper::Tick(float DeltaTime)
 
 	if (curHP == maxHP && camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 
-	
+	UE_LOG(LogTemp, Warning, TEXT("Current speed: %f"), curSpeed);
 	if (!bPlayInjureSound)
 	{
 		StopInjureSound();
@@ -307,15 +307,15 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACamper::CamperMove(const FInputActionValue& value)
 {
-	// if (Anim->bStartRepair || Anim->bSelfHealing) return;
-
-	FVector2D dir = value.Get<FVector2D>();
+	if (Anim->bStartRepair || Anim->bSelfHealing) return;
 	
+	FVector2D dir = value.Get<FVector2D>();
+
 	const FRotator Rotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
+
 	// get right vector 
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
@@ -436,17 +436,17 @@ void ACamper::UpdateStanceState()
 
 void ACamper::UpdateMovementState()
 {
-	if (bIsRuning && camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crouch)
+	if (bIsRuning)
 	{
-		SetMovementState(ECamperMoveState::ECS_Run);
+		if (camperFSMComp->curMoveState != ECamperMoveState::ECS_Run) SetMovementState(ECamperMoveState::ECS_Run);
 	}
 	else if (bIsMoveing)
 	{
-		SetMovementState(ECamperMoveState::ECS_Move);
+		if (camperFSMComp->curMoveState != ECamperMoveState::ECS_Move) SetMovementState(ECamperMoveState::ECS_Move);
 	}
 	else
 	{
-		SetMovementState(ECamperMoveState::ECS_NONE);
+		if (camperFSMComp->curMoveState != ECamperMoveState::ECS_NONE) SetMovementState(ECamperMoveState::ECS_NONE);
 	}
 }
 
@@ -467,12 +467,10 @@ void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewS
 	switch (NewState)
 	{
 	case ECamperStanceState::ECSS_Idle:
-		curSpeed = 0;
-		moveComp->MaxWalkSpeed = moveSpeed;
+		// curSpeed = 0;
+		// moveComp->MaxWalkSpeed = moveSpeed;
 		break;
 	case ECamperStanceState::ECSS_Crouch:
-		curSpeed = crouchSpeed * 2;
-		moveComp->MaxWalkSpeed = curSpeed;
 		springArmComp->SetRelativeLocation(FVector(0, 0, 160));
 		break;
 	case ECamperStanceState::ECSS_Crawl:
@@ -481,8 +479,6 @@ void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewS
 			Anim->bHitCrawl = true;
 			Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
 		}
-		curSpeed = crawlSpeed;
-		moveComp->MaxWalkSpeed = crawlSpeed;
 		break;
 	}
 }
@@ -508,14 +504,31 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 		moveComp->StopMovementImmediately();
 		break;
 	case ECamperMoveState::ECS_Move:
-		if (camperFSMComp && camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch || camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl) return;
-		curSpeed = moveSpeed * 2;
-		moveComp->MaxWalkSpeed = curSpeed;
+		// Croch 상태
+		if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch)
+		{
+			curSpeed = crouchSpeed * 2;
+			moveComp->MaxWalkSpeed = curSpeed;
+		}
+		else if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+		{
+			curSpeed = crawlSpeed;
+			moveComp->MaxWalkSpeed = curSpeed;
+		}
+		else
+		{
+			curSpeed = moveSpeed * 2;
+			moveComp->MaxWalkSpeed = curSpeed;
+		}
 		break;
 	case ECamperMoveState::ECS_Run:
-		if (camperFSMComp && camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch || camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl) return;
-		curSpeed = maxSpeed * 2;
-		moveComp->MaxWalkSpeed = curSpeed;
+		if (camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crouch &&
+			camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crawl)
+		{
+			curSpeed = maxSpeed * 2;
+			moveComp->MaxWalkSpeed = curSpeed;
+			UE_LOG(LogTemp, Error, TEXT("RUN"));
+		}
 		break;
 	}
 }
@@ -634,7 +647,14 @@ void ACamper::ServerRPC_StopInteract_Implementation()
 
 void ACamper::GetDamage()
 {
-	ServerRPC_GetDamage();
+	if (HasAuthority())
+	{
+		ServerRPC_GetDamage();
+	}
+	else if (IsLocallyControlled())
+	{
+		ServerRPC_GetDamage();
+	}
 }
 
 void ACamper::ServerRPC_GetDamage_Implementation()
@@ -645,27 +665,26 @@ void ACamper::ServerRPC_GetDamage_Implementation()
 void ACamper::MultiCastRPC_GetDamage_Implementation()
 {
 	if (camperFSMComp == nullptr) return;
-	
+
 	if (curHP > 1)
 	{
-		// HP를 줄이고
-		--curHP;
-		UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f "), curHP);
-		// 다친 상태로 변경하고
-		Anim->bInjure = true;
 		// 이전 속도를 저장
 		beforeSpeed = moveComp->MaxWalkSpeed;
 		// 다쳤을 때 2초동안 스피드가 2배 증가
-		moveComp->MaxWalkSpeed = moveComp->MaxWalkSpeed * 2;
-
+		moveComp->MaxWalkSpeed *= 2;
+		// 다친 상태로 변경하고
 		camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
 		
 		// 맞을 때 비명 지르는 부분
 		if (injuredScreamCue) PlayScreamSound();
 
 		// 2초 후 다시 이전 속도로 복귀
-		FTimerHandle hitTimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, this, &ACamper::HitSpeedTimer, 2.0f, false);
+		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, [this]()
+		{
+			moveComp->MaxWalkSpeed = beforeSpeed;
+			bPlayInjureSound = true;
+			PlayInjureSound();
+		}, 2.0f, false);
 	}
 	else
 	{
@@ -674,26 +693,18 @@ void ACamper::MultiCastRPC_GetDamage_Implementation()
 		// 기어다니는 상태로 전환
 		Crawling();
 	}
-}
-
-void ACamper::HitSpeedTimer()
-{
-	ServerRPC_HitSpeedTimer();
-}
-void ACamper::ServerRPC_HitSpeedTimer_Implementation()
-{
-	MultiCastRPC_HitSpeedTimer();
-}
-void ACamper::MultiCastRPC_HitSpeedTimer_Implementation()
-{
-	// if (Anim->bCrawl) return;
-	moveComp->MaxWalkSpeed = beforeSpeed;
-
-	bPlayInjureSound = true;
 	
-	PlayInjureSound();
+	if (IsLocallyControlled())
+	{
+		if (curHP > 1)
+		{
+			// HP를 줄이고
+			--curHP;
+			UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f "), curHP);
+			
+		}
+	}
 }
-
 void ACamper::Crawling()
 {
 	ServerRPC_Crawling();

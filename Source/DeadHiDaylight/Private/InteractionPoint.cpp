@@ -16,6 +16,12 @@ UInteractionPoint::UInteractionPoint()
 
 UInteractionPoint* UInteractionPoint::FindInteractionPoint(const UWorld* WorldContext, const FVector& Start, const FVector& End, const EInteractionMode FindMode)
 {
+	if (FindMode == EInteractionMode::EIM_None || FindMode == EInteractionMode::EIM_Both)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UInteractionPoint::FindInteractionPoint INVALID FindMode"));
+		return nullptr;
+	}
+	
 	TArray<AActor*> ActorsToIgnore;
     TArray<FHitResult> OutHits;
     const bool bHit = UKismetSystemLibrary::SphereTraceMultiByProfile(
@@ -30,17 +36,27 @@ UInteractionPoint* UInteractionPoint::FindInteractionPoint(const UWorld* WorldCo
     	OutHits,
     	false
     );
+	
 	if (bHit)
 	{
 		for (int i = 0; i < OutHits.Num(); i++)
 		{
-			auto* Point = Cast<UInteractionPoint>(OutHits[i].Component);
-			bool bA = Point->bCanInteract;
-			if (false == Point->bCanInteract)
+			// 상호작용 불가능 한 Point는 거른다
+			const auto* Point = Cast<UInteractionPoint>(OutHits[i].Component);
+			if (false == Point->bCanInteract || (Point->InteractionMode != FindMode || Point->InteractionMode == EInteractionMode::EIM_None))
 			{
-				
+				OutHits.RemoveAt(i);
+				i--;
+				continue;
 			}
+
+			// TODO: 바라보는 방향 고려
 		}
+	}
+	
+	if (OutHits.Num() > 0)
+	{
+		// 가장 거리가 가까운 Point를 반환
 		Algo::SortBy(OutHits, &FHitResult::Distance);
 		return Cast<UInteractionPoint>(OutHits[0].Component);
 	}

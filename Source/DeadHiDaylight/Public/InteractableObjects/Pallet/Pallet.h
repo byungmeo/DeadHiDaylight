@@ -4,16 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "MeatHook.generated.h"
+#include "Pallet.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFallGround);
 
 UCLASS()
-class DEADHIDAYLIGHT_API AMeatHook : public AActor
+class DEADHIDAYLIGHT_API APallet : public AActor
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
-	AMeatHook();
+	APallet();
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,22 +25,25 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<USkeletalMeshComponent> Mesh = nullptr;
+    TObjectPtr<USkeletalMeshComponent> Mesh = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    TObjectPtr<class UInteractionPoint> SlasherPoint = nullptr;
+	TObjectPtr<UStaticMeshComponent> BrokenMesh = nullptr;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UInteractionPoint> CamperPoint = nullptr;
+	TObjectPtr<class UInteractionPoint> AttachPoint1 = nullptr;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UInteractionPoint> AttachPoint2 = nullptr;
 
 	UFUNCTION()
 	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);
-	UFUNCTION()
-	void OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor);
 
-	void OnHooked(class ACamper* HookedCamper);
-	void OnRescued();
-	void OnSacrificed();
+	UFUNCTION(CallInEditor, Category="Test")
+	void FallGround();
+	FOnFallGround OnFallGround;
+
+	UFUNCTION(CallInEditor, Category="Test")
+	void Broken();
 };

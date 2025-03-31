@@ -3,8 +3,10 @@
 
 #include "MeatHook.h"
 
+#include "Canival.h"
 #include "Player/Camper.h"
 #include "InteractionPoint.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 
 
 // Sets default values
@@ -34,6 +36,7 @@ AMeatHook::AMeatHook()
 		SlasherPoint->OnInteraction.AddDynamic(this, &AMeatHook::OnInteraction);
 		SlasherPoint->OnStopInteraction.AddDynamic(this, &AMeatHook::OnStopInteraction);
 		SlasherPoint->InteractionMode = EInteractionMode::EIM_SlasherOnly;
+		SlasherPoint->bCanInteract = true;
 		
 		CamperPoint = CreateDefaultSubobject<UInteractionPoint>(TEXT("CamperPoint"));
 		CamperPoint->SetupAttachment(Mesh, TEXT("joint_CamperAttach"));
@@ -41,6 +44,7 @@ AMeatHook::AMeatHook()
 		CamperPoint->OnInteraction.AddDynamic(this, &AMeatHook::OnInteraction);
 		CamperPoint->OnStopInteraction.AddDynamic(this, &AMeatHook::OnStopInteraction);
 		CamperPoint->InteractionMode = EInteractionMode::EIM_CamperOnly;
+		CamperPoint->bCanInteract = false;
 	}
 }
 
@@ -60,19 +64,38 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 {
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AMeathook::OnInteraction Survivor"));
+		NET_LOG(LogTemp, Warning, TEXT("AMeathook::OnInteraction Survivor"));
 		
-		// TODO: Case1 : 생존자가 갈고리에 걸려있는 생존자를 구하는 경우
-		
-		// TODO: Case2 : 갈고리에 걸려있는 생존자가 스스로 탈출을 시도하는 경우
-		
+		if (Point->AttachedActor == OtherActor)
+		{
+			// TODO: Case1 : 갈고리에 걸려있는 생존자가 스스로 탈출을 시도하는 경우
+		}
+		else
+		{
+			// TODO: Case2 : 생존자가 갈고리에 걸려있는 생존자를 구하는 경우
+			
+			// 1. 구하려는 생존자에게 알림
+			Camper->ServerRPC_RescueHooking(TEXT("HookRescueIn"));
+
+			// 2. Point를 적절한 상태로 전환
+			CamperPoint->bCanInteract = false;
+		}
 	}
-	else
+	else if (ACanival* Slasher = Cast<ACanival>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AMeathook::OnInteraction Slasher"));
+		NET_LOG(LogTemp, Warning, TEXT("AMeathook::OnInteraction Slasher"));
 		
 		// TODO: 살인마가 생존자를 업은 상태에서 갈고리에 걸려고 하는 경우
-		
+		if (auto* HookingCamper = Slasher->AttachedSurvivor)
+		{
+			// 1. 생존자 및 살인자에게 알림
+			HookingCamper->ServerRPC_Hooking(TEXT("HookIn"));
+			// Slasher->HangOnHook();
+
+			// 2. Point를 적절한 상태로 전환
+			CamperPoint->bCanInteract = true;
+			SlasherPoint->bCanInteract = false;
+		}
 	}
 }
 
@@ -80,16 +103,37 @@ void AMeatHook::OnStopInteraction(UInteractionPoint* Point, AActor* OtherActor)
 {
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AMeathook::OnInteraction Survivor"));
+		NET_LOG(LogTemp, Warning, TEXT("AMeathook::OnInteraction Survivor"));
 		
 		// TODO: Case1 : 생존자가 갈고리에 걸려있는 생존자를 구하다가 중단하는 경우
 		
 		// TODO: Case2 : 갈고리에 걸려있는 생존자가 스스로 탈출을 시도하다가 중단하는 경우
-		
+
+		CamperPoint->bCanInteract = true;
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AMeathook::OnInteraction Slasher"));
+		NET_LOG(LogTemp, Warning, TEXT("AMeathook::OnInteraction Slasher"));
 		// 중단 불가
 	}
+}
+
+void AMeatHook::OnHooked(class ACamper* HookedCamper)
+{
+	CamperPoint->AttachActor(HookedCamper, 0, false);
+	
+}
+
+void AMeatHook::OnRescued()
+{
+	CamperPoint->DetachActor();
+	CamperPoint->bCanInteract = false;
+	SlasherPoint->bCanInteract = true;
+}
+
+void AMeatHook::OnSacrificed()
+{
+	CamperPoint->DetachActor();
+	CamperPoint->bCanInteract = false;
+	SlasherPoint->bCanInteract = true;
 }

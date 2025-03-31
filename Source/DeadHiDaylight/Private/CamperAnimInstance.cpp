@@ -87,14 +87,14 @@ void UCamperAnimInstance::AnimNotify_EndUnLock()
 }
 
 // 기어가는 애니메이션 RPC
-void UCamperAnimInstance::ServerRPC_HitCrawl_Implementation()
+void UCamperAnimInstance::ServerRPC_PlayHitCrawlAnimation_Implementation(FName sectionName)
 {
-	MultiCastRPC_HitCrawl();
+	MultiCastRPC_PlayHitCrawlAnimation(sectionName);
 }
 
-void UCamperAnimInstance::MultiCastRPC_HitCrawl_Implementation()
+void UCamperAnimInstance::MultiCastRPC_PlayHitCrawlAnimation_Implementation(FName sectionName)
 {
-	HitCrawl();
+	PlayHitCrawlAnimation(sectionName);
 }
 // 발전기 애니메이션 RPC
 void UCamperAnimInstance::ServerRPC_PlayRepairAnimation_Implementation(FName sectionName)

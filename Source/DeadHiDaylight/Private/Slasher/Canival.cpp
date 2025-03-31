@@ -7,7 +7,6 @@
 
 #include "Player/Camper.h"
 #include "CanivalAnim.h"
-#include "CanivalUI.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -82,7 +81,7 @@ ACanival::ACanival()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(GetMesh(), TEXT("joint_Cam_01"));
-	Camera->bUsePawnControlRotation = true;
+	//Camera-> bUsePawnControlRotation = true;
 
 	Hammer = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hammer"));
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> HammerObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Weapon/Hammer/Hammer.Hammer'"));
@@ -91,9 +90,9 @@ ACanival::ACanival()
 		Hammer->SetSkeletalMesh(HammerObj.Object);
 	}
 	Hammer->SetupAttachment(GetMesh(), TEXT("joint_Hand_RT_01_IK"));
-	Hammer->SetRelativeLocation(FVector(2.060449, 14.845951, 6.233762));
-	Hammer->SetRelativeRotation(FRotator(7.372038, 110.272844, 92.284188));
-	Hammer->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.3f));
+	Hammer->SetRelativeLocation(FVector(17.197212, -14.791651, 20.419429));
+	Hammer->SetRelativeRotation(FRotator(85.793405, 6.474225, 59.887648));
+	Hammer->SetRelativeScale3D(FVector(0.7f, 0.7f, 0.7f));
 	Hammer->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
 
@@ -105,9 +104,9 @@ ACanival::ACanival()
 		ChainSaw->SetSkeletalMesh(ChainSawObj.Object);
 	}
 	ChainSaw->SetupAttachment(GetMesh(), TEXT("joint_Hand_LT_01_IK"));
-	//ChainSaw->SetRelativeLocation(FVector(0,0,0));
-	//ChainSaw->SetRelativeRotation(FRotator(0,0,0));
-	//ChainSaw->SetRelativeScale3D(FVector(1,1,1));
+	ChainSaw->SetRelativeLocation(FVector(3.396842,-41.498392,-5.774845));
+	ChainSaw->SetRelativeRotation(FRotator(-66.141346,18.747237,143.994784));
+	ChainSaw->SetRelativeScale3D(FVector(0.7f,0.7f,0.7f));
 	ChainSaw->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
 	bIsCharging = false;
@@ -131,12 +130,8 @@ void ACanival::BeginPlay()
 
 	AnimInstance = Cast<UCanivalAnim>(GetMesh()->GetAnimInstance());
 	Hammer->OnComponentBeginOverlap.AddDynamic(this, &ACanival::OnHammerBeginOverlap);
+	ChainSaw->OnComponentBeginOverlap.AddDynamic(this, &ACanival::OnChainSawBeginOverlap);
 	
-	
-	if (ChainSaw)
-	{
-		ChainSaw->OnComponentHit.AddDynamic(this, &ACanival::OnChainSawHit);
-	}
 
 	//전기톱 UI
 	// FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
@@ -424,8 +419,7 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	// 그 외냐
 }
 
-void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == this)
 	{
@@ -435,7 +429,7 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 	// 생존자냐
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
+		//UE_LOG(LogTemp, Warning, TEXT("ACanival::OnChainSawBeginOverlap"));
 		ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
 		Camper->GetDamage();

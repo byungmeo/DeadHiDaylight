@@ -11,7 +11,8 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
-#include "Blueprint/UserWidget.h"
+#include "SacrificeCommonHUD.h"
+#include "SacrificePlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
@@ -108,9 +109,6 @@ ACanival::ACanival()
 	ChainSaw->SetRelativeRotation(FRotator(-66.141346,18.747237,143.994784));
 	ChainSaw->SetRelativeScale3D(FVector(0.7f,0.7f,0.7f));
 	ChainSaw->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-
-	bIsCharging = false;
-
 }
 
 // Called when the game starts or when spawned
@@ -150,6 +148,10 @@ void ACanival::BeginPlay()
 	// 	}
 	// }
 
+	if (const auto* SacrificeController = Cast<ASacrificePlayerController>(Controller))
+	{
+		CommonHud = SacrificeController->Hud;
+	}
 }
 
 
@@ -168,6 +170,37 @@ void ACanival::Tick(float DeltaTime)
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		
+	}
+	
+	if (bChainSawCharging || ChainSawGauge > 0)
+	{
+		if (bChainSawCharging)
+		{
+			ChainSawGauge += DeltaTime * ChainSawIncPerSec;
+		}
+		else
+		{
+			ChainSawGauge -= DeltaTime * ChainSawIncPerSec;
+		}
+
+		if (CommonHud)
+		{
+			if (ChainSawGauge >= 1 || ChainSawGauge < 0)
+			{
+				if (ChainSawGauge >= 1)
+				{
+					RightAttack();
+				}
+				bChainSawCharging = false;
+				ChainSawGauge = 0;
+				CommonHud->OnHiddenGaugeBar();
+				GetCharacterMovement()->MaxWalkSpeed = InitSpeed;
+			}
+			else
+			{
+				CommonHud->OnUpdateGaugeBar(ChainSawGauge);
+			}
+		}
 	}
 }
 
@@ -226,19 +259,25 @@ void ACanival::LeftClick_Complet()
 void ACanival::RightClick_Start()
 {
 	GetCharacterMovement()->MaxWalkSpeed *= 0.8f;
+
+	if (ChainSawGauge <= 0)
+	{
+		AnimInstance->PlayChainSawAttackAnimation();
+	}
+	// bIsCharging = true;
+	bIsAttacking = false;
 	
-	bIsCharging = true;
-	bIsAttacking=false;
-	AnimInstance->PlayChainSawAttackAnimation();
-	GetWorld()->GetTimerManager().SetTimer(RigthAttackTimerHandle,this, &ACanival::RightAttack, RigthAttackDelay,false);
+	// GetWorld()->GetTimerManager().SetTimer(RigthAttackTimerHandle,this, &ACanival::RightAttack, RigthAttackDelay,false);
+
+	if (CommonHud)
+	{
+		CommonHud->OnVisibleGaugeBar(FText::FromName(TEXT("USE CHAINSAW")), 0);
+	}
+	bChainSawCharging = true;
 }
 
 void ACanival::RightAttack()
 {
-	GetCharacterMovement()->MaxWalkSpeed *= 1.6;
-	
-	bIsCharging = false;
-	//타이머가 만료되면 공격
 	bIsAttacking=true;
 	AnimInstance->PlayChainSawRunAnimation();
 }
@@ -250,17 +289,6 @@ void ACanival::OnChainSawHit(UPrimitiveComponent* HitComponent, AActor* OtherAct
 	{
 		return;
 	}
-
-	if (OtherActor->ActorHasTag("Generator"))
-	{
-		// 충돌로 인한 차징 취소
-		GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);
-		bIsCharging = false;
-		bIsAttacking = false;
-		
-		//AnimInstance->PlayChainSawCollisionReaction();
-	}
-
 }
 
 void ACanival::CheckAndAttachSurvivor()
@@ -379,11 +407,16 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 
 void ACanival::RightClick_Complet()
 {
+	if (bChainSawCharging)
+	{
+		bChainSawCharging = false;
+	}
+	
 	//버튼 떼었을 때 타이머가 아직 실행중이면
 	if (!bIsAttacking)
 	{
-		GetCharacterMovement()->MaxWalkSpeed *= 2;
-		GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);//타이머 취소
+		// GetCharacterMovement()->MaxWalkSpeed *= 2;
+		// GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);//타이머 취소
 		//AnimInstance->PlayChainSawRunAnimation(); //아이들상태로 (코드 변경해야함)
 		
 	}

@@ -27,10 +27,6 @@ protected:
 	UFUNCTION(CallInEditor)
 	void LeftClick_Complet();
 	UFUNCTION(CallInEditor)
-	void RightClick_Start();
-	UFUNCTION(CallInEditor)
-	void RightClick_Complet();
-	UFUNCTION(CallInEditor)
 	void HangOnHook();
 	
 public:	
@@ -73,34 +69,13 @@ public:
 
 	UFUNCTION()
 	void OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
+	
 	void FindPoint();
 	void Kick();
-
 	
-	//공격 타이머
-	FTimerHandle RigthAttackTimerHandle;
-	UPROPERTY(EditDefaultsOnly, Category=Attack)
-	float RigthAttackDelay = 3.0f;
 	
 	bool bIsAttacking; //공격 실행되었는지
-	bool bIsCharging; //공격 실행되었는지
-	
 	bool bIsIdleAndMove; //idle move 상태
-	
-	//공격실행
-	UFUNCTION()
-	void RightAttack();
-	
-
-	UPROPERTY(EditAnywhere)
-	class UCanivalAnim* Anim;
-
-	UFUNCTION()
-	void OnChainSawHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
-					   UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	//죽은 생존자 관련 코드
 	//생존자 어깨에 붙었는지 안붙었는지 체크
@@ -125,6 +100,27 @@ public:
 
 	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
 	// UCanivalUI* ChainsawWidgetInstance;
+
+
+
+	/*
+	 * 전기톱 공격 관련
+	 */
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<class USacrificeCommonHUD> CommonHud = nullptr;
+	float InitSpeed = 600.0f;
+	bool bChainSawCharging = false;
+	float ChainSawIncPerSec = 0.33f;
+	float ChainSawGauge = 0.0f;
+
+	UFUNCTION(CallInEditor)
+	void RightClick_Start();
+	UFUNCTION(CallInEditor)
+	void RightClick_Complet();
 	
+	UFUNCTION()
+	void RightAttack();
+	UFUNCTION()
+	void OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
 

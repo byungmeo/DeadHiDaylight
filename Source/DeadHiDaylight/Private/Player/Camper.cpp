@@ -228,7 +228,7 @@ void ACamper::Tick(float DeltaTime)
 	
 	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
-		GetDamage();
+		GetDamage(TEXT("Chainsaw"));
 	}
 	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
 	{
@@ -645,63 +645,78 @@ void ACamper::ServerRPC_StopInteract_Implementation()
 	}
 }
 
-void ACamper::GetDamage()
+void ACamper::GetDamage(FString weapon)
 {
 	if (HasAuthority())
 	{
-		ServerRPC_GetDamage();
+		ServerRPC_GetDamage(weapon);
 	}
 	else if (IsLocallyControlled())
 	{
-		ServerRPC_GetDamage();
+		ServerRPC_GetDamage(weapon);
 	}
 }
 
-void ACamper::ServerRPC_GetDamage_Implementation()
+void ACamper::ServerRPC_GetDamage_Implementation(const FString& weapon)
 {
-	MultiCastRPC_GetDamage();
+	MultiCastRPC_GetDamage(weapon);
 }
 
-void ACamper::MultiCastRPC_GetDamage_Implementation()
+void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 {
 	if (camperFSMComp == nullptr) return;
-
-	if (curHP > 1)
-	{
-		// 이전 속도를 저장
-		beforeSpeed = moveComp->MaxWalkSpeed;
-		// 다쳤을 때 2초동안 스피드가 2배 증가
-		moveComp->MaxWalkSpeed *= 2;
-		// 다친 상태로 변경하고
-		camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
-		
-		// 맞을 때 비명 지르는 부분
-		if (injuredScreamCue) PlayScreamSound();
-
-		// 2초 후 다시 이전 속도로 복귀
-		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, [this]()
-		{
-			moveComp->MaxWalkSpeed = beforeSpeed;
-			bPlayInjureSound = true;
-			PlayInjureSound();
-		}, 2.0f, false);
-	}
-	else
+	if (weapon == TEXT("Chainsaw"))
 	{
 		// 맞을 때 비명 지르는 부분
 		if (injuredScreamCue) PlayScreamSound();
 		// 기어다니는 상태로 전환
 		Crawling();
+		
+		if (IsLocallyControlled())
+		{
+			// HP를 줄이고
+			curHP -= 2;
+			UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f "), curHP);
+		}
 	}
-	
-	if (IsLocallyControlled())
+	else
 	{
 		if (curHP > 1)
 		{
-			// HP를 줄이고
-			--curHP;
-			UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f "), curHP);
+			// 이전 속도를 저장
+			beforeSpeed = moveComp->MaxWalkSpeed;
+			// 다쳤을 때 2초동안 스피드가 2배 증가
+			moveComp->MaxWalkSpeed *= 2;
+			// 다친 상태로 변경하고
+			camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
+		
+			// 맞을 때 비명 지르는 부분
+			if (injuredScreamCue) PlayScreamSound();
+
+			// 2초 후 다시 이전 속도로 복귀
+			GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, [this]()
+			{
+				moveComp->MaxWalkSpeed = beforeSpeed;
+				bPlayInjureSound = true;
+				PlayInjureSound();
+			}, 2.0f, false);
+		}
+		else
+		{
+			// 맞을 때 비명 지르는 부분
+			if (injuredScreamCue) PlayScreamSound();
+			// 기어다니는 상태로 전환
+			Crawling();
+		}
+		if (IsLocallyControlled())
+		{
+			if (curHP > 1)
+			{
+				// HP를 줄이고
+				--curHP;
+				UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f "), curHP);
 			
+			}
 		}
 	}
 }

@@ -202,11 +202,11 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = PerksComponent)
 	class UCamperFSM* camperFSMComp;
 	// 대미지 받았을 때 처리하는 함수 RPC
-	void GetDamage();
+	void GetDamage(FString weapon);
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_GetDamage();
+	void ServerRPC_GetDamage(const FString& weapon);
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_GetDamage();
+	void MultiCastRPC_GetDamage(const FString& weapon);
 	
 	// 쓰러진 상태 함수 RPC
 	void Crawling();

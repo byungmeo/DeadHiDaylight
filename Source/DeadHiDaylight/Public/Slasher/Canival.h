@@ -42,7 +42,7 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	class USkeletalMeshComponent* Hammer = nullptr;
 
-	UPROPERTY(EditDefaultsOnly )
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	class USkeletalMeshComponent* ChainSaw = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category=Input)

@@ -269,7 +269,9 @@ void ACanival::RightClick_Start()
 
 void ACanival::RightAttack()
 {
+	UE_LOG(LogTemp, Warning, TEXT("ACanival::RightAttack"));
 	bIsAttacking=true;
+	ChainSaw->SetGenerateOverlapEvents(true);
 	AnimInstance->PlayChainSawRunAnimation();
 }
 
@@ -453,7 +455,7 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("ACanival::OnChainSawBeginOverlap"));
-		ChainSaw->SetGenerateOverlapEvents(false);
+		// ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
 		Camper->GetDamage(TEXT("Chainsaw"));
 	}

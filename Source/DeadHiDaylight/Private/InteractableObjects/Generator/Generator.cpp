@@ -270,7 +270,7 @@ void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActo
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Slasher"));
 		Point->AttachActor(Slasher, -100, true);
-		Slasher->Kick();
+		Slasher->KickGenerator(this);
 	}
 }
 

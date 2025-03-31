@@ -51,7 +51,10 @@ public:
 	void PlayChainSawRunAnimation();
 	
 	UFUNCTION(BlueprintImplementableEvent)
-	void PlayKickAnimation();
+	void PlayKickGeneratorAnimation(class AGenerator* Generator);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayKickPalletAnimation(class APallet* Pallet);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayHangAnimation(class AMeatHook* Hook);

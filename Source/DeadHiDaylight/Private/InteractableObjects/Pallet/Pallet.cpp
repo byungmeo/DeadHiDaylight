@@ -90,6 +90,7 @@ void APallet::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 		// 살인마에게 판자 부수는 애니메이션 실행하라고 함.
 		AttachPoint1->bCanInteract = false;
 		AttachPoint2->bCanInteract = false;
+		Slasher->KickPallet(this);
 	}
 }
 

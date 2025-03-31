@@ -40,10 +40,10 @@ public:
 	UFUNCTION()
 	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);
 
-	UFUNCTION(CallInEditor, Category="Test")
+	UFUNCTION(BlueprintCallable, CallInEditor, Category="Test")
 	void FallGround();
 	FOnFallGround OnFallGround;
 
-	UFUNCTION(CallInEditor, Category="Test")
+	UFUNCTION(BlueprintCallable, CallInEditor, Category="Test")
 	void Broken();
 };

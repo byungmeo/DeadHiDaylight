@@ -413,14 +413,17 @@ void ACanival::HangOnHook(class AMeatHook* Hook)
 	UE_LOG(LogTemp, Warning, TEXT("Hang"));
 }
 
-
-void ACanival::Kick()
+void ACanival::KickGenerator(class AGenerator* Generator)
 {
-	AnimInstance->PlayKickAnimation();
-	UE_LOG(LogTemp, Warning, TEXT("Kick"));
+	AnimInstance->PlayKickGeneratorAnimation(Generator);
+	UE_LOG(LogTemp, Warning, TEXT("KickGenerator"));
 }
 
-
+void ACanival::KickPallet(class APallet* Pallet)
+{
+	AnimInstance->PlayKickPalletAnimation(Pallet);
+	UE_LOG(LogTemp, Warning, TEXT("KickPallet"));
+}
 
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

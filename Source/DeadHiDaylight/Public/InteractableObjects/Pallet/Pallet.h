@@ -45,5 +45,5 @@ public:
 	FOnFallGround OnFallGround;
 
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Test")
-	void Broken();
+	void Broken(class UInteractionPoint* Point);
 };

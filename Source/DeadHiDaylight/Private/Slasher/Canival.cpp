@@ -424,15 +424,15 @@ void ACanival::HangOnHook(class AMeatHook* Hook)
 	UE_LOG(LogTemp, Warning, TEXT("Hang"));
 }
 
-void ACanival::KickGenerator(class AGenerator* Generator)
+void ACanival::KickGenerator(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickGeneratorAnimation(Generator);
+	AnimInstance->PlayKickGeneratorAnimation(Point);
 	UE_LOG(LogTemp, Warning, TEXT("KickGenerator"));
 }
 
-void ACanival::KickPallet(class APallet* Pallet)
+void ACanival::KickPallet(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickPalletAnimation(Pallet);
+	AnimInstance->PlayKickPalletAnimation(Point);
 	UE_LOG(LogTemp, Warning, TEXT("KickPallet"));
 }
 

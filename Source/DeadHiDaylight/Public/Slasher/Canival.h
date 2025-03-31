@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractionPoint.h"
 #include "GameFramework/Character.h"
 #include "Canival.generated.h"
 
@@ -71,8 +72,8 @@ public:
 	void OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 	void FindPoint();
-	void KickGenerator(class AGenerator* Generator);
-	void KickPallet(class APallet* Pallet);
+	void KickGenerator(class UInteractionPoint* Point);
+	void KickPallet(class UInteractionPoint* Point);
 	
 	
 	bool bIsAttacking; //공격 실행되었는지

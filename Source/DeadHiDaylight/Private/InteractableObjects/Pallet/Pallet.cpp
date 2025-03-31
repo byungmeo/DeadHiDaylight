@@ -90,7 +90,7 @@ void APallet::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 		// 살인마에게 판자 부수는 애니메이션 실행하라고 함.
 		AttachPoint1->bCanInteract = false;
 		AttachPoint2->bCanInteract = false;
-		Slasher->KickPallet(this);
+		Slasher->KickPallet(Point);
 	}
 }
 
@@ -109,7 +109,7 @@ void APallet::FallGround()
 	// TODO: 만약 판자 근처에 살인마가 있었다면 기절 적용
 }
 
-void APallet::Broken()
+void APallet::Broken(class UInteractionPoint* Point)
 {
 	AttachPoint1->bCanInteract = false;
 	AttachPoint1->InteractionMode = EInteractionMode::EIM_None;

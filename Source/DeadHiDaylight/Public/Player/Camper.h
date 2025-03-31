@@ -114,11 +114,11 @@ public:
 	bool bFindPoints = false;
 
 	// 이동 관련 불 변수
-	bool bIsMoveing = false;
-	bool bIsRuning = false;
-	bool bIsCrouching = false;
-	bool bIsCrawling = false;
-	
+	// bool bIsMoveing = false;
+	// bool bIsRuning = false;
+	// bool bIsCrouching = false;
+	// bool bIsCrawling = false;
+
 	// 이동 관련 함수
 	void CamperMove(const FInputActionValue& value); // 캠퍼 움직임 함수
 	void StopCamperMove(const FInputActionValue& value);
@@ -158,11 +158,6 @@ public:
 	void ServerRPC_SetMovementState(ECamperMoveState NewState);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_SetMovementState(ECamperMoveState NewState);
-	
-	// 자세 상태 업데이트 함수
-	void UpdateStanceState();
-	// 이동 상태 업데이트 함수
-	void UpdateMovementState();
 	
 	// 카메라 관련 함수
 	void Look(const struct FInputActionValue& value);  // 카메라 움직임 함수

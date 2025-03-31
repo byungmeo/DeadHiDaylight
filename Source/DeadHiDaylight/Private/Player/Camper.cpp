@@ -237,11 +237,10 @@ void ACamper::Tick(float DeltaTime)
 	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Three))
 	{
 		// 쓰러진 상태에서 돌아갈 때 Crawlhealing이 끝나면
-		Anim->bHitCrawl = false;
 		curHP = maxHP;
 		camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 		moveComp->MaxWalkSpeed = 0;
-		bIsCrawling = false;
+		SetStanceState(ECamperStanceState::ECSS_Idle);
 		StopInjureSound();
 	}
 	// Hook 걸리는 거 테스트 용
@@ -309,31 +308,28 @@ void ACamper::CamperMove(const FInputActionValue& value)
 {
 	if (Anim->bStartRepair || Anim->bSelfHealing) return;
 	
-	FVector2D dir = value.Get<FVector2D>();
-
+	FVector2D moveDirection = value.Get<FVector2D>();
+	
 	const FRotator Rotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-	// get right vector 
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 	// add movement 
-	AddMovementInput(ForwardDirection, dir.Y);
-	AddMovementInput(RightDirection, dir.X);
+	AddMovementInput(ForwardDirection, moveDirection.Y);
+	AddMovementInput(RightDirection, moveDirection.X);
 
-	bIsMoveing = true;
-	curSpeed = FVector::DotProduct(GetVelocity(), GetActorForwardVector()); 
-	UpdateStanceState();
-	UpdateMovementState();
+	
+	curSpeed = FVector::DotProduct(GetVelocity(), GetActorForwardVector());
+
+	if (camperFSMComp->curMoveState == ECamperMoveState::ECS_Run) return;
+	SetMovementState(ECamperMoveState::ECS_Move);
 }
 
 void ACamper::StopCamperMove(const FInputActionValue& value)
 {
-	bIsMoveing = false;
-	UpdateStanceState();
-	UpdateMovementState();
+	SetMovementState(ECamperMoveState::ECS_NONE);
 }
 
 void ACamper::Look(const struct FInputActionValue& value)
@@ -346,19 +342,19 @@ void ACamper::Look(const struct FInputActionValue& value)
 // Run Start
 void ACamper::StartRun(const struct FInputActionValue& value)
 {
+	if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch ||
+		camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl ||
+		Anim->moveSpeed < 3.0f) return;
+	
 	ServerRPC_StartRun();
 }
-
-
 void ACamper::ServerRPC_StartRun_Implementation()
 {
 	MultiCastRPC_StartRun();
 }
 void ACamper::MultiCastRPC_StartRun_Implementation()
 {
-	bIsRuning = true;
-	UpdateStanceState();
-	UpdateMovementState();
+	SetMovementState(ECamperMoveState::ECS_Run);
 }
 // Run Start End
 
@@ -375,9 +371,8 @@ void ACamper::ServerRPC_StopRun_Implementation()
 
 void ACamper::MultiCastRPC_StopRun_Implementation()
 {
-	bIsRuning = false;
-	UpdateStanceState();
-	UpdateMovementState();
+	// bIsRuning = false;
+	SetMovementState(ECamperMoveState::ECS_NONE);
 }
 // Run Stop End
 
@@ -392,9 +387,8 @@ void ACamper::ServerRPC_Start_Crouch_Implementation()
 }
 void ACamper::MultiCastRPC_Start_Crouch_Implementation()
 {
-	bIsCrouching = true;
-	UpdateStanceState();
-	UpdateMovementState();
+	// bIsCrouching = true;
+	SetStanceState(ECamperStanceState::ECSS_Crouch);
 }
 // Crouch Start End
 
@@ -411,44 +405,10 @@ void ACamper::ServerRPC_End_Crouch_Implementation()
 
 void ACamper::MultiCastRPC_End_Crouch_Implementation()
 {
-	bIsCrouching = false;
 	springArmComp->SetRelativeLocation(FVector(0, 0, 210));
-	UpdateStanceState();
-	UpdateMovementState();
+	SetStanceState(ECamperStanceState::ECSS_Idle);
 }
 // Crouch End
-
-void ACamper::UpdateStanceState()
-{
-	if (bIsCrawling)
-	{
-		SetStanceState(ECamperStanceState::ECSS_Crawl);
-	}
-	else if (bIsCrouching)
-	{
-		SetStanceState(ECamperStanceState::ECSS_Crouch);
-	}
-	else
-	{
-		SetStanceState(ECamperStanceState::ECSS_Idle);
-	}
-}
-
-void ACamper::UpdateMovementState()
-{
-	if (bIsRuning)
-	{
-		if (camperFSMComp->curMoveState != ECamperMoveState::ECS_Run) SetMovementState(ECamperMoveState::ECS_Run);
-	}
-	else if (bIsMoveing)
-	{
-		if (camperFSMComp->curMoveState != ECamperMoveState::ECS_Move) SetMovementState(ECamperMoveState::ECS_Move);
-	}
-	else
-	{
-		if (camperFSMComp->curMoveState != ECamperMoveState::ECS_NONE) SetMovementState(ECamperMoveState::ECS_NONE);
-	}
-}
 
 void ACamper::SetStanceState(ECamperStanceState NewState)
 {
@@ -474,11 +434,7 @@ void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewS
 		springArmComp->SetRelativeLocation(FVector(0, 0, 160));
 		break;
 	case ECamperStanceState::ECSS_Crawl:
-		if (Anim && Anim->bHitCrawl == false)
-		{
-			Anim->bHitCrawl = true;
-			Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
-		}
+		Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
 		break;
 	}
 }
@@ -665,6 +621,7 @@ void ACamper::ServerRPC_GetDamage_Implementation(const FString& weapon)
 void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 {
 	if (camperFSMComp == nullptr) return;
+	
 	if (weapon == TEXT("Chainsaw"))
 	{
 		// 맞을 때 비명 지르는 부분
@@ -731,9 +688,7 @@ void ACamper::ServerRPC_Crawling_Implementation()
 
 void ACamper::MultiCastRPC_Crawling_Implementation()
 {
-	bIsCrawling = true;
-	UpdateStanceState();
-	UpdateMovementState();
+	SetStanceState(ECamperStanceState::ECSS_Crawl);
 }
 
 void ACamper::StartUnLock()

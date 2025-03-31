@@ -418,7 +418,7 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		Hammer->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
 		AnimInstance->PlayWipeAnimation();
-		Camper->GetDamage();
+		Camper->GetDamage("");
 	}
 	// 벽이냐
 	// 그 외냐
@@ -438,7 +438,7 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		UE_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
 		ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
-		Camper->GetDamage();
+		Camper->GetDamage("");
 	}
 	// 벽이냐
 	// 그 외냐

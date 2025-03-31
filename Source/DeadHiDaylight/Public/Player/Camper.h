@@ -63,7 +63,7 @@ public:
 	
 	// 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UAnimMontage* deadHardMontage;
+	UAnimMontage* hitcrawlMontage;
 	
 	// moveComp
 	UPROPERTY()

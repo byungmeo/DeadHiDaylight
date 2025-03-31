@@ -40,6 +40,10 @@ void UPerksComponent::BeginPlay()
 	{
 		anim = Cast<UCamperAnimInstance>(meshComp->GetAnimInstance());
 	}
+	if (Camper)
+	{
+		fsm = Camper->camperFSMComp;
+	}
 }
 
 
@@ -67,7 +71,7 @@ void UPerksComponent::SetupInputBinding(class UEnhancedInputComponent* pi)
 
 void UPerksComponent::PerksDeadHard()
 {
-	if (bDeadHard == false) ServerRPC_PerksDeadHard();
+	ServerRPC_PerksDeadHard();
 }
 
 void UPerksComponent::ServerRPC_PerksDeadHard_Implementation()
@@ -78,31 +82,40 @@ void UPerksComponent::ServerRPC_PerksDeadHard_Implementation()
 void UPerksComponent::NetMultiCastRPC_PerksDeadHard_Implementation()
 {
 	// 데드하드 발동
-	if (anim)
+	// if (anim)
+	// {
+	// 	if (anim->bInjure && anim->bRun && bDeadHard == false)
+	// 	{
+	// 		bDeadHard = true;
+	// 	}
+	// }
+	// DeadHard 몽타주 실행
+	if (bDeadHard == true && fsm->curHealthState != ECamperHealth::ECH_Injury) return;
+	
+	bDeadHard = true;
+	fsm->curInteractionState = ECamperInteraction::ECI_DeadHard;
+	anim->ServerRPC_PlayDeadHardAnimation(TEXT("DeadHard"));
+	FTimerHandle deadHardHandle;
+	GetWorld()->GetTimerManager().SetTimer(deadHardHandle, [this]()
 	{
-		if (anim->bInjure && anim->bRun && bDeadHard == false)
-		{
-			bDeadHard = true;
-			// DeadHard 몽타주 실행
-			anim->ServerRPC_PlayDeadHardAnimation(TEXT("DeadHard"));
-		}
-	}
+		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
+	}, 0.5f, false);
 }
 
 void UPerksComponent::DeadHardTimingCheck(float deltaTime)
 {
 	// 데드하드를 사용하고 뛰지 않을 때만 시간 카운트
-	if (bDeadHard && anim->bRun == false)
+	if (bDeadHard && fsm->curMoveState != ECamperMoveState::ECS_Run)
 	{
 		// 탈진시간이 exhaustionTime(40초)보다 크거나 같아지면 시간을 초기화하고 데드하드 사용 가능 상태로 변경
 		if (exTime >= exhaustionTime)
 		{
 			exTime = 0;
-			bDeadHard = false;
-			ServerRPC_PerksDeadHardTimingCheck(bDeadHard);	
+			ServerRPC_PerksDeadHardTimingCheck(false);	
 		}
 		// 40초 동안 탈진상태
 		exTime += deltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("%f"), exTime);
 	}
 	
 }

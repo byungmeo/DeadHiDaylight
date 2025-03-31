@@ -166,7 +166,9 @@ ACamper::ACamper()
 
 	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("PerksComp")); // 퍽 컴포넌트
 	camperFSMComp = CreateDefaultSubobject<UCamperFSM>(TEXT("camperFSMComp")); // FSM 컴포넌트
-	
+
+	springArmComp->bEnableCameraLag = true;
+	springArmComp->CameraLagSpeed = 10;
 	bUseControllerRotationYaw = false;
 }
 
@@ -305,7 +307,7 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACamper::CamperMove(const FInputActionValue& value)
 {
-	if (Anim->bStartRepair || Anim->bSelfHealing || GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) == true) return;
+	// if (Anim->bStartRepair || Anim->bSelfHealing) return;
 
 	FVector2D dir = value.Get<FVector2D>();
 	
@@ -434,7 +436,7 @@ void ACamper::UpdateStanceState()
 
 void ACamper::UpdateMovementState()
 {
-	if (bIsRuning)
+	if (bIsRuning && camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crouch)
 	{
 		SetMovementState(ECamperMoveState::ECS_Run);
 	}

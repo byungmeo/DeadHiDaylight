@@ -31,4 +31,13 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnUpdatedCamperState(const FUserState& UserState);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnVisibleGaugeBar(const FText& TitleText, const float InitFillAmount);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnUpdateGaugeBar(const float FillAmount);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnHiddenGaugeBar();
 };

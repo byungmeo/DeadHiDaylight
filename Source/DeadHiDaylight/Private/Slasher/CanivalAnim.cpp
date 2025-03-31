@@ -26,7 +26,7 @@ void UCanivalAnim::NativeUpdateAnimation(float DeltaSeconds)
 		Speed = Velocity.Size2D();
 		
 		bIsMoving = (Speed > 0.1f);
-		UE_LOG(LogTemp, Warning, TEXT("%f"), Speed);
+		// UE_LOG(LogTemp, Warning, TEXT("%f"), Speed);
 		
 		bIsInAir = Canival->GetMovementComponent()->IsFalling();
 

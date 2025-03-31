@@ -274,7 +274,7 @@ void ACamper::Tick(float DeltaTime)
 
 	if (curHP == maxHP && camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 
-	UE_LOG(LogTemp, Warning, TEXT("Current speed: %f"), curSpeed);
+	// UE_LOG(LogTemp, Warning, TEXT("Current speed: %f"), curSpeed);
 	if (!bPlayInjureSound)
 	{
 		StopInjureSound();
@@ -527,7 +527,7 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 		{
 			curSpeed = maxSpeed * 2;
 			moveComp->MaxWalkSpeed = curSpeed;
-			UE_LOG(LogTemp, Error, TEXT("RUN"));
+			// UE_LOG(LogTemp, Error, TEXT("RUN"));
 		}
 		break;
 	}

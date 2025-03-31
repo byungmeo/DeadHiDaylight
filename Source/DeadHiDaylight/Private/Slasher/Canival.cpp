@@ -5,12 +5,11 @@
 #include "CamperAnimInstance.h"
 
 
-#include "Player/Camper.h"
 #include "CanivalAnim.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "InputActionValue.h"
 #include "InputAction.h"
+#include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
@@ -18,6 +17,7 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Player/Camper.h"
 
 // Sets default values
 ACanival::ACanival()
@@ -161,12 +161,13 @@ void ACanival::Tick(float DeltaTime)
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		FindPoint();
+		CheckAndAttachSurvivor();
 	}
 
 	// UE_LOG(LogTemp, Display, TEXT("%s"), *GetVelocity().ToString());
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
-		CheckAndAttachSurvivor();
+		
 	}
 }
 
@@ -284,7 +285,7 @@ void ACanival::CheckAndAttachSurvivor()
 		if (Camper)
 		{
 			// 생존자가 죽어서 크롤링 상태인지 확인 (Anim 인스턴스가 있고 bCrawl이 true)
-			if (!(Camper->Anim && Camper->Anim->bCrawl))
+			if (!(Camper->Anim && Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl))
 			{
 				continue;
 			}
@@ -362,8 +363,14 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 	//어깨 부착
 	if (Survivor && Survivor->GetMesh())
 	{
-		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
-		
+		// AActor* ParentActor, FName SocketName, EAttachmentRule LocationRule, EAttachmentRule RotationRule, EAttachmentRule ScaleRule, bool bWeldSimulatedBodies
+		// Survivor->K2_AttachToActor(this, TEXT("joint_ShoulderLT_01Socket"), );
+		Survivor->GetMesh()->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
+
+		Survivor->SetActorEnableCollision(false);
+		Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		Survivor->GetCharacterMovement()->StopMovementImmediately();
+		Survivor->GetMesh()->bPauseAnims = true;
 		UE_LOG(LogTemp, Warning, TEXT("어깨에 붙음"));
 	}
 	
@@ -413,7 +420,7 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		Hammer->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
 		AnimInstance->PlayWipeAnimation();
-		Camper->GetDamage();
+		Camper->GetDamage(TEXT(""));
 	}
 	// 벽이냐
 	// 그 외냐
@@ -432,7 +439,7 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		//UE_LOG(LogTemp, Warning, TEXT("ACanival::OnChainSawBeginOverlap"));
 		ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
-		Camper->GetDamage();
+		Camper->GetDamage(TEXT("Chainsaw"));
 	}
 	// 벽이냐
 	// 그 외냐

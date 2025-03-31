@@ -457,8 +457,15 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		//UE_LOG(LogTemp, Warning, TEXT("ACanival::OnChainSawBeginOverlap"));
 		// ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
+		
+		if (Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+		{
+			return;
+		}
 		Camper->GetDamage(TEXT("Chainsaw"));
+		
 	}
+	
 	// 벽이냐
 	// 그 외냐
 }

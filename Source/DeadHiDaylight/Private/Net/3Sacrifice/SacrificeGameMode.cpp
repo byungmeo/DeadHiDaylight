@@ -53,6 +53,16 @@ void ASacrificeGameMode::HandleStartingNewPlayer_Implementation(APlayerControlle
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 }
 
+void ASacrificeGameMode::Logout(AController* Exiting)
+{
+	Super::Logout(Exiting);
+
+	if (ASacrificePlayerState* PlayerState = Exiting->GetPlayerState<ASacrificePlayerState>())
+	{
+		
+	}
+}
+
 void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controller, const EPlayerRole PlayerRole)
 {
 	if (Controller->IsLocalController())

@@ -137,25 +137,26 @@ void ASacrificePlayerController::ToggleCamera()
 
 void ASacrificePlayerController::RequestCallbackWithGuid()
 {
-	const auto* ClientGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
-	ServerRPC_RequestCreatePawn(ClientGameInstance->Guid);
+	auto* ClientGameInstance = Cast<UDHDGameInstance>(GetGameInstance());
+	ServerRPC_RequestCreatePawn(ClientGameInstance->Guid, ClientGameInstance->Nickname);
 }
 
-void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(const FGuid Guid)
+void ASacrificePlayerController::ServerRPC_RequestCreatePawn_Implementation(FGuid Guid, const FText& Nickname)
 {
 	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_RequestCreatePawn_Implementation %s"), *Guid.ToString());
 	const EPlayerRole PlayerRole = GameMode->ServerGameInstance->RoleMap[Guid];
+	GameMode->ServerGameInstance->NameMap.Add(Guid, Nickname);
 	GameMode->RequestCreatePawn(this, PlayerRole);
 	
 	FUserState NewState = FUserState();
-	NewState.Name = FName(*Guid.ToString().Left(10));
+	NewState.Name = Nickname;
 	NewState.PlayerRole = PlayerRole;
 	SacrificePlayerState->UserState = NewState;
 	SacrificePlayerState->OnRep_UserState();
 }
 
 void ASacrificePlayerController::ClientRPC_OnSkillCheck_Implementation(AActor* Obj, const float Min, const float Max,
-	const float GreatRange)
+                                                                       const float GreatRange)
 {
 	if (Hud)
 	{

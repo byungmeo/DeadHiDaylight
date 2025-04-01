@@ -25,5 +25,15 @@ class DEADHIDAYLIGHT_API UDHDGameInstance : public UGameInstance
 
 public:
 	FGuid Guid;
+	FText Nickname;
+
+	/*
+	 *	Server Only
+	 */
 	TMap<FGuid, EPlayerRole> RoleMap;
+	
+	/*
+	 *	Server Only
+	 */
+	TMap<FGuid, FText> NameMap;
 };

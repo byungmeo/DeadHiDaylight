@@ -79,7 +79,7 @@ struct FUserState
 	 * Common
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	FName Name = FName(NAME_None);
+	FText Name;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	EPlayerRole PlayerRole = EPlayerRole::EPR_None;
 
@@ -109,7 +109,7 @@ protected:
 public:
 	bool bIsInit = false;
 	
-	UPROPERTY(ReplicatedUsing=OnRep_UserState ,BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(ReplicatedUsing=OnRep_UserState, BlueprintReadOnly, VisibleAnywhere)
 	FUserState UserState;
 
 	UFUNCTION()

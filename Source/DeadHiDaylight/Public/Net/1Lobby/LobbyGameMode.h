@@ -21,5 +21,5 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CreateRoom();
 	UFUNCTION(BlueprintCallable)
-	void JoinRoom(const FString& ServerAddress);
+	void JoinRoom(const FString& ServerAddress, const FText& Nickname);
 };

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerState.h"
 #include "GameFramework/GameState.h"
 #include "SacrificeGameState.generated.h"
 
@@ -42,4 +43,8 @@ public:
 	UFUNCTION()
     void OnRep_ReqGeneratorCount();
 	FOnRepGeneratorCount OnRepGeneratorCount;
+	
+	int RemCamperCount = 0;
+	void OnCamperOutGame(ASacrificePlayerState* State);
+	void GameEnd();
 };

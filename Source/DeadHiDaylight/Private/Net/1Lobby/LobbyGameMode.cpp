@@ -3,6 +3,7 @@
 
 #include "LobbyGameMode.h"
 
+#include "DHDGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
 ALobbyGameMode::ALobbyGameMode()
@@ -16,8 +17,10 @@ void ALobbyGameMode::CreateRoom()
 	UGameplayStatics::OpenLevel(GetWorld(), TEXT("/Game/Common/Maps/CampfireMap"), true, "listen");
 }
 
-void ALobbyGameMode::JoinRoom(const FString& ServerAddress)
+void ALobbyGameMode::JoinRoom(const FString& ServerAddress, const FText& Nickname)
 {
 	UE_LOG(LogTemp, Warning, TEXT("ALobbyGameMode::JoinRoom"));
-	UGameplayStatics::OpenLevel(GetWorld(), TEXT("127.0.0.1"));
+	auto* GameInstance = Cast<UDHDGameInstance>(GetGameInstance());
+	GameInstance->Nickname = Nickname;
+	UGameplayStatics::OpenLevel(GetWorld(), *ServerAddress);
 }

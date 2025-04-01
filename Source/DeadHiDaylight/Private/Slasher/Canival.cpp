@@ -8,14 +8,18 @@
 #include "CanivalAnim.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Generator.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "InteractionPoint.h"
+#include "MeatHook.h"
+#include "Pallet.h"
 #include "SacrificeCommonHUD.h"
 #include "SacrificePlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "CamperComps/CamperFSM.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -28,6 +32,9 @@ ACanival::ACanival()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+	bAlwaysRelevant = true;
+	bNetLoadOnClient = true;
 
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Character/Carnival.Carnival'"));
 	if (MeshObj.Succeeded())
@@ -162,6 +169,12 @@ void ACanival::BeginPlay()
 	{
 		CommonHud = SacrificeController->Hud;
 	}
+	
+	if (HasAuthority())
+	{
+		FTimerHandle FindPointTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(FindPointTimerHandle, this, &ACanival::ServerOnly_FindInteractionPoint, 0.1f, true);
+	}
 }
 
 
@@ -216,7 +229,7 @@ void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputCompo
 		pi->BindAction(ia_leftClick, ETriggerEvent::Completed ,this, &ACanival::LeftClick_Complet);
 		pi->BindAction(ia_rightClick, ETriggerEvent::Started,this, &ACanival::RightClick_Start);
 		pi->BindAction(ia_rightClick, ETriggerEvent::Completed ,this, &ACanival::RightClick_Complet);
-		pi->BindAction(ia_Kick, ETriggerEvent::Started,this, &ACanival::FindPoint);
+		pi->BindAction(ia_Kick, ETriggerEvent::Started,this, &ACanival::TryInteraction);
 		// pi->BindAction(ia_hang, ETriggerEvent::Started,this, &ACanival::HangOnHook);
 	}
 }
@@ -478,6 +491,93 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 	// 그 외냐
 }
 
+void ACanival::ServerOnly_FindInteractionPoint()
+{
+	if (nullptr != InteractingPoint)
+	{
+		if (nullptr != NearPoint)
+		{
+			NearPoint = nullptr;
+			ClientRPC_ChangeNearPoint(NearPoint);
+		}
+		return;
+	}
+	
+	const FVector& StartEnd = GetMovementComponent()->GetFeetLocation();
+	auto* Point = UInteractionPoint::FindInteractionPoint(GetWorld(), StartEnd, StartEnd, EInteractionMode::EIM_SlasherOnly);
+	if (NearPoint != Point)
+	{
+		NearPoint = Point;
+		NET_LOG(LogTemp, Warning, TEXT("ServerOnly_FindInteractionPoint"));
+		ClientRPC_ChangeNearPoint(NearPoint);
+	}
+}
+
+void ACanival::ClientRPC_ChangeNearPoint_Implementation(class UInteractionPoint* NewPoint)
+{
+	FText Description = FText::FromString("NONE");
+
+	if (NewPoint)
+	{
+		const auto* PointOwner = NewPoint->GetOwner();
+		if (Cast<AGenerator>(PointOwner))
+		{
+			Description = FText::FromString("BREAK");
+		}
+		else if (Cast<AMeatHook>(PointOwner))
+		{
+			Description = FText::FromString("HOOK SURVIVOR");
+		}
+		else if (Cast<APallet>(PointOwner))
+		{
+			Description = FText::FromString("BREAK");
+		}
+		else if (Cast<ACamper>(PointOwner))
+		{
+			Description = FText::FromString("CARRY SURVIVOR");
+		}
+	}
+	
+	NearPoint = NewPoint;
+	NET_LOG(LogTemp, Warning, TEXT("ClientRPC_ChangeNearPoint : %s"), *Description.ToString());
+	if (const auto* SacrificeController = Cast<ASacrificePlayerController>(GetController()))
+	{
+		if (SacrificeController->Hud)
+		{
+			SacrificeController->Hud->OnUpdatedNearPoint(NewPoint, Description);
+		}
+	}
+}
+
+void ACanival::TryInteraction()
+{
+	ServerRPC_TryInteraction();
+}
+
+void ACanival::ServerRPC_TryInteraction_Implementation()
+{
+	if (nullptr == NearPoint)
+	{
+		return;
+	}
+
+	InteractingPoint = NearPoint;
+	NearPoint->Interaction(this);
+}
+
+void ACanival::StopInteract()
+{
+	ServerRPC_StopInteract();
+}
+
+void ACanival::ServerRPC_StopInteract_Implementation()
+{
+	if (InteractingPoint)
+	{
+		InteractingPoint->StopInteraction(this);
+		InteractingPoint = nullptr;
+	}
+}
 
 void ACanival::FindPoint()
 {

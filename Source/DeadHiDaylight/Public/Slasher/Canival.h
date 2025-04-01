@@ -126,5 +126,26 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* HammerHitSound;
+
+	/*
+	 *	상호작용 관련
+	 */
+	UPROPERTY()
+	class UInteractionPoint* NearPoint = nullptr;
+	void ServerOnly_FindInteractionPoint();
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_ChangeNearPoint(class UInteractionPoint* NewPoint);
+	
+	void TryInteraction();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_TryInteraction();
+	
+	void StopInteract();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StopInteract();
+	
+	// 현재 상호작용을 진행 중인 Point
+	UPROPERTY()
+	class UInteractionPoint* InteractingPoint = nullptr;
 };
 

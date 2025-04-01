@@ -43,13 +43,13 @@ UInteractionPoint* UInteractionPoint::FindInteractionPoint(const UWorld* WorldCo
 		{
 			// 상호작용 불가능 한 Point는 거른다
 			const auto* Point = Cast<UInteractionPoint>(OutHits[i].Component);
-			if (false == Point->bCanInteract || (Point->InteractionMode != FindMode || Point->InteractionMode == EInteractionMode::EIM_None))
+			if (false == Point->bCanInteract || (Point->InteractionMode != FindMode && Point->InteractionMode != EInteractionMode::EIM_Both))
 			{
 				OutHits.RemoveAt(i);
 				i--;
 				continue;
 			}
-
+			OutHits[i].Distance = FVector::Dist(Point->GetComponentLocation(), Start);
 			// TODO: 바라보는 방향 고려
 		}
 	}

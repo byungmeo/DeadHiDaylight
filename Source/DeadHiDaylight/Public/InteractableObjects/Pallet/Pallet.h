@@ -40,8 +40,12 @@ public:
 	UFUNCTION()
 	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);
 
+	bool bIsFallOnGround = false;
+	
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Test")
 	void FallGround();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_FallGround();
 	FOnFallGround OnFallGround;
 
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Test")

@@ -40,4 +40,7 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnHiddenGaugeBar();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnUpdatedNearPoint(class UInteractionPoint* Point, const FText& Description);
 };

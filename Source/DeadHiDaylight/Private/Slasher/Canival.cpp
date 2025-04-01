@@ -5,20 +5,23 @@
 #include "CamperAnimInstance.h"
 
 
-#include "Player/Camper.h"
 #include "CanivalAnim.h"
-#include "CanivalUI.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "InputActionValue.h"
 #include "InputAction.h"
+#include "InputActionValue.h"
 #include "InputMappingContext.h"
-#include "Blueprint/UserWidget.h"
+#include "InteractionPoint.h"
+#include "SacrificeCommonHUD.h"
+#include "SacrificePlayerController.h"
 #include "Camera/CameraComponent.h"
+#include "CamperComps/CamperFSM.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Player/Camper.h"
+#include "Sound/SoundBase.h"
 
 // Sets default values
 ACanival::ACanival()
@@ -91,9 +94,9 @@ ACanival::ACanival()
 		Hammer->SetSkeletalMesh(HammerObj.Object);
 	}
 	Hammer->SetupAttachment(GetMesh(), TEXT("joint_Hand_RT_01_IK"));
-	Hammer->SetRelativeLocation(FVector(2.060449, 14.845951, 6.233762));
-	Hammer->SetRelativeRotation(FRotator(7.372038, 110.272844, 92.284188));
-	Hammer->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.3f));
+	Hammer->SetRelativeLocation(FVector(17.197212, -14.791651, 20.419429));
+	Hammer->SetRelativeRotation(FRotator(85.793405, 6.474225, 59.887648));
+	Hammer->SetRelativeScale3D(FVector(0.7f, 0.7f, 0.7f));
 	Hammer->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
 
@@ -105,13 +108,17 @@ ACanival::ACanival()
 		ChainSaw->SetSkeletalMesh(ChainSawObj.Object);
 	}
 	ChainSaw->SetupAttachment(GetMesh(), TEXT("joint_Hand_LT_01_IK"));
-	//ChainSaw->SetRelativeLocation(FVector(0,0,0));
-	//ChainSaw->SetRelativeRotation(FRotator(0,0,0));
-	//ChainSaw->SetRelativeScale3D(FVector(1,1,1));
+	ChainSaw->SetRelativeLocation(FVector(3.396842,-41.498392,-5.774845));
+	ChainSaw->SetRelativeRotation(FRotator(-66.141346,18.747237,143.994784));
+	ChainSaw->SetRelativeScale3D(FVector(0.7f,0.7f,0.7f));
 	ChainSaw->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
-	bIsCharging = false;
 
+	ConstructorHelpers::FObjectFinder<USoundBase> SoundObj(TEXT("/Script/Engine.SoundWave'/Game/KHA/Carnival/Character/Audio/K09_WEAPON/AudioEvent_K09_WPN_Default_SledgeHammer_Impact_Survivor__r_.AudioEvent_K09_WPN_Default_SledgeHammer_Impact_Survivor__r_'"));
+	if (SoundObj.Succeeded())
+	{
+		HammerHitSound = SoundObj.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -131,12 +138,8 @@ void ACanival::BeginPlay()
 
 	AnimInstance = Cast<UCanivalAnim>(GetMesh()->GetAnimInstance());
 	Hammer->OnComponentBeginOverlap.AddDynamic(this, &ACanival::OnHammerBeginOverlap);
+	ChainSaw->OnComponentBeginOverlap.AddDynamic(this, &ACanival::OnChainSawBeginOverlap);
 	
-	
-	if (ChainSaw)
-	{
-		ChainSaw->OnComponentHit.AddDynamic(this, &ACanival::OnChainSawHit);
-	}
 
 	//전기톱 UI
 	// FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
@@ -155,6 +158,10 @@ void ACanival::BeginPlay()
 	// 	}
 	// }
 
+	if (const auto* SacrificeController = Cast<ASacrificePlayerController>(Controller))
+	{
+		CommonHud = SacrificeController->Hud;
+	}
 }
 
 
@@ -166,12 +173,38 @@ void ACanival::Tick(float DeltaTime)
 	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		FindPoint();
-	}
-
-	// UE_LOG(LogTemp, Display, TEXT("%s"), *GetVelocity().ToString());
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
-	{
 		CheckAndAttachSurvivor();
+	}
+	
+	if (bChainSawCharging || ChainSawGauge > 0)
+	{
+		if (bChainSawCharging)
+		{
+			ChainSawGauge += DeltaTime * ChainSawIncPerSec;
+		}
+		else
+		{
+			ChainSawGauge -= DeltaTime * ChainSawIncPerSec;
+		}
+
+		if (CommonHud)
+		{
+			if (ChainSawGauge >= 1 || ChainSawGauge < 0)
+			{
+				if (ChainSawGauge >= 1)
+				{
+					RightAttack();
+				}
+				bChainSawCharging = false;
+				ChainSawGauge = 0;
+				CommonHud->OnHiddenGaugeBar();
+				GetCharacterMovement()->MaxWalkSpeed = InitSpeed;
+			}
+			else
+			{
+				CommonHud->OnUpdateGaugeBar(ChainSawGauge);
+			}
+		}
 	}
 }
 
@@ -189,7 +222,7 @@ void ACanival::SetupPlayerInputComponent(class UInputComponent* PlayerInputCompo
 		pi->BindAction(ia_rightClick, ETriggerEvent::Started,this, &ACanival::RightClick_Start);
 		pi->BindAction(ia_rightClick, ETriggerEvent::Completed ,this, &ACanival::RightClick_Complet);
 		pi->BindAction(ia_Kick, ETriggerEvent::Started,this, &ACanival::FindPoint);
-		pi->BindAction(ia_hang, ETriggerEvent::Started,this, &ACanival::HangOnHook);
+		// pi->BindAction(ia_hang, ETriggerEvent::Started,this, &ACanival::HangOnHook);
 	}
 }
 
@@ -207,11 +240,8 @@ void ACanival::Look(const FInputActionValue& InputActionValue)
 {
 	FVector2D Value = InputActionValue.Get<FVector2D>();
 	AddControllerYawInput(Value.X);
-	if (GetVelocity().Size2D()<0.1f)
-	{
-		AddControllerPitchInput(Value.Y);
-		
-	}
+	AddControllerPitchInput(Value.Y);
+	
 }
 
 void ACanival::LeftClick_Start()
@@ -230,41 +260,29 @@ void ACanival::LeftClick_Complet()
 void ACanival::RightClick_Start()
 {
 	GetCharacterMovement()->MaxWalkSpeed *= 0.8f;
+
+	if (ChainSawGauge <= 0)
+	{
+		AnimInstance->PlayChainSawAttackAnimation();
+	}
+	// bIsCharging = true;
+	bIsAttacking = false;
 	
-	bIsCharging = true;
-	bIsAttacking=false;
-	AnimInstance->PlayChainSawAttackAnimation();
-	GetWorld()->GetTimerManager().SetTimer(RigthAttackTimerHandle,this, &ACanival::RightAttack, RigthAttackDelay,false);
+	// GetWorld()->GetTimerManager().SetTimer(RigthAttackTimerHandle,this, &ACanival::RightAttack, RigthAttackDelay,false);
+
+	if (CommonHud)
+	{
+		CommonHud->OnVisibleGaugeBar(FText::FromName(TEXT("USE CHAINSAW")), 0);
+	}
+	bChainSawCharging = true;
 }
 
 void ACanival::RightAttack()
 {
-	GetCharacterMovement()->MaxWalkSpeed *= 1.6;
-	
-	bIsCharging = false;
-	//타이머가 만료되면 공격
+	UE_LOG(LogTemp, Warning, TEXT("ACanival::RightAttack"));
 	bIsAttacking=true;
+	ChainSaw->SetGenerateOverlapEvents(true);
 	AnimInstance->PlayChainSawRunAnimation();
-}
-
-void ACanival::OnChainSawHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse, const FHitResult& Hit)
-{
-	if (!OtherActor || OtherActor == this)
-	{
-		return;
-	}
-
-	if (OtherActor->ActorHasTag("Generator"))
-	{
-		// 충돌로 인한 차징 취소
-		GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);
-		bIsCharging = false;
-		bIsAttacking = false;
-		
-		//AnimInstance->PlayChainSawCollisionReaction();
-	}
-
 }
 
 void ACanival::CheckAndAttachSurvivor()
@@ -289,7 +307,7 @@ void ACanival::CheckAndAttachSurvivor()
 		if (Camper)
 		{
 			// 생존자가 죽어서 크롤링 상태인지 확인 (Anim 인스턴스가 있고 bCrawl이 true)
-			if (!(Camper->Anim && Camper->Anim->bCrawl))
+			if (!(Camper->camperFSMComp && Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl))
 			{
 				continue;
 			}
@@ -367,8 +385,15 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 	//어깨 부착
 	if (Survivor && Survivor->GetMesh())
 	{
+		// AActor* ParentActor, FName SocketName, EAttachmentRule LocationRule, EAttachmentRule RotationRule, EAttachmentRule ScaleRule, bool bWeldSimulatedBodies
+		// Survivor->K2_AttachToActor(this, TEXT("joint_ShoulderLT_01Socket"), );
 		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
-		
+		Survivor->GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));
+
+		Survivor->SetActorEnableCollision(false);
+		Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		Survivor->GetCharacterMovement()->StopMovementImmediately();
+		Survivor->GetMesh()->bPauseAnims = true;
 		UE_LOG(LogTemp, Warning, TEXT("어깨에 붙음"));
 	}
 	
@@ -377,30 +402,38 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 
 void ACanival::RightClick_Complet()
 {
+	if (bChainSawCharging)
+	{
+		bChainSawCharging = false;
+	}
+	
 	//버튼 떼었을 때 타이머가 아직 실행중이면
 	if (!bIsAttacking)
 	{
-		GetCharacterMovement()->MaxWalkSpeed *= 2;
-		GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);//타이머 취소
+		// GetCharacterMovement()->MaxWalkSpeed *= 2;
+		// GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);//타이머 취소
 		//AnimInstance->PlayChainSawRunAnimation(); //아이들상태로 (코드 변경해야함)
 		
 	}
 }
 
-void ACanival::HangOnHook()
+void ACanival::HangOnHook(class AMeatHook* Hook)
 {
-	AnimInstance->PlayHangAnimation();
+	AnimInstance->PlayHangAnimation(Hook);
 	UE_LOG(LogTemp, Warning, TEXT("Hang"));
 }
 
-
-void ACanival::Kick()
+void ACanival::KickGenerator(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickAnimation();
-	UE_LOG(LogTemp, Warning, TEXT("Kick"));
+	AnimInstance->PlayKickGeneratorAnimation(Point);
+	UE_LOG(LogTemp, Warning, TEXT("KickGenerator"));
 }
 
-
+void ACanival::KickPallet(class UInteractionPoint* Point)
+{
+	AnimInstance->PlayKickPalletAnimation(Point);
+	UE_LOG(LogTemp, Warning, TEXT("KickPallet"));
+}
 
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -418,14 +451,14 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		Hammer->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
 		AnimInstance->PlayWipeAnimation();
+		UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
 		Camper->GetDamage("");
 	}
 	// 벽이냐
 	// 그 외냐
 }
 
-void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == this)
 	{
@@ -435,11 +468,16 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 	// 생존자냐
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
-		ChainSaw->SetGenerateOverlapEvents(false);
+		//UE_LOG(LogTemp, Warning, TEXT("ACanival::OnChainSawBeginOverlap"));
+		// ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
-		Camper->GetDamage("");
+		if (Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+		{
+			return;
+		}
+		Camper->GetDamage("Chainsaw");
 	}
+	
 	// 벽이냐
 	// 그 외냐
 }
@@ -467,14 +505,12 @@ void ACanival::FindPoint()
 	{
 		for (const auto HitResult : OutHits)
 		{
-			
 			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Find InteractionPoint"));
 				interact->Interaction(this);
 				break;
 			}
-			
 		}
 	}
 }

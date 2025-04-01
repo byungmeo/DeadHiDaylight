@@ -38,7 +38,8 @@ public:
 	UFUNCTION()
 	void OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor);
 
-	void OnHooked(class ACamper* HookedCamper);
+	UFUNCTION(BlueprintCallable)
+	void OnHooked(class ACanival* Slasher);
 	void OnRescued();
 	void OnSacrificed();
 };

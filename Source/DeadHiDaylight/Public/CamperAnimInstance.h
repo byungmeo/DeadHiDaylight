@@ -3,11 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SacrificePlayerState.h"
 #include "Animation/AnimInstance.h"
-#include "CamperComps/CamperFSM.h"
 #include "CamperAnimInstance.generated.h"
 
+enum class ECamperInteraction : uint8;
+enum class ECamperHealth : uint8;
+enum class ECamperMoveState : uint8;
+enum class ECamperStanceState : uint8;
 /**
  * 
  */
@@ -17,30 +19,30 @@ class DEADHIDAYLIGHT_API UCamperAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
-
-	virtual void NativeInitializeAnimation() override;
+	virtual void NativeBeginPlay() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 
 public:
 	// Camper 저장 변수
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(BlueprintReadOnly)
 	class ACamper* camper;
+	
 	// 생존자 자세 상태 애니메이션 스테이트
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
-	ECamperStanceState animCamperStanceState = ECamperStanceState::ECSS_Idle;
+	UPROPERTY(BlueprintReadOnly, Category = "AnimFSM")
+	ECamperStanceState animCamperStanceState;
 
 	// 생존자 움직임 상태 애니메이션 스테이트
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
-	ECamperMoveState animCamperMoveState = ECamperMoveState::ECS_NONE;
+	UPROPERTY(BlueprintReadOnly, Category = "AnimFSM")
+	ECamperMoveState animCamperMoveState;
 	
 	// 건강 상태 애니메이션 스테이트
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
-	ECamperHealth animHealthState = ECamperHealth::ECH_Healthy;
-	
+	UPROPERTY(BlueprintReadOnly, Category = "AnimFSM")
+	ECamperHealth animHealthState;
+
 	// 생존자 상호작용 스테이트
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimFSM")
-	ECamperInteraction animCamperInteractionState = ECamperInteraction::ECI_NONE;
+	UPROPERTY(BlueprintReadOnly, Category = "AnimFSM")
+	ECamperInteraction animCamperInteractionState;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	float moveSpeed; // 현재 속도

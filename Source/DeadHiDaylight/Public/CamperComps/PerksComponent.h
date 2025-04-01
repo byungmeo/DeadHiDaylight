@@ -3,8 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CamperAnimInstance.h"
-#include "CamperComps/CamperBaseComponent.h"
+#include "CamperBaseComponent.h"
 #include "PerksComponent.generated.h"
 
 
@@ -33,10 +32,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_SelfHealing;
 
-	// anim 저장용 변수
-	UCamperAnimInstance* anim;
-	
-	UCamperFSM* fsm;
+	class UCamperAnimInstance* anim;
+	class UCamperFSM* fsm;
 	
 	// 데드하드 사용 가능한지 판단하는 변수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Perks")

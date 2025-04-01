@@ -88,9 +88,11 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 		// TODO: 살인마가 생존자를 업은 상태에서 갈고리에 걸려고 하는 경우
 		if (auto* HookingCamper = Slasher->AttachedSurvivor)
 		{
+			Point->AttachActor(Slasher, 0, false);
+			
 			// 1. 생존자 및 살인자에게 알림
 			HookingCamper->ServerRPC_Hooking(TEXT("HookIn"));
-			// Slasher->HangOnHook();
+			Slasher->HangOnHook(this);
 
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = true;
@@ -118,10 +120,14 @@ void AMeatHook::OnStopInteraction(UInteractionPoint* Point, AActor* OtherActor)
 	}
 }
 
-void AMeatHook::OnHooked(class ACamper* HookedCamper)
+void AMeatHook::OnHooked(class ACanival* Slasher)
 {
-	CamperPoint->AttachActor(HookedCamper, 0, false);
-	
+	auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor);
+	Camper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	CamperPoint->AttachActor(Camper, 0, false);
+	Slasher->AttachedSurvivor = nullptr;
+	// Camper->ServerRPC_Hooking(TEXT("HookIn"));
+	SlasherPoint->DetachActor();
 }
 
 void AMeatHook::OnRescued()

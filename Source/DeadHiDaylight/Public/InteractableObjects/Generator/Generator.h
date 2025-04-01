@@ -95,7 +95,8 @@ public:
 	 */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Test")
 	bool bIsBreak = false;
-	void Break();
+	UFUNCTION(BlueprintCallable)
+	void Break(UInteractionPoint* Point);
 	UPROPERTY(BlueprintAssignable)
 	FOnBreak OnBreak;
 	UFUNCTION(CallInEditor, Category="Test")

@@ -223,13 +223,14 @@ void AGenerator::TestExplosion()
 	SkillCheckFail(nullptr);
 }
 
-void AGenerator::Break()
+void AGenerator::Break(UInteractionPoint* Point)
 {
 	if (bPowerOn)
 	{
 		return;
 	}
-	
+
+	Point->DetachActor();
 	bIsBreak = true;
 	PowerGauge -= FMath::Clamp(ImmediateBreakValue, 0, 1);
 	RemainBreakShield = InitBreakShield;
@@ -238,7 +239,7 @@ void AGenerator::Break()
 
 void AGenerator::TestBreak()
 {
-	Break();
+	Break(nullptr);
 }
 
 void AGenerator::DetachAll() const
@@ -270,7 +271,7 @@ void AGenerator::OnInteraction(class UInteractionPoint* Point, AActor* OtherActo
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AGenerator::OnInteraction Slasher"));
 		Point->AttachActor(Slasher, -100, true);
-		Slasher->Kick();
+		Slasher->KickGenerator(Point);
 	}
 }
 

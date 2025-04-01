@@ -4,8 +4,8 @@
 #include "CamperComps/CamperFSM.h"
 
 #include "CamperAnimInstance.h"
+#include "SacrificePlayerState.h"
 #include "Player/Camper.h"
-
 
 // Sets default values for this component's properties
 UCamperFSM::UCamperFSM()

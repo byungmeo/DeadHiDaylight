@@ -13,6 +13,9 @@ APallet::APallet()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+	bAlwaysRelevant = true;
+	bNetLoadOnClient = true;
 	
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	SetRootComponent(Mesh);
@@ -20,6 +23,7 @@ APallet::APallet()
 	if (MeshObj.Succeeded())
 	{
 		Mesh->SetSkeletalMeshAsset(MeshObj.Object);
+		Mesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	}
 	ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Script/Engine.AnimBlueprint'/Game/KBD/Pallet/ABP_Pallet.ABP_Pallet_C'"));
 	if (AnimClass.Succeeded())
@@ -79,10 +83,17 @@ void APallet::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			// 생존자에게 판자 내리는 애니메이션 실행하라고 함.
 			AttachPoint1->bCanInteract = false;
 			AttachPoint2->bCanInteract = false;
+			FallGround();
+			Camper->NearPoint = nullptr;
+			Camper->InteractingPoint = nullptr;
 		}
 		else
 		{
 			// 생존자에게 판자 슬라이딩 애니메이션 실행하라고 함.
+			AttachPoint1->DetachActor();
+			AttachPoint2->DetachActor();
+			Camper->NearPoint = nullptr;
+			Camper->InteractingPoint = nullptr;
 		}
 	}
 	else if (auto* Slasher = Cast<ACanival>(OtherActor))
@@ -96,8 +107,6 @@ void APallet::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 
 void APallet::FallGround()
 {
-	OnFallGround.Broadcast();
-	
 	AttachPoint1->bCanInteract = true;
 	AttachPoint1->InteractionMode = EInteractionMode::EIM_Both;
 	AttachPoint1->DetachActor();
@@ -106,7 +115,15 @@ void APallet::FallGround()
 	AttachPoint2->InteractionMode = EInteractionMode::EIM_Both;
 	AttachPoint2->DetachActor();
 
+	MulticastRPC_FallGround();
+
 	// TODO: 만약 판자 근처에 살인마가 있었다면 기절 적용
+}
+
+void APallet::MulticastRPC_FallGround_Implementation()
+{
+	bIsFallOnGround = true;
+	OnFallGround.Broadcast();
 }
 
 void APallet::Broken(class UInteractionPoint* Point)
@@ -119,6 +136,7 @@ void APallet::Broken(class UInteractionPoint* Point)
 	AttachPoint2->InteractionMode = EInteractionMode::EIM_None;
 	AttachPoint2->DetachActor();
 
+	SetActorEnableCollision(false);
 	Mesh->SetVisibility(false);
 	BrokenMesh->SetVisibility(true);
 }

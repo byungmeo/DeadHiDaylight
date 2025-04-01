@@ -7,8 +7,13 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
+#include "Generator.h"
 #include "InputMappingContext.h"
 #include "InteractionPoint.h"
+#include "MeatHook.h"
+#include "Pallet.h"
+#include "SacrificeCommonHUD.h"
+#include "SacrificePlayerController.h"
 #include "SacrificePlayerState.h"
 #include "Camera/CameraComponent.h"
 #include "CamperComps/CamperFSM.h"
@@ -197,6 +202,12 @@ void ACamper::BeginPlay()
 	}
 
 	Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
+
+	if (HasAuthority())
+	{
+		FTimerHandle FindPointTimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(FindPointTimerHandle, this, &ACamper::ServerOnly_FindInteractionPoint, 0.1f, true);
+	}
 }
 
 // Called every frame
@@ -296,7 +307,7 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Crouch, ETriggerEvent::Started, this, &ACamper::Start_Crouch);
 		input->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &ACamper::End_Crouch);
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
-		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::CheckInteractPoint);
+		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::TryInteraction);
 		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::StopInteract);
 
 		if (perksComp)
@@ -494,6 +505,87 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 	}
 }
 
+void ACamper::ServerOnly_FindInteractionPoint()
+{
+	if (nullptr != InteractingPoint)
+	{
+		if (nullptr != NearPoint)
+		{
+			NearPoint = nullptr;
+			ClientRPC_ChangeNearPoint(NearPoint);
+		}
+		return;
+	}
+	
+	const FVector& StartEnd = GetMovementComponent()->GetFeetLocation();
+	auto* Point = UInteractionPoint::FindInteractionPoint(GetWorld(), StartEnd, StartEnd, EInteractionMode::EIM_CamperOnly);
+	if (NearPoint != Point)
+	{
+		NearPoint = Point;
+		NET_LOG(LogTemp, Warning, TEXT("ServerOnly_FindInteractionPoint"));
+		ClientRPC_ChangeNearPoint(NearPoint);
+	}
+}
+
+void ACamper::ClientRPC_ChangeNearPoint_Implementation(class UInteractionPoint* NewPoint)
+{
+	FText Description = FText::FromString("NONE");
+
+	if (NewPoint)
+	{
+		const auto* PointOwner = NewPoint->GetOwner();
+		if (Cast<AGenerator>(PointOwner))
+		{
+			Description = FText::FromString("REPAIR");
+		}
+		else if (Cast<AMeatHook>(PointOwner))
+		{
+			Description = FText::FromString("UNHOOK");
+		}
+		else if (auto* Pallet = Cast<APallet>(PointOwner))
+		{
+			if (Pallet->bIsFallOnGround)
+			{
+				Description = FText::FromString("VAULT");
+			}
+			else
+			{
+				Description = FText::FromString("PULL DOWN");
+			}
+		}
+		else if (Cast<ACamper>(PointOwner))
+		{
+			Description = FText::FromString("HEAL");
+		}
+	}
+	
+	NearPoint = NewPoint;
+	NET_LOG(LogTemp, Warning, TEXT("ClientRPC_ChangeNearPoint : %s"), *Description.ToString());
+	if (const auto* SacrificeController = Cast<ASacrificePlayerController>(GetController()))
+	{
+		if (SacrificeController->Hud)
+		{
+			SacrificeController->Hud->OnUpdatedNearPoint(NewPoint, Description);
+		}
+	}
+}
+
+void ACamper::TryInteraction()
+{
+	ServerRPC_TryInteraction();
+}
+
+void ACamper::ServerRPC_TryInteraction_Implementation()
+{
+	if (nullptr == NearPoint)
+	{
+		return;
+	}
+
+	InteractingPoint = NearPoint;
+	NearPoint->Interaction(this);
+}
+
 void ACamper::CheckInteractPoint()
 {
 	ServerRPC_CheckInteractPoint();
@@ -531,7 +623,7 @@ void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 				if(interact->bCanInteract)
 				{
 					interact->Interaction(this);
-					SaveInteract = interact;
+					InteractingPoint = interact;
 					break;
 				}
 			}
@@ -599,9 +691,10 @@ void ACamper::StopInteract()
 
 void ACamper::ServerRPC_StopInteract_Implementation()
 {
-	if (SaveInteract)
+	if (InteractingPoint)
 	{
-		SaveInteract->StopInteraction(this);
+		InteractingPoint->StopInteraction(this);
+		InteractingPoint = nullptr;
 	}
 }
 

@@ -164,9 +164,6 @@ public:
 	// 카메라 관련 함수
 	void Look(const struct FInputActionValue& value);  // 카메라 움직임 함수
 
-	/*
-	 * Temp for Interact with Generator
-	 */
 public:
 	// 발전기 시작 / 실패
 	UFUNCTION(NetMulticast, Reliable)
@@ -180,17 +177,6 @@ public:
 	void ServerRPC_FailRepair(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_FailRepair(FName sectionName);
-	// 주변 상호작용 포인트 탐지 함수
-	void CheckInteractPoint();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_CheckInteractPoint();
-
-	
-	void StopInteract();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_StopInteract();
-	UPROPERTY()
-	class UInteractionPoint* SaveInteract;
 
 public:
 	UPROPERTY(VisibleAnywhere, Category = PerksComponent)
@@ -267,7 +253,30 @@ public:
 	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);
 	UFUNCTION()
 	void OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor);
+
+	/*
+	 *	상호작용 관련
+	 */
+	// 현재 상호작용 시작이 가능한 Point
+	UPROPERTY()
+	class UInteractionPoint* NearPoint = nullptr;
+	void ServerOnly_FindInteractionPoint();
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_ChangeNearPoint(class UInteractionPoint* NewPoint);
+	
+	void TryInteraction();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_TryInteraction();
+	
+	void CheckInteractPoint();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_CheckInteractPoint();
+	
+	void StopInteract();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StopInteract();
+	
+	// 현재 상호작용을 진행 중인 Point
+	UPROPERTY()
+	class UInteractionPoint* InteractingPoint = nullptr;
 };
-
-
-

@@ -119,6 +119,6 @@ public:
 	void AnimNotify_InjureLeftFoot();
 	UFUNCTION()
 	void AnimNotify_InjureRightFoot();
-
+	
 	
 };

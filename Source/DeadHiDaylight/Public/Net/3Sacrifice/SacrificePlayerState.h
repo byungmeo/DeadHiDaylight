@@ -87,9 +87,15 @@ struct FUserState
 	 *	Camper
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	ECamperStanceState Stance = ECamperStanceState::ECSS_Idle;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	ECamperMoveState Move = ECamperMoveState::ECS_NONE;	
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	EStrugglePhase StrugglePhase = EStrugglePhase::ESP_First;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	ECamperHealth Health = ECamperHealth::ECH_Healthy;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	ECamperInteraction Interaction = ECamperInteraction::ECI_NONE;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpdatedUserState, const FUserState&, UserState);

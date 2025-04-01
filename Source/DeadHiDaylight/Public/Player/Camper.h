@@ -115,12 +115,6 @@ public:
 	// 포인트 찾았는지 체크하는 변수
 	bool bFindPoints = false;
 
-	// 이동 관련 불 변수
-	// bool bIsMoveing = false;
-	// bool bIsRuning = false;
-	// bool bIsCrouching = false;
-	// bool bIsCrawling = false;
-
 	// 이동 관련 함수
 	void CamperMove(const struct FInputActionValue& value); // 캠퍼 움직임 함수
 	void StopCamperMove(const struct FInputActionValue& value);
@@ -238,6 +232,20 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMultiCastRPC_RescueHooking(FName sectionName);
 
+	// 살인마가 드는 RPC
+	void PickUp();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PickUp();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PickUp();
+
+	// 살인마가 떨어트리는 RPC
+	void PickUpDrop();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PickUpDrop();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PickUpDrop();
+	
 	// 뛸 때 왼발, 오른 발 사운드 재생 함수
 	void PlayLeftSound();
 	void PlayRightSound();
@@ -257,6 +265,11 @@ public:
 	float testCheckTime = 0;
 	bool btest = false;
 	float testRescueTime = 0;
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_HealthCheck();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_HealthCheck();
 };
 
 

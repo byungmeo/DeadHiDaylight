@@ -125,6 +125,13 @@ public:
 	void ServerRPC_PlayRescueHookingAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PlayRescueHookingAnimation(FName sectionName);
+	// 살인마가 들고 다니는 애니메이션 몽타주 실행하는 RPC
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlayPickUpAnimation(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PickUpAnimation(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PickUpAnimation(FName sectionName);
 	
 	UFUNCTION()
 	void AnimNotify_StartGen();

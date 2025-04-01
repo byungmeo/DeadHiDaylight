@@ -173,3 +173,13 @@ void UCamperAnimInstance::AnimNotify_InjureRightFoot()
 {
 	camper->PlayRightSound();
 }
+
+void UCamperAnimInstance::ServerRPC_PickUpAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PickUpAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PickUpAnimation_Implementation(FName sectionName)
+{
+	PlayPickUpAnimation(sectionName);
+}

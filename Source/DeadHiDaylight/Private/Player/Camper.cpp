@@ -225,14 +225,12 @@ void ACamper::Tick(float DeltaTime)
 	}
 	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
 	{
-		if (camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
+		PickUp();
 	}
 	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Three))
 	{
 		// 쓰러진 상태에서 돌아갈 때 Crawlhealing이 끝나면
-		curHP = maxHP;
-		camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
-		moveComp->MaxWalkSpeed = 0;
+		ServerRPC_HealthCheck();
 		SetStanceState(ECamperStanceState::ECSS_Idle);
 		StopInjureSound();
 	}
@@ -262,9 +260,13 @@ void ACamper::Tick(float DeltaTime)
 	{
 		FailRepair(TEXT("GenFailFT"));
 	}
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Nine))
+	{
+		PickUpDrop();
+	}
 	PrintNetLog();
 
-	if (curHP == maxHP && camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
+	// if (curHP == maxHP && camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 
 	// UE_LOG(LogTemp, Warning, TEXT("Current speed: %f"), curSpeed);
 	if (!bPlayInjureSound)
@@ -736,6 +738,39 @@ void ACamper::NetMultiCastRPC_RescueHooking_Implementation(FName sectionName)
 	Anim->ServerRPC_PlayRescueHookingAnimation(sectionName);
 }
 
+void ACamper::PickUp()
+{
+	ServerRPC_PickUp();
+}
+
+void ACamper::ServerRPC_PickUp_Implementation()
+{
+	MultiCastRPC_PickUp();
+}
+
+void ACamper::MultiCastRPC_PickUp_Implementation()
+{
+	if (Anim == nullptr) return;
+	Anim->ServerRPC_PickUpAnimation(TEXT("PickUpStart"));
+}
+
+void ACamper::PickUpDrop()
+{
+	ServerRPC_PickUpDrop();
+}
+
+void ACamper::ServerRPC_PickUpDrop_Implementation()
+{
+	MultiCastRPC_PickUpDrop();
+}
+
+void ACamper::MultiCastRPC_PickUpDrop_Implementation()
+{
+	if (Anim == nullptr) return;
+	camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
+	Anim->ServerRPC_PickUpAnimation(TEXT("PickUpDrop"));
+}
+
 void ACamper::PlayLeftSound()
 {
 	if (leftFootCue)
@@ -852,6 +887,18 @@ void ACamper::PrintNetLog()
 	
 		DrawDebugString(GetWorld(), GetActorLocation(), logStr, nullptr, FColor::Red, 0, true);
 	}
+}
+
+void ACamper::ServerRPC_HealthCheck_Implementation()
+{
+	MultiCastRPC_HealthCheck();
+}
+
+void ACamper::MultiCastRPC_HealthCheck_Implementation()
+{
+	if (camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
+	moveComp->MaxWalkSpeed = 0;
+	curHP = maxHP;
 }
 
 

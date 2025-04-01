@@ -380,6 +380,7 @@ void ACanival::CheckAndAttachSurvivor()
 
 void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 {
+	AttachedSurvivor = Survivor;
 	
 	AnimInstance->PlayAttackShoulderAnimation();
 	//어깨 부착

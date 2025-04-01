@@ -257,6 +257,16 @@ public:
 	float testCheckTime = 0;
 	bool btest = false;
 	float testRescueTime = 0;
+
+	/*
+	 *	살인마가 업을 수 있게 InteractionPoint 작업
+	 */
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class UInteractionPoint> CrawlPoint = nullptr;
+	UFUNCTION()
+	void OnInteraction(class UInteractionPoint* Point, AActor* OtherActor);
+	UFUNCTION()
+	void OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor);
 };
 
 

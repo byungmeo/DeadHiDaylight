@@ -24,65 +24,6 @@ void UCamperAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 }
 
-void UCamperAnimInstance::IsWalk()
-{
-	bWalk = !bWalk;
-	// UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::IsWalk %d"), bWalk);
-}
-
-void UCamperAnimInstance::IsRun()
-{
-	bRun = !bRun;
-	// UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::IsRun %d"), bRun);
-}
-
-void UCamperAnimInstance::IsCrouch(bool value)
-{
-	bCrouch = value;
-	randValue = RandomValue();
-	UE_LOG(LogTemp, Warning, TEXT("UCamperAnimInstance::bCrouch %d randomValue : %d"), bCrouch, randValue);
-}
-
-int32 UCamperAnimInstance::RandomValue()
-{
-	return FMath::RandRange(1, 2);
-}
-
-void UCamperAnimInstance::AnimNotify_StartGen()
-{
-	bStartRepair = true;
-	bEndRepair = true;
-}
-
-void UCamperAnimInstance::AnimNotify_GenEnd()
-{
-	bStartRepair = false;
-	Montage_Stop(0.2f);
-}
-
-void UCamperAnimInstance::AnimNotify_StartSelfHealing()
-{
-	bSelfHealing = true;
-}
-
-void UCamperAnimInstance::AnimNotify_EndSelfHealing()
-{
-	bSelfHealing = false;
-	Montage_Stop(0.2f);
-}
-
-void UCamperAnimInstance::AnimNotify_StartUnLock()
-{
-	bUnLocking = true;
-}
-
-void UCamperAnimInstance::AnimNotify_EndUnLock()
-{
-	bUnLocking = false;
-	bUnLock = true;
-	Montage_Stop(0.2f);
-}
-
 // 기어가는 애니메이션 RPC
 void UCamperAnimInstance::ServerRPC_PlayHitCrawlAnimation_Implementation(FName sectionName)
 {
@@ -154,6 +95,27 @@ void UCamperAnimInstance::MultiCastRPC_PlayRescueHookingAnimation_Implementation
 	PlayRescueHookingAnimation(sectionName);
 }
 
+// 살인마가 생존자를 들거나 떨어트리는 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_PickUpAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PickUpAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PickUpAnimation_Implementation(FName sectionName)
+{
+	PlayPickUpAnimation(sectionName);
+}
+
+void UCamperAnimInstance::ServerRPC_PullDownPalletAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_PullDownPalletAnimation(sectionName);
+}
+
+void UCamperAnimInstance::MultiCastRPC_PullDownPalletAnimation_Implementation(FName sectionName)
+{
+	PlayPullDownPalletAnimation(sectionName);
+}
+
 void UCamperAnimInstance::AnimNotify_LeftFoot()
 {
 	camper->PlayLeftSound();
@@ -174,12 +136,3 @@ void UCamperAnimInstance::AnimNotify_InjureRightFoot()
 	camper->PlayRightSound();
 }
 
-void UCamperAnimInstance::ServerRPC_PickUpAnimation_Implementation(FName sectionName)
-{
-	MultiCastRPC_PickUpAnimation(sectionName);
-}
-
-void UCamperAnimInstance::MultiCastRPC_PickUpAnimation_Implementation(FName sectionName)
-{
-	PlayPickUpAnimation(sectionName);
-}

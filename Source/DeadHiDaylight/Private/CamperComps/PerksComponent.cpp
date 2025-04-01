@@ -84,7 +84,8 @@ void UPerksComponent::ServerRPC_PerksDeadHard_Implementation()
 void UPerksComponent::NetMultiCastRPC_PerksDeadHard_Implementation()
 {
 	// 데드하드를 사용했고, 다친 상태가 아니고 달리는 상태가 아니면 return
-	if (bDeadHard == true || fsm->curHealthState != ECamperHealth::ECH_Injury || fsm->curMoveState != ECamperMoveState::ECS_Run) return;
+	if (bDeadHard == true || fsm->curHealthState != ECamperHealth::ECH_Injury
+						  || fsm->curMoveState != ECamperMoveState::ECS_Run) return;
 	
 	bDeadHard = true;
 	fsm->curInteractionState = ECamperInteraction::ECI_DeadHard;
@@ -133,16 +134,23 @@ void UPerksComponent::ServerRPC_PerksSelfHealing_Implementation()
 
 void UPerksComponent::NetMultiCastRPC_PerksSelfHealing_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("In NetMultCastRPC_PerksSelfHealing"));
-	if (anim == nullptr || Camper->bFindPoints || anim->bSelfHealing || anim->bInjure == false)
-	{
-		FString s = GetOwner()->GetName();
-		UE_LOG(LogTemp, Warning, TEXT("anim = %s, Comper->bFindPoints = %d, anim->bSelfHealing = %d, anim->bInjure = %d 참 = 1 거짓 = 0"), *s, Camper->bFindPoints, anim->bSelfHealing, anim->bInjure);
-		return;
-	}
+	if (anim == nullptr || Camper->bFindPoints
+						|| fsm->curInteractionState == ECamperInteraction::ECI_SelfHealing
+						|| fsm->curHealthState != ECamperHealth::ECH_Injury
+						|| fsm->curInteractionState == ECamperInteraction::ECI_Repair
+						|| fsm->curInteractionState == ECamperInteraction::ECI_UnLock) return;
 	UE_LOG(LogTemp, Warning, TEXT("PerksSelfHealing"));
 
-	anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartSelfHealing"));
+	if (fsm->curStanceState == ECamperStanceState::ECSS_Crouch)
+	{
+		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
+		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartCrouchSelfHealing"));
+	}
+	else
+	{
+		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
+		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartSelfHealing"));
+	}
 }
 void UPerksComponent::StopPerksSelfHealing()
 {
@@ -156,25 +164,36 @@ void UPerksComponent::ServerRPC_StopPerSelfHealing_Implementation()
 
 void UPerksComponent::NetMultiCastRPC_StopPerSelfHealing_Implementation()
 {
-	if (anim == nullptr || Camper->bFindPoints || anim->bSelfHealing == false) return;
+	if (anim == nullptr || Camper->bFindPoints || fsm->curInteractionState != ECamperInteraction::ECI_SelfHealing) return;
 
 	Camper->StopInjureSound();
-	anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndSelfHealing"));
+	if (fsm->curStanceState == ECamperStanceState::ECSS_Crouch)
+	{
+		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
+		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndCrouchSelfHealing"));
+	}
+	else
+	{
+		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
+		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndSelfHealing"));
+	}
 }
 
 void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
 {
 	// 자가치유를 사용할 때
-	// 자가치유중이고 다친상태일 때 
-	if (anim->bSelfHealing && anim->bInjure)
+	// 자가치유중이고 다친상태일 때 anim->bSelfHealing && anim->bInjure
+	if (fsm->curInteractionState == ECamperInteraction::ECI_SelfHealing &&
+		fsm->curHealthState == ECamperHealth::ECH_Injury &&
+		fsm->curInteractionState != ECamperInteraction::ECI_Repair &&
+		fsm->curInteractionState != ECamperInteraction::ECI_UnLock)
 	{
 		// 치유시간이 자가치유 시간을 넘어가면 힐링 시간을 초기화하고 HP를 풀로 채우며 다친 상태를 회복시킨다.
 		if (healingTime >= selfhealingTime)
 		{
 			healingTime = 0;
-			Camper->curHP = Camper->maxHP;
-			anim->bInjure = false;
-			ServerRPC_SelfHealingTimingCheck(anim->bInjure);
+			Camper->curHP = 2;
+			ServerRPC_SelfHealingTimingCheck(ECamperHealth::ECH_Healthy);
 		}
 		// 32초동안 치유 해야함.
 		healingTime += deltaTime;
@@ -182,14 +201,14 @@ void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
 	}
 }
 
-void UPerksComponent::ServerRPC_SelfHealingTimingCheck_Implementation(bool value)
+void UPerksComponent::ServerRPC_SelfHealingTimingCheck_Implementation(ECamperHealth newState)
 {
-	NetMultiCastRPC_SelfHealingTimingCheck(value);
+	NetMultiCastRPC_SelfHealingTimingCheck(newState);
 }
 
-void UPerksComponent::NetMultiCastRPC_SelfHealingTimingCheck_Implementation(bool value)
+void UPerksComponent::NetMultiCastRPC_SelfHealingTimingCheck_Implementation(ECamperHealth newState)
 {
-	anim->bInjure = value;
+	fsm->curHealthState = newState;
 }
 
 

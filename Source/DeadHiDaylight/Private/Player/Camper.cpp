@@ -178,7 +178,7 @@ ACamper::ACamper()
 void ACamper::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	if (const auto* pc = Cast<APlayerController>(Controller)) {
 		//그 객체를 이용해서 EnhanceInputLocalPlayerSubSystem을 가져온다.
 		UEnhancedInputLocalPlayerSubsystem* subSys = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
@@ -186,7 +186,6 @@ void ACamper::BeginPlay()
 			subSys->AddMappingContext(IMC_Camper, 0);
 		}
 	}
-
 	Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
 }
 
@@ -264,6 +263,10 @@ void ACamper::Tick(float DeltaTime)
 	{
 		PickUpDrop();
 	}
+	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Zero))
+	{
+		PullDownPallet();
+	}
 	PrintNetLog();
 
 	// if (curHP == maxHP && camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
@@ -301,8 +304,10 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACamper::CamperMove(const FInputActionValue& value)
 {
-	if (Anim->bStartRepair || Anim->bSelfHealing) return;
-	if (Anim->Montage_IsPlaying(hitcrawlMontage)) return;
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing ||
+		Anim->Montage_IsPlaying(hitcrawlMontage)) return;
+
 	FVector2D moveDirection = value.Get<FVector2D>();
 	
 	const FRotator Rotation = Controller->GetControlRotation();
@@ -317,7 +322,7 @@ void ACamper::CamperMove(const FInputActionValue& value)
 
 	
 	curSpeed = FVector::DotProduct(GetVelocity(), GetActorForwardVector());
-
+	
 	if (camperFSMComp->curMoveState == ECamperMoveState::ECS_Run) return;
 	SetMovementState(ECamperMoveState::ECS_Move);
 }
@@ -341,33 +346,10 @@ void ACamper::StartRun(const struct FInputActionValue& value)
 		camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl ||
 		Anim->moveSpeed < 3.0f) return;
 	
-	
-	ServerRPC_StartRun();
-}
-void ACamper::ServerRPC_StartRun_Implementation()
-{
-	MultiCastRPC_StartRun();
-}
-void ACamper::MultiCastRPC_StartRun_Implementation()
-{
 	SetMovementState(ECamperMoveState::ECS_Run);
 }
-// Run Start End
-
-// Run Stop
 void ACamper::StopRun(const struct FInputActionValue& value)
 {
-	ServerRPC_StopRun();
-}
-
-void ACamper::ServerRPC_StopRun_Implementation()
-{
-	MultiCastRPC_StopRun();
-}
-
-void ACamper::MultiCastRPC_StopRun_Implementation()
-{
-	// bIsRuning = false;
 	SetMovementState(ECamperMoveState::ECS_NONE);
 }
 // Run Stop End
@@ -376,34 +358,11 @@ void ACamper::MultiCastRPC_StopRun_Implementation()
 void ACamper::Start_Crouch(const struct FInputActionValue& value)
 {
 	if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl) return;
-	ServerRPC_Start_Crouch();
-}
-void ACamper::ServerRPC_Start_Crouch_Implementation()
-{
-	MultiCastRPC_Start_Crouch();
-}
-void ACamper::MultiCastRPC_Start_Crouch_Implementation()
-{
-	// bIsCrouching = true;
 	SetStanceState(ECamperStanceState::ECSS_Crouch);
 }
-// Crouch Start End
-
-// Crouch End Start
 void ACamper::End_Crouch(const struct FInputActionValue& value)
 {
 	if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl) return;
-	ServerRPC_End_Crouch();
-}
-
-void ACamper::ServerRPC_End_Crouch_Implementation()
-{
-	MultiCastRPC_End_Crouch();
-}
-
-void ACamper::MultiCastRPC_End_Crouch_Implementation()
-{
-	springArmComp->SetRelativeLocation(FVector(0, 0, 210));
 	SetStanceState(ECamperStanceState::ECSS_Idle);
 }
 // Crouch End
@@ -427,6 +386,7 @@ void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewS
 	case ECamperStanceState::ECSS_Idle:
 		// curSpeed = 0;
 		// moveComp->MaxWalkSpeed = moveSpeed;
+		springArmComp->SetRelativeLocation(FVector(0, 0, 210));
 		break;
 	case ECamperStanceState::ECSS_Crouch:
 		springArmComp->SetRelativeLocation(FVector(0, 0, 160));
@@ -439,6 +399,7 @@ void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewS
 
 void ACamper::SetMovementState(ECamperMoveState NewState)
 {
+	if (camperFSMComp->curMoveState == NewState) return;
 	ServerRPC_SetMovementState(NewState);
 }
 
@@ -451,6 +412,9 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 {
 	camperFSMComp->curMoveState = NewState;
 
+	FString s = UEnum::GetValueAsString(camperFSMComp->curMoveState);
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *s);
+	
 	switch (NewState)
 	{
 	case ECamperMoveState::ECS_NONE:
@@ -494,7 +458,8 @@ void ACamper::CheckInteractPoint()
 
 void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 {
-	if (Anim->bSelfHealing) return; // 자가 치유 중이라면 리턴
+	// if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair ||
+	// 	camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing) return; // 자가 치유 중이라면 리턴
 	// || Anim->bCrawl
 	// InteractionPoint 찾는 Trace
 	TArray<AActor*> ActorsToIgnore;
@@ -519,8 +484,8 @@ void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 		{
 			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
 			{
-				if (Anim == nullptr || Anim->bStartRepair) return;
-				UE_LOG(LogTemp, Warning, TEXT("%s, %d"), *HitResult.GetComponent()->GetName(), Anim->bStartRepair);
+				if (Anim == nullptr || camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair) return;
+				UE_LOG(LogTemp, Warning, TEXT("%s, %d"), *HitResult.GetComponent()->GetName(),camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair);
 				if(interact->bCanInteract)
 				{
 					interact->Interaction(this);
@@ -538,14 +503,17 @@ void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 
 void ACamper::MultiCastRPC_StartRepair_Implementation()
 {
-	if (Anim == nullptr || Anim->bStartRepair || Anim->bSelfHealing )
+	if (Anim == nullptr || camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Camper : StartRepair : Anim : nullptr"));
 		return;
 	}
 	// || Anim->bCrawl
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
-
+	// Interaction 상태 전환
+	camperFSMComp->curInteractionState = ECamperInteraction::ECI_Repair;
+	
+	// 움직임 멈추기
 	GetCharacterMovement()->StopMovementImmediately();
 	
 	// 시작 애니메이션 몽타주 실행
@@ -554,13 +522,16 @@ void ACamper::MultiCastRPC_StartRepair_Implementation()
 
 void ACamper::MultiCastRPC_EndRepair_Implementation()
 {
-	if (Anim == nullptr || Anim->bEndRepair == false)
+	if (Anim == nullptr || camperFSMComp->curInteractionState != ECamperInteraction::ECI_Repair)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Camper : EndRepair : Anim : nullptr"));
 		return;
 	}
-	Anim->bEndRepair = false;
+
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
+
+	// InterAction 상태 None으로 전환
+	camperFSMComp->curInteractionState = ECamperInteraction::ECI_NONE;
 	
 	// 다시 애니메이션 idle로 바꾸고 wsad 움직일 수 있게 변경
 	Anim->ServerRPC_PlayRepairAnimation(TEXT("GenOut"));
@@ -568,21 +539,11 @@ void ACamper::MultiCastRPC_EndRepair_Implementation()
 
 void ACamper::FailRepair(FName sectionName)
 {
-	ServerRPC_FailRepair(sectionName);
-}
-void ACamper::ServerRPC_FailRepair_Implementation(FName sectionName)
-{
-	MultiCastRPC_FailRepair(sectionName);
-}
-
-void ACamper::MultiCastRPC_FailRepair_Implementation(FName sectionName)
-{
 	if (Anim == nullptr) return;
 
 	// 발전기 가동은 된 상태로 게이지만 줄어들고 다시 고쳐야 한다
 	Anim->ServerRPC_PlayRepairAnimation(sectionName);
 }
-
 // Repair End
 
 void ACamper::StopInteract()
@@ -618,6 +579,11 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 		NET_LOG(LogTemp, Warning, TEXT("Camper : GetDamage (%s) !!CamperFSM is nullptr"), *weapon);
 		return;
 	}
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_DeadHard)
+	{
+		ChangeSpeed();
+		return;
+	}
 
 	// 맞을 때 비명 지르는 부분
 	if (injuredScreamCue) PlayScreamSound();
@@ -638,34 +604,31 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 	}
 	else
 	{
-		// 다친 상태로 전환 (서버와 로컬 모두 실행)
-		camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
-
-		// 이전 속도를 저장
-		beforeSpeed = moveComp->MaxWalkSpeed;
-
-		// 2초 동안 스피드 증가
-		moveComp->MaxWalkSpeed *= 2;
-
-		// 2초 후 원래 속도로 복귀
-		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, [this]()
-		{
-			moveComp->MaxWalkSpeed = beforeSpeed;
-			bPlayInjureSound = true;
-			PlayInjureSound();
-		}, 2.0f, false);
+		ChangeSpeed();
 	}
 }
-void ACamper::Crawling()
+
+void ACamper::ChangeSpeed()
 {
-	ServerRPC_Crawling();
-}
-void ACamper::ServerRPC_Crawling_Implementation()
-{
-	MultiCastRPC_Crawling();
+	// 다친 상태로 전환 (서버와 로컬 모두 실행)
+	camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
+
+	// 이전 속도를 저장
+	beforeSpeed = moveComp->MaxWalkSpeed;
+
+	// 2초 동안 스피드 증가
+	moveComp->MaxWalkSpeed *= 2;
+
+	// 2초 후 원래 속도로 복귀
+	GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, [this]()
+	{
+		moveComp->MaxWalkSpeed = beforeSpeed;
+		bPlayInjureSound = true;
+		PlayInjureSound();
+	}, 2.0f, false);
 }
 
-void ACamper::MultiCastRPC_Crawling_Implementation()
+void ACamper::Crawling()
 {
 	SetStanceState(ECamperStanceState::ECSS_Crawl);
 	SetMovementState(ECamperMoveState::ECS_NONE);
@@ -673,48 +636,20 @@ void ACamper::MultiCastRPC_Crawling_Implementation()
 
 void ACamper::StartUnLock()
 {
-	ServerRPC_StartUnLock();
-}
+	if (Anim == nullptr || camperFSMComp->curInteractionState == ECamperInteraction::ECI_UnLock) return;
 
-void ACamper::ServerRPC_StartUnLock_Implementation()
-{
-	MultiCastRPC_StartUnLock();
-}
-
-void ACamper::MultiCastRPC_StartUnLock_Implementation()
-{
-	if (Anim == nullptr || Anim->bUnLocking) return;
-
+	camperFSMComp->curInteractionState = ECamperInteraction::ECI_UnLock;
 	Anim->ServerRPC_PlayUnLockAnimation(TEXT("StartUnLock"));
 }
 
 void ACamper::EndUnLock()
 {
-	ServerRPC_EndUnLock();
-}
-void ACamper::ServerRPC_EndUnLock_Implementation()
-{
-	MultiCastRPC_EndUnLock();
-}
-
-void ACamper::MultiCastRPC_EndUnLock_Implementation()
-{
 	if (Anim == nullptr) return;
-	
+	camperFSMComp->curInteractionState = ECamperInteraction::ECI_NONE;
 	Anim->ServerRPC_PlayUnLockAnimation(TEXT("OpenDoor"));
 }
 
 void ACamper::Hooking(FName sectionName)
-{
-	ServerRPC_Hooking(sectionName);
-}
-
-void ACamper::ServerRPC_Hooking_Implementation(FName sectionName)
-{
-	NetMultiCastRPC_Hooking(sectionName);
-}
-
-void ACamper::NetMultiCastRPC_Hooking_Implementation(FName sectionName)
 {
 	if (Anim == nullptr) return;
 	camperFSMComp->curInteractionState = ECamperInteraction::ECI_Hook;
@@ -723,54 +658,33 @@ void ACamper::NetMultiCastRPC_Hooking_Implementation(FName sectionName)
 
 void ACamper::RescueHooking(FName sectionName)
 {
-	ServerRPC_RescueHooking(sectionName);
-}
-
-void ACamper::ServerRPC_RescueHooking_Implementation(FName sectionName)
-{
-	NetMultiCastRPC_RescueHooking(sectionName);
-}
-
-void ACamper::NetMultiCastRPC_RescueHooking_Implementation(FName sectionName)
-{
 	if (Anim == nullptr) return;
 	camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 	Anim->ServerRPC_PlayRescueHookingAnimation(sectionName);
 }
 
+// 살인마가 드는 함수
 void ACamper::PickUp()
-{
-	ServerRPC_PickUp();
-}
-
-void ACamper::ServerRPC_PickUp_Implementation()
-{
-	MultiCastRPC_PickUp();
-}
-
-void ACamper::MultiCastRPC_PickUp_Implementation()
 {
 	if (Anim == nullptr) return;
 	Anim->ServerRPC_PickUpAnimation(TEXT("PickUpStart"));
 }
 
+// 살인마가 떨어트리는 함수
 void ACamper::PickUpDrop()
-{
-	ServerRPC_PickUpDrop();
-}
-
-void ACamper::ServerRPC_PickUpDrop_Implementation()
-{
-	MultiCastRPC_PickUpDrop();
-}
-
-void ACamper::MultiCastRPC_PickUpDrop_Implementation()
 {
 	if (Anim == nullptr) return;
 	camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
 	Anim->ServerRPC_PickUpAnimation(TEXT("PickUpDrop"));
 }
 
+void ACamper::PullDownPallet()
+{
+	if (Anim == nullptr) return;
+	Anim->ServerRPC_PullDownPalletAnimation(TEXT("PullDownPallet"));
+}
+
+// Sound 부분
 void ACamper::PlayLeftSound()
 {
 	if (leftFootCue)

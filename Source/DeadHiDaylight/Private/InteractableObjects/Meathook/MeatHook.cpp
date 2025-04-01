@@ -75,7 +75,7 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			// TODO: Case2 : 생존자가 갈고리에 걸려있는 생존자를 구하는 경우
 			
 			// 1. 구하려는 생존자에게 알림
-			Camper->ServerRPC_RescueHooking(TEXT("HookRescueIn"));
+			Camper->RescueHooking(TEXT("HookRescueIn"));
 
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = false;
@@ -91,7 +91,7 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			Point->AttachActor(Slasher, 0, false);
 			
 			// 1. 생존자 및 살인자에게 알림
-			HookingCamper->ServerRPC_Hooking(TEXT("HookIn"));
+			HookingCamper->Hooking(TEXT("HookIn"));
 			Slasher->HangOnHook(this);
 
 			// 2. Point를 적절한 상태로 전환

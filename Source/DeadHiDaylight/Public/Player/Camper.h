@@ -119,29 +119,11 @@ public:
 	void CamperMove(const struct FInputActionValue& value); // 캠퍼 움직임 함수
 	void StopCamperMove(const struct FInputActionValue& value);
 
-	void StartRun(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_StartRun();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_StartRun();
-
+	void StartRun(const struct FInputActionValue& value); // 캠퍼 뛰기 시작 함수
 	void StopRun(const struct FInputActionValue& value);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_StopRun();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_StopRun();
 	
 	void Start_Crouch(const struct FInputActionValue& value); // 앉기 시작 함수 
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_Start_Crouch();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_Start_Crouch();
-
 	void End_Crouch(const struct FInputActionValue& value); // 앉기 끝 함수
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_End_Crouch();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_End_Crouch();
 	
 	void SetStanceState(ECamperStanceState NewState);
 	UFUNCTION(Server, Reliable)
@@ -170,10 +152,7 @@ public:
 	void MultiCastRPC_EndRepair();
 
 	void FailRepair(FName sectionName);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_FailRepair(FName sectionName);
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_FailRepair(FName sectionName);
+
 	// 주변 상호작용 포인트 탐지 함수
 	void CheckInteractPoint();
 	UFUNCTION(Server, Reliable)
@@ -198,53 +177,30 @@ public:
 	void ServerRPC_GetDamage(const FString& weapon);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_GetDamage(const FString& weapon);
-	
+	void ChangeSpeed();
 	// 쓰러진 상태 함수 RPC
 	void Crawling();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_Crawling();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_Crawling();
 
 	// 문 여는 함수 RPC
 	void StartUnLock();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_StartUnLock();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_StartUnLock();
+
 	// 문 닫는 함수 RPC
 	void EndUnLock();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_EndUnLock();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_EndUnLock();
+
 	// 갈고리 걸리는 함수 RPC
 	void Hooking(FName sectionName);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_Hooking(FName sectionName);
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMultiCastRPC_Hooking(FName sectionName);
 	
 	// 갈고리에서 구해주는 RPC
 	void RescueHooking(FName sectionName);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_RescueHooking(FName sectionName);
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMultiCastRPC_RescueHooking(FName sectionName);
 
 	// 살인마가 드는 RPC
 	void PickUp();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_PickUp();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_PickUp();
 
 	// 살인마가 떨어트리는 RPC
 	void PickUpDrop();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_PickUpDrop();
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_PickUpDrop();
+
+	// 판자 내리는 RPC
+	void PullDownPallet();
 	
 	// 뛸 때 왼발, 오른 발 사운드 재생 함수
 	void PlayLeftSound();

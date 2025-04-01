@@ -75,7 +75,7 @@ public:
 	
 	void SelfHealingTimingCheck(float deltaTime);
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_SelfHealingTimingCheck(bool value);
+	void ServerRPC_SelfHealingTimingCheck(ECamperHealth newState);
 	UFUNCTION(NetMulticast, Reliable)
-	void NetMultiCastRPC_SelfHealingTimingCheck(bool value);
+	void NetMultiCastRPC_SelfHealingTimingCheck(ECamperHealth newState);
 };

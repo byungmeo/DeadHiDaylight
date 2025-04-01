@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InputActionValue.h"
-#include "InteractionPoint.h"
-#include "SacrificePlayerState.h"
 #include "GameFramework/Character.h"
 #include "Camper.generated.h"
+
+enum class ECamperMoveState : uint8;
+enum class ECamperStanceState : uint8;
 
 UCLASS()
 class DEADHIDAYLIGHT_API ACamper : public ACharacter
@@ -16,8 +16,10 @@ public:
 	// Sets default values for this character's properties
 	ACamper();
 
+protected:
+	virtual void BeginPlay() override;
+	
 public:
-	virtual void OnConstruction(const FTransform& Transform) override;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
@@ -68,8 +70,8 @@ public:
 	// moveComp
 	UPROPERTY()
 	class UCharacterMovementComponent* moveComp; // 캐릭터 움직임 컴포넌트
-	UPROPERTY(EditAnywhere)
-	class UCamperAnimInstance* Anim;
+	UPROPERTY()
+	class UCamperAnimInstance* Anim = nullptr;
 	
 	// Input 변수
 	UPROPERTY(EditDefaultsOnly)
@@ -120,8 +122,8 @@ public:
 	// bool bIsCrawling = false;
 
 	// 이동 관련 함수
-	void CamperMove(const FInputActionValue& value); // 캠퍼 움직임 함수
-	void StopCamperMove(const FInputActionValue& value);
+	void CamperMove(const struct FInputActionValue& value); // 캠퍼 움직임 함수
+	void StopCamperMove(const struct FInputActionValue& value);
 
 	void StartRun(const struct FInputActionValue& value); // 캠퍼 뛰는 함수
 	UFUNCTION(Server, Reliable)
@@ -188,7 +190,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_StopInteract();
 	UPROPERTY()
-	UInteractionPoint* SaveInteract;
+	class UInteractionPoint* SaveInteract;
 
 public:
 	UPROPERTY(VisibleAnywhere, Category = PerksComponent)

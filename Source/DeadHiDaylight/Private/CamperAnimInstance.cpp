@@ -4,14 +4,11 @@
 #include "CamperAnimInstance.h"
 
 #include "Player/Camper.h"
-#include "Kismet/GameplayStatics.h"
 
-
-void UCamperAnimInstance::NativeInitializeAnimation()
+void UCamperAnimInstance::NativeBeginPlay()
 {
-	Super::NativeInitializeAnimation();
-
-	camper = Cast<ACamper>(TryGetPawnOwner());
+	Super::NativeBeginPlay();
+	camper = Cast<ACamper>(GetOwningActor());
 }
 
 void UCamperAnimInstance::NativeUpdateAnimation(float DeltaSeconds)

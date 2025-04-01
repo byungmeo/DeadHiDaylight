@@ -11,18 +11,17 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
+#include "InteractionPoint.h"
 #include "SacrificeCommonHUD.h"
 #include "SacrificePlayerController.h"
-#include "Audio/AudioDebug.h"
 #include "Camera/CameraComponent.h"
+#include "CamperComps/CamperFSM.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Player/Camper.h"
 #include "Sound/SoundBase.h"
-
-
 
 // Sets default values
 ACanival::ACanival()
@@ -308,7 +307,7 @@ void ACanival::CheckAndAttachSurvivor()
 		if (Camper)
 		{
 			// 생존자가 죽어서 크롤링 상태인지 확인 (Anim 인스턴스가 있고 bCrawl이 true)
-			if (!(Camper->Anim && Camper->camperFSMComp && Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl))
+			if (!(Camper->camperFSMComp && Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl))
 			{
 				continue;
 			}

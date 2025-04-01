@@ -6,6 +6,8 @@
 #include "Player/Camper.h"
 #include "CamperAnimInstance.h"
 #include "EnhancedInputComponent.h"
+#include "SacrificePlayerState.h"
+#include "CamperComps/CamperFSM.h"
 
 
 // Sets default values for this component's properties

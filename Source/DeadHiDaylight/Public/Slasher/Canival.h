@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InteractionPoint.h"
 #include "GameFramework/Character.h"
 #include "Canival.generated.h"
 

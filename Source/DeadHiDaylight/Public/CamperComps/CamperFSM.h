@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "CamperBaseComponent.h"
-#include "SacrificePlayerState.h"
 #include "CamperFSM.generated.h"
 
+enum class ECamperInteraction : uint8;
+enum class ECamperHealth : uint8;
+enum class ECamperMoveState : uint8;
+enum class ECamperStanceState : uint8;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DEADHIDAYLIGHT_API UCamperFSM : public UCamperBaseComponent
@@ -30,16 +33,16 @@ public:
 	
 	// 자세 상태 변수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
-	ECamperStanceState curStanceState = ECamperStanceState::ECSS_Idle;
+	ECamperStanceState curStanceState;
 	// 이동 상태 변수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
-	ECamperMoveState curMoveState = ECamperMoveState::ECS_NONE;
+	ECamperMoveState curMoveState;
 	// 건강 상태 변수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
-	ECamperHealth curHealthState = ECamperHealth::ECH_Healthy;
+	ECamperHealth curHealthState;
 	// 상호작용 상태 변수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
-	ECamperInteraction curInteractionState = ECamperInteraction::ECI_NONE;
+	ECamperInteraction curInteractionState;
 	
 	// 자세 상태 함수
 	void SetCamperStanceState(ECamperStanceState newState);

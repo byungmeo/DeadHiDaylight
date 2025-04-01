@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "DeadHiDaylight/Public/Player/Camper.h"
+#include "Player/Camper.h"
 
 #include "CamperAnimInstance.h"
 #include "EnhancedInputComponent.h"
@@ -8,6 +8,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "InteractionPoint.h"
+#include "SacrificePlayerState.h"
 #include "Camera/CameraComponent.h"
 #include "CamperComps/CamperFSM.h"
 #include "CamperComps/PerksComponent.h"
@@ -35,40 +36,31 @@ ACamper::ACamper()
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -210), FRotator(0, -90, 0));
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/JS/Assets/Camper/Character/Claudette/Claudette.Claudette'"));
-
 	if (tempMesh.Succeeded())
 	{
-		GetMesh()->SetSkeletalMesh(tempMesh.Object);
-	}
-
-	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnimInstance(TEXT("/Script/Engine.AnimBlueprint'/Game/JS/Blueprints/Animation/ABP_Player.ABP_Player_C'"));
-	if (tempAnimInstance.Succeeded())
-	{
-		GetMesh()->SetAnimInstanceClass(tempAnimInstance.Class);
+		GetMesh()->SetSkeletalMeshAsset(tempMesh.Object);
+	
+		glassesComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("glassesComp"));
+		ConstructorHelpers::FObjectFinder<UStaticMesh> tempGlassesMesh(TEXT("/Script/Engine.StaticMesh'/Game/JS/Assets/Camper/Character/Claudette/Acc/Glasses/CM_Glasses_Acc01_REF.CM_Glasses_Acc01_REF'"));
+		if (tempGlassesMesh.Succeeded())
+		{
+			glassesComp->SetStaticMesh(tempGlassesMesh.Object);
+			glassesComp->SetupAttachment(GetMesh(), TEXT("Glasses"));
+			glassesComp->SetRelativeLocation(FVector(2.2f, -11, 0));
+			glassesComp->SetRelativeScale3D(FVector(0.72f));
+		}
+	
+		hairComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("hairComp"));
+		ConstructorHelpers::FObjectFinder<UStaticMesh> tempHairMesh(TEXT("/Script/Engine.StaticMesh'/Game/JS/Assets/Camper/Character/Claudette/Acc/Hair/CM_Hair_Acc01_REF.CM_Hair_Acc01_REF'"));
+		if (tempHairMesh.Succeeded())
+		{
+			hairComp->SetStaticMesh(tempHairMesh.Object);
+			hairComp->SetupAttachment(GetMesh(), TEXT("Hair"));
+			hairComp->SetRelativeLocationAndRotation(FVector(2.84f, -9, 1), FRotator(80, 180, 100));
+			hairComp->SetRelativeScale3D(FVector(0.35f));
+		}
 	}
 	
-	glassesComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("glassesComp"));
-	glassesComp->SetupAttachment(GetMesh(), TEXT("Glasses"));
-	glassesComp->SetRelativeLocation(FVector(2.2f, -11, 0));
-	glassesComp->SetRelativeScale3D(FVector(0.72f));
-	
-	ConstructorHelpers::FObjectFinder<UStaticMesh> tempGlassesMesh(TEXT("/Script/Engine.StaticMesh'/Game/JS/Assets/Camper/Character/Claudette/Acc/Glasses/CM_Glasses_Acc01_REF.CM_Glasses_Acc01_REF'"));
-
-	if (tempGlassesMesh.Succeeded())
-	{
-		glassesComp->SetStaticMesh(tempGlassesMesh.Object);
-	}
-	hairComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("hairComp"));
-	hairComp->SetupAttachment(GetMesh(), TEXT("Hair"));
-	hairComp->SetRelativeLocationAndRotation(FVector(2.84f, -9, 1), FRotator(80, 180, 100));
-	hairComp->SetRelativeScale3D(FVector(0.35f));
-	
-	ConstructorHelpers::FObjectFinder<UStaticMesh> tempHairMesh(TEXT("/Script/Engine.StaticMesh'/Game/JS/Assets/Camper/Character/Claudette/Acc/Hair/CM_Hair_Acc01_REF.CM_Hair_Acc01_REF'"));
-
-	if (tempHairMesh.Succeeded())
-	{
-		hairComp->SetStaticMesh(tempHairMesh.Object);
-	}
 	springArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("springArmComp"));
 	springArmComp->SetupAttachment(RootComponent);
 	springArmComp->SetRelativeLocation(FVector(0, 0, 210));
@@ -81,82 +73,82 @@ ACamper::ACamper()
 
 	
 	// IA
-	ConstructorHelpers::FObjectFinder<UInputMappingContext> tempIMC(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/JS/Input/IMC_FirstCamper.IMC_FirstCamper'"));
+	static const ConstructorHelpers::FObjectFinder<UInputMappingContext> tempIMC(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/JS/Input/IMC_FirstCamper.IMC_FirstCamper'"));
 	if (tempIMC.Succeeded())
 	{
 		IMC_Camper = tempIMC.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UInputAction> tempIAMove(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_CamperMove.IA_CamperMove'"));
+	static const ConstructorHelpers::FObjectFinder<UInputAction> tempIAMove(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_CamperMove.IA_CamperMove'"));
 	if (tempIAMove.Succeeded())
 	{
 		IA_Move = tempIAMove.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UInputAction> tempIALook(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Look.IA_Look'"));
+	static const ConstructorHelpers::FObjectFinder<UInputAction> tempIALook(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Look.IA_Look'"));
 	if (tempIALook.Succeeded())
 	{
 		IA_Look = tempIALook.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UInputAction> tempIARun(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Run.IA_Run'"));
+	static const ConstructorHelpers::FObjectFinder<UInputAction> tempIARun(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Run.IA_Run'"));
 	if (tempIARun.Succeeded())
 	{
 		IA_Run = tempIARun.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UInputAction> tempIACrouch(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Crouch.IA_Crouch'"));
+	static const ConstructorHelpers::FObjectFinder<UInputAction> tempIACrouch(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Crouch.IA_Crouch'"));
 	if (tempIACrouch.Succeeded())
 	{
 		IA_Crouch = tempIACrouch.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UInputAction> tempIARepair(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Repair.IA_Repair'"));
+	static const ConstructorHelpers::FObjectFinder<UInputAction> tempIARepair(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_Repair.IA_Repair'"));
 	if (tempIARepair.Succeeded())
 	{
 		IA_Repair = tempIARepair.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UInputAction> tempIAUnLock(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_UnLock.IA_UnLock'"));
+	static const ConstructorHelpers::FObjectFinder<UInputAction> tempIAUnLock(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_UnLock.IA_UnLock'"));
 	if (tempIAUnLock.Succeeded())
 	{
 		IA_UnLock = tempIAUnLock.Object;
 	}
 	
 	// Sound
-	ConstructorHelpers::FObjectFinder<USoundCue> tempLeftSound(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/run/SC_LeftFoot.SC_LeftFoot'"));
+	static const ConstructorHelpers::FObjectFinder<USoundCue> tempLeftSound(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/run/SC_LeftFoot.SC_LeftFoot'"));
 	if (tempLeftSound.Succeeded())
 	{
 		leftFootCue = tempLeftSound.Object;
 	}
-	ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationLeftObj(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/run/SA_LeftFoot.SA_LeftFoot'"));
+	static const ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationLeftObj(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/run/SA_LeftFoot.SA_LeftFoot'"));
 	if (AttenuationLeftObj.Succeeded())
 	{
 		leftFootAttenuation = AttenuationLeftObj.Object;
 	}
 	
-	ConstructorHelpers::FObjectFinder<USoundCue> tempRightSound(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/run/SC_RightFoot.SC_RightFoot'"));
+	static const ConstructorHelpers::FObjectFinder<USoundCue> tempRightSound(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/run/SC_RightFoot.SC_RightFoot'"));
 	if (tempRightSound.Succeeded())
 	{
 		rightFootCue = tempRightSound.Object;
 	}
-	ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationRightObj(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/run/SA_RightFoot.SA_RightFoot'"));
+	static const ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationRightObj(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/run/SA_RightFoot.SA_RightFoot'"));
 	if (AttenuationRightObj.Succeeded())
 	{
 		rightFootAttenuation = AttenuationRightObj.Object;
 	}
 	
-	ConstructorHelpers::FObjectFinder<USoundCue> tempinjureCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/injurewav/SC_Injure.SC_Injure'"));
+	static const ConstructorHelpers::FObjectFinder<USoundCue> tempinjureCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/injurewav/SC_Injure.SC_Injure'"));
 	if (tempinjureCue.Succeeded())
 	{
 		injureCue = tempinjureCue.Object;
 	}
-	ConstructorHelpers::FObjectFinder<USoundAttenuation> tempinjureAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/injurewav/SA_Injure.SA_Injure'"));
+	static const ConstructorHelpers::FObjectFinder<USoundAttenuation> tempinjureAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/injurewav/SA_Injure.SA_Injure'"));
 	if (tempinjureAttenuation.Succeeded())
 	{
 		injureAttenuation = tempinjureAttenuation.Object;
 	}
 
-	ConstructorHelpers::FObjectFinder<USoundCue> tempInjureScreamCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/hit/SC_Scream.SC_Scream'"));
+	static const ConstructorHelpers::FObjectFinder<USoundCue> tempInjureScreamCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/hit/SC_Scream.SC_Scream'"));
 	if (tempInjureScreamCue.Succeeded())
 	{
 		injuredScreamCue = tempInjureScreamCue.Object;
 	}
-	ConstructorHelpers::FObjectFinder<USoundAttenuation> tempInjureScreamAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/hit/SA_Scream.SA_Scream'"));
+	static const ConstructorHelpers::FObjectFinder<USoundAttenuation> tempInjureScreamAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/hit/SA_Scream.SA_Scream'"));
 	if (tempInjureScreamAttenuation.Succeeded())
 	{
 		injuredScreamAttenuation = tempInjureScreamAttenuation.Object;
@@ -165,7 +157,7 @@ ACamper::ACamper()
 	// CharacterMovement 컴포넌트
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("PerksComp")); // 퍽 컴포넌트
+	perksComp = CreateDefaultSubobject<UPerksComponent>(TEXT("perksComp")); // 퍽 컴포넌트
 	camperFSMComp = CreateDefaultSubobject<UCamperFSM>(TEXT("camperFSMComp")); // FSM 컴포넌트
 
 	springArmComp->bEnableCameraLag = true;
@@ -175,27 +167,27 @@ ACamper::ACamper()
 	// 캐릭터 움직임 컴포넌트 세팅
 	moveComp = GetCharacterMovement();
 	moveComp->MaxWalkSpeed = moveSpeed;
+	
+	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnimInstance(TEXT("/Script/Engine.AnimBlueprint'/Game/JS/Blueprints/Animation/ABP_Player.ABP_Player_C'"));
+	if (tempAnimInstance.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(tempAnimInstance.Class);
+	}
 }
 
-void ACamper::OnConstruction(const FTransform& Transform)
+void ACamper::BeginPlay()
 {
-	Super::OnConstruction(Transform);
+	Super::BeginPlay();
 
-	Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
-
-	// 시작 시 IMC 세팅
-	FTimerHandle timerHandle;
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this](){ 
-	auto* pc = Cast<APlayerController>(Controller);
-	if (pc) {
+	if (const auto* pc = Cast<APlayerController>(Controller)) {
 		//그 객체를 이용해서 EnhanceInputLocalPlayerSubSystem을 가져온다.
 		UEnhancedInputLocalPlayerSubsystem* subSys = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
 		if (subSys) {
 			subSys->AddMappingContext(IMC_Camper, 0);
 		}
 	}
-}, 0.1f, false);
 
+	Anim = Cast<UCamperAnimInstance>(GetMesh()->GetAnimInstance());
 }
 
 // Called every frame
@@ -523,7 +515,6 @@ void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 		bFindPoints = true;
 		for (const auto HitResult : OutHits)
 		{
-			
 			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
 			{
 				if (Anim == nullptr || Anim->bStartRepair) return;

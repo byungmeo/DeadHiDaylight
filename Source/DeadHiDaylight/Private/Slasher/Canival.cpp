@@ -476,7 +476,7 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		{
 			return;
 		}
-		Camper->GetDamage("");
+		Camper->GetDamage("Chainsaw");
 	}
 	
 	// 벽이냐

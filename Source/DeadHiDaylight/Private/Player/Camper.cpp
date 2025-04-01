@@ -13,6 +13,7 @@
 #include "CamperComps/PerksComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "DeadHiDaylight/DeadHiDaylight.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -623,68 +624,47 @@ void ACamper::ServerRPC_GetDamage_Implementation(const FString& weapon)
 
 void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 {
-	if (camperFSMComp == nullptr) return;
+	if (camperFSMComp == nullptr)
+	{
+		NET_LOG(LogTemp, Warning, TEXT("Camper : GetDamage (%s) !!CamperFSM is nullptr"), *weapon);
+		return;
+	}
 
 	// 맞을 때 비명 지르는 부분
 	if (injuredScreamCue) PlayScreamSound();
-
-	// 체인톱 피해 처리
+	
 	if (weapon == TEXT("Chainsaw"))
 	{
-		if (IsLocallyControlled())
-		{
-			// HP를 줄이고 로그 출력
-			curHP -= 2;
-			UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage (Chainsaw) : %f"), curHP);
-		}
-
-		// HP가 0 이하라면 기어다니기 상태로 전환
-		if (curHP <= 0)
-		{
-			Crawling();
-		}
-		else
-		{
-			// 다친 상태로 전환 (서버와 로컬 모두 실행)
-			camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
-		}
+		curHP -= 2;
 	}
 	else
 	{
-		if (IsLocallyControlled())
-		{
-			// 일반 피해 처리
-			if (curHP > 1)
-			{
-				--curHP;
-				UE_LOG(LogTemp, Warning, TEXT("Camper : GetDamage : %f"), curHP);
+		curHP--;
+	}
+	NET_LOG(LogTemp, Warning, TEXT("Camper : GetDamage (%s), CurrentHP=%f"), *weapon, curHP);
 
-				// 이전 속도를 저장
-				beforeSpeed = moveComp->MaxWalkSpeed;
-
-				// 2초 동안 스피드 증가
-				moveComp->MaxWalkSpeed *= 2;
-
-				// 2초 후 원래 속도로 복귀
-				GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, [this]()
-				{
-					moveComp->MaxWalkSpeed = beforeSpeed;
-					bPlayInjureSound = true;
-					PlayInjureSound();
-				}, 2.0f, false);
-			}
-			else
-			{
-				// HP가 0 이하라면 기어다니기 상태로 전환
-				Crawling();
-			}
-		}
-
+	if (curHP <= 0)
+	{
+		Crawling();
+	}
+	else
+	{
 		// 다친 상태로 전환 (서버와 로컬 모두 실행)
-		if (curHP > 0)
+		camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
+
+		// 이전 속도를 저장
+		beforeSpeed = moveComp->MaxWalkSpeed;
+
+		// 2초 동안 스피드 증가
+		moveComp->MaxWalkSpeed *= 2;
+
+		// 2초 후 원래 속도로 복귀
+		GetWorld()->GetTimerManager().SetTimer(hitTimerHandle, [this]()
 		{
-			camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
-		}
+			moveComp->MaxWalkSpeed = beforeSpeed;
+			bPlayInjureSound = true;
+			PlayInjureSound();
+		}, 2.0f, false);
 	}
 }
 void ACamper::Crawling()

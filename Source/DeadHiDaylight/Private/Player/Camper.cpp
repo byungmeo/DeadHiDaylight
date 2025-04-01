@@ -607,11 +607,7 @@ void ACamper::ServerRPC_StopInteract_Implementation()
 
 void ACamper::GetDamage(FString weapon)
 {
-	if (HasAuthority())
-	{
-		ServerRPC_GetDamage(weapon);
-	}
-	else if (IsLocallyControlled())
+	if (IsLocallyControlled())
 	{
 		ServerRPC_GetDamage(weapon);
 	}

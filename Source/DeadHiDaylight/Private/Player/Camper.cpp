@@ -3,6 +3,7 @@
 #include "Player/Camper.h"
 
 #include "CamperAnimInstance.h"
+#include "Canival.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
@@ -167,6 +168,14 @@ ACamper::ACamper()
 	// 캐릭터 움직임 컴포넌트 세팅
 	moveComp = GetCharacterMovement();
 	moveComp->MaxWalkSpeed = moveSpeed;
+
+	CrawlPoint = CreateDefaultSubobject<UInteractionPoint>(TEXT("CrawlPoint"));
+	CrawlPoint->SetupAttachment(GetMesh(), TEXT("joint_Pelvis_01"));
+	CrawlPoint->OnInteraction.AddDynamic(this, &ACamper::OnInteraction);
+	CrawlPoint->OnStopInteraction.AddDynamic(this, &ACamper::OnStopInteraction);
+	// TODO: 생존자가 치료해서 살릴 수 있게도 바꿔야 함.
+	CrawlPoint->InteractionMode = EInteractionMode::EIM_SlasherOnly;
+	CrawlPoint->bCanInteract = false;
 	
 	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnimInstance(TEXT("/Script/Engine.AnimBlueprint'/Game/JS/Blueprints/Animation/ABP_Player.ABP_Player_C'"));
 	if (tempAnimInstance.Succeeded())
@@ -630,6 +639,7 @@ void ACamper::ChangeSpeed()
 
 void ACamper::Crawling()
 {
+	CrawlPoint->bCanInteract = true;
 	SetStanceState(ECamperStanceState::ECSS_Crawl);
 	SetMovementState(ECamperMoveState::ECS_NONE);
 }
@@ -815,4 +825,16 @@ void ACamper::MultiCastRPC_HealthCheck_Implementation()
 	curHP = maxHP;
 }
 
+void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor)
+{
+	if (auto* Slasher = Cast<ACanival>(OtherActor))
+	{
+		Slasher->AttachSurvivorToShoulder(this);
+	}
+}
 
+
+void ACamper::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor)
+{
+	// TODO: 생존자 치료
+}

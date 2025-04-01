@@ -170,11 +170,6 @@ void ACanival::BeginPlay()
 void ACanival::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
-	{
-		FindPoint();
-		CheckAndAttachSurvivor();
-	}
 	
 	if (bChainSawCharging || ChainSawGauge > 0)
 	{
@@ -380,6 +375,7 @@ void ACanival::CheckAndAttachSurvivor()
 
 void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 {
+	AttachedSurvivor = Survivor;
 	
 	AnimInstance->PlayAttackShoulderAnimation();
 	//어깨 부착

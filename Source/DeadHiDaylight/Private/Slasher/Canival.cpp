@@ -170,11 +170,6 @@ void ACanival::BeginPlay()
 void ACanival::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
-	{
-		FindPoint();
-		CheckAndAttachSurvivor();
-	}
 	
 	if (bChainSawCharging || ChainSawGauge > 0)
 	{

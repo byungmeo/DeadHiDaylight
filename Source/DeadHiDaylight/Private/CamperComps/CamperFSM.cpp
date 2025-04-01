@@ -4,6 +4,7 @@
 #include "CamperComps/CamperFSM.h"
 
 #include "CamperAnimInstance.h"
+#include "Player/Camper.h"
 
 
 // Sets default values for this component's properties
@@ -29,7 +30,8 @@ void UCamperFSM::BeginPlay()
 void UCamperFSM::InitializeComponent()
 {
 	Super::InitializeComponent();
-	
+
+	Camper = Cast<ACamper>(GetOwner());
 }
 
 
@@ -83,7 +85,17 @@ void UCamperFSM::SetCamperMoveState(ECamperMoveState newState)
 // 건강 상태 함수
 void UCamperFSM::SetCamperHealthState(ECamperHealth newHealthState)
 {
-	ServerRPC_SetCamperHealthState(newHealthState);
+	// 서버에서 직접 호출하거나, 클라이언트가 소유권이 있을 때 서버로 요청
+	if (GetOwner()->HasAuthority())
+	{
+		// 서버일 경우 직접 실행
+		ServerRPC_SetCamperHealthState(newHealthState);
+	}
+	else if (Camper && Camper->IsLocallyControlled())
+	{
+		// 클라이언트에서 소유권 있는 경우 서버로 요청
+		ServerRPC_SetCamperHealthState(newHealthState);
+	}
 }
 
 void UCamperFSM::ServerRPC_SetCamperHealthState_Implementation(ECamperHealth newHealthState)

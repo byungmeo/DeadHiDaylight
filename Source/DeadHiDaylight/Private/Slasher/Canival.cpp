@@ -453,7 +453,7 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		// Camper->야 너 맞았어
 		AnimInstance->PlayWipeAnimation();
 		UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
-		Camper->GetDamage(TEXT(""));
+		Camper->GetDamage("");
 	}
 	// 벽이냐
 	// 그 외냐
@@ -472,13 +472,11 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		//UE_LOG(LogTemp, Warning, TEXT("ACanival::OnChainSawBeginOverlap"));
 		// ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
-		
 		if (Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
 		{
 			return;
 		}
-		Camper->GetDamage(TEXT("Chainsaw"));
-		
+		Camper->GetDamage("");
 	}
 	
 	// 벽이냐
@@ -508,14 +506,12 @@ void ACanival::FindPoint()
 	{
 		for (const auto HitResult : OutHits)
 		{
-			
 			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Find InteractionPoint"));
 				interact->Interaction(this);
 				break;
 			}
-			
 		}
 	}
 }

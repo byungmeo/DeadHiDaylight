@@ -43,8 +43,9 @@ public:
 	UFUNCTION()
     void OnRep_ReqGeneratorCount();
 	FOnRepGeneratorCount OnRepGeneratorCount;
-	
+
+	// BeginPlay에서 계산된다
 	int RemCamperCount = 0;
-	void OnCamperOutGame(ASacrificePlayerState* State);
-	void GameEnd();
+	void ServerOnly_OnCamperOutGame(ASacrificePlayerState* State);
+	void ServerOnly_GameEnd();
 };

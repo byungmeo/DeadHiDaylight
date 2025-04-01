@@ -214,7 +214,7 @@ void AGenerator::MulticastRPC_SkillCheckFail_Implementation(ACamper* Camper)
 	OnExplosion.Broadcast();
 	if (Camper)
     {
-    	Camper->MultiCastRPC_FailRepair(TEXT("GenFailFT"));
+    	Camper->FailRepair(TEXT("GenFailFT"));
     }
 }
 

@@ -3,6 +3,7 @@
 
 #include "SacrificePlayerState.h"
 
+#include "SacrificeGameState.h"
 #include "SacrificePlayerController.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"

@@ -5,6 +5,9 @@
 
 #include "DHDGameInstance.h"
 #include "Generator.h"
+#include "ResultCarnival.h"
+#include "SacrificeCommonHUD.h"
+#include "SacrificePlayerController.h"
 #include "SacrificePlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
@@ -69,4 +72,18 @@ void ASacrificeGameState::ServerOnly_OnCamperExitOrDie()
 
 void ASacrificeGameState::MulticastRPC_GameEnd_Implementation()
 {
+	if (false == HasAuthority())
+	{
+		if (auto* MyController = Cast<ASacrificePlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
+		{
+			if (MyController->Hud)
+			{
+				if (auto* ResultCarnival = UGameplayStatics::GetActorOfClass(GetWorld(), AResultCarnival::StaticClass()))
+				{
+					MyController->SetViewTarget(ResultCarnival);
+				}
+				MyController->Hud->OnGameEnd();
+			}
+		}
+	}
 }

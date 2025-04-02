@@ -488,6 +488,11 @@ void ACanival::Server_RightAttack_Implementation()
 void ACanival::MultiCast_RightAttack_Implementation()
 {
 	bIsAttacking = true;
+	if (IsLocallyControlled())
+	{
+		CommonHud->OnDisplayBlood();
+	}
+	
 	if (ChainSaw)
 	{
 		ChainSaw->SetGenerateOverlapEvents(true);
@@ -760,6 +765,10 @@ void ACanival::StopInteract()
 
 void ACanival::MulticastRPC_OnHammerHit_Implementation()
 {
+	if (IsLocallyControlled())
+	{
+		CommonHud->OnDisplayBlood();
+	}
 	AnimInstance->PlayWipeAnimation();
 	UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
 }

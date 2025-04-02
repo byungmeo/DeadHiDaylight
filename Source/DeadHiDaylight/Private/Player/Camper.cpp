@@ -538,7 +538,7 @@ void ACamper::ServerOnly_FindInteractionPoint()
 	}
 	
 	const FVector& StartEnd = GetMovementComponent()->GetFeetLocation();
-	auto* Point = UInteractionPoint::FindInteractionPoint(GetWorld(), StartEnd, StartEnd, EInteractionMode::EIM_CamperOnly);
+	auto* Point = UInteractionPoint::FindInteractionPoint(this, StartEnd, StartEnd, EInteractionMode::EIM_CamperOnly);
 	if (NearPoint != Point)
 	{
 		NearPoint = Point;

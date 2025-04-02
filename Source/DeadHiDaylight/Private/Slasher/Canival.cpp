@@ -720,7 +720,7 @@ void ACanival::ServerOnly_FindInteractionPoint()
 	}
 	
 	const FVector& StartEnd = GetMovementComponent()->GetFeetLocation();
-	auto* Point = UInteractionPoint::FindInteractionPoint(GetWorld(), StartEnd, StartEnd, EInteractionMode::EIM_SlasherOnly);
+	auto* Point = UInteractionPoint::FindInteractionPoint(this, StartEnd, StartEnd, EInteractionMode::EIM_SlasherOnly);
 	if (NearPoint != Point)
 	{
 		NearPoint = Point;

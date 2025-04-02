@@ -3,8 +3,12 @@
 
 #include "InteractionPoint.h"
 
+#include "Canival.h"
+#include "Generator.h"
+#include "MeatHook.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Player/Camper.h"
 
 
 // Sets default values for this component's properties
@@ -14,7 +18,7 @@ UInteractionPoint::UInteractionPoint()
 	BoxExtent = FVector(1, 1, 1);
 }
 
-UInteractionPoint* UInteractionPoint::FindInteractionPoint(const UWorld* WorldContext, const FVector& Start, const FVector& End, const EInteractionMode FindMode)
+UInteractionPoint* UInteractionPoint::FindInteractionPoint(const AActor* Actor, const FVector& Start, const FVector& End, const EInteractionMode FindMode)
 {
 	if (FindMode == EInteractionMode::EIM_None || FindMode == EInteractionMode::EIM_Both)
 	{
@@ -25,7 +29,7 @@ UInteractionPoint* UInteractionPoint::FindInteractionPoint(const UWorld* WorldCo
 	TArray<AActor*> ActorsToIgnore;
     TArray<FHitResult> OutHits;
     const bool bHit = UKismetSystemLibrary::SphereTraceMultiByProfile(
-    	WorldContext,
+    	Actor->GetWorld(),
     	Start,
     	End,
     	500,
@@ -44,6 +48,12 @@ UInteractionPoint* UInteractionPoint::FindInteractionPoint(const UWorld* WorldCo
 			// 상호작용 불가능 한 Point는 거른다
 			const auto* Point = Cast<UInteractionPoint>(OutHits[i].Component);
 			if (false == Point->bCanInteract || (Point->InteractionMode != FindMode && Point->InteractionMode != EInteractionMode::EIM_Both))
+			{
+				OutHits.RemoveAt(i);
+				i--;
+				continue;
+			}
+			if (false == Point->IsCanInteractionWithThisActor(Actor))
 			{
 				OutHits.RemoveAt(i);
 				i--;
@@ -154,4 +164,33 @@ void UInteractionPoint::DetachActor()
 	AttachedActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	AttachedActor = nullptr;
 	bCanInteract = true;
+}
+
+bool UInteractionPoint::IsCanInteractionWithThisActor(const AActor* Actor) const
+{
+	auto* Owner = GetOwner();
+	auto* Camper = Cast<ACamper>(Actor);
+	auto* Slasher = Cast<ACanival>(Actor);
+	if (auto* Generator = Cast<AGenerator>(Owner))
+	{
+		if (Slasher)
+		{
+			if (Generator->bIsBreak)
+			{
+				return false;
+			}
+		}
+	}
+	else if (auto* MeatHook = Cast<AMeatHook>(Owner))
+	{
+		if (Slasher)
+		{
+			if (nullptr == Slasher->AttachedSurvivor)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }

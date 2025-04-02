@@ -225,7 +225,7 @@ void AGenerator::TestExplosion()
 
 void AGenerator::Break(UInteractionPoint* Point)
 {
-	if (bPowerOn)
+	if (bPowerOn || false == HasAuthority())
 	{
 		return;
 	}

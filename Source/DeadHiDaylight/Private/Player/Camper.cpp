@@ -354,7 +354,6 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
 		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::TryInteraction);
 		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::StopInteract);
-		
 
 		if (perksComp)
 		{
@@ -549,7 +548,7 @@ void ACamper::ServerOnly_FindInteractionPoint()
 	}
 	
 	const FVector& StartEnd = GetMovementComponent()->GetFeetLocation();
-	auto* Point = UInteractionPoint::FindInteractionPoint(GetWorld(), StartEnd, StartEnd, EInteractionMode::EIM_CamperOnly);
+	auto* Point = UInteractionPoint::FindInteractionPoint(this, StartEnd, StartEnd, EInteractionMode::EIM_CamperOnly);
 	if (NearPoint != Point)
 	{
 		NearPoint = Point;
@@ -1169,12 +1168,13 @@ void ACamper::MultiCastRPC_HealthCheck_Implementation()
 
 void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) // 쓰러진 생존자 기준으로 OtherActor는 서있는 생존자
 {
-	
 	UE_LOG(LogTemp, Warning, TEXT("1"));
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *OtherActor->GetActorNameOrLabel());
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
 		Slasher->AttachSurvivorToShoulder(this);
+		Slasher->InteractingPoint = nullptr;
+		Slasher->NearPoint = nullptr;
 	}
 	else if (auto* camper = Cast<ACamper>(OtherActor))
 	{
@@ -1221,4 +1221,21 @@ void ACamper::MultiCastRPC_EndHealingAnimation_Implementation(ACamper* camper)
 {
 	// 상대방 애니메이션도 멈추기
 	camper->Anim->ServerRPC_HealingAnimation(TEXT("EndHealing"));
+}
+
+
+void ACamper::OnRescued()
+{
+	if (HasAuthority())
+	{
+		MulticastRPC_OnRescued();
+	}
+}
+
+void ACamper::MulticastRPC_OnRescued_Implementation()
+{
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -210), FRotator(0, -90, 0));
+    SetActorEnableCollision(true);
+    GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    GetCharacterMovement()->StopMovementImmediately();
 }

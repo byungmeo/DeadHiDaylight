@@ -38,8 +38,6 @@ ACanival::ACanival()
 	bReplicates = true;
 	bAlwaysRelevant = true;
 	bNetLoadOnClient = true;
-
-
 	
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Character/Carnival.Carnival'"));
 	if (MeshObj.Succeeded())
@@ -188,6 +186,11 @@ void ACanival::BeginPlay()
 void ACanival::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (IsLocallyControlled())
+	{
+		ServerRPC_SendViewRotation(Camera->GetRelativeRotation());
+	}
 	
 	if (bChainSawCharging || ChainSawGauge > 0)
 	{
@@ -248,6 +251,28 @@ void ACanival::Move(const struct FInputActionValue& inputValue)
 	AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 	AddMovementInput(GetActorRightVector(), MovementVector.X);
 }
+
+void ACanival::OnRep_ViewRotation()
+{
+	if (false == IsLocallyControlled())
+	{
+		Camera->SetRelativeRotation(FRotator(ViewRotation.Pitch, ViewRotation.Yaw, 0.f));
+	}
+}
+
+void ACanival::Look(const FInputActionValue& InputActionValue)
+{
+	FVector2D Value = InputActionValue.Get<FVector2D>();
+	AddControllerYawInput(Value.X);
+	AddControllerPitchInput(Value.Y);
+}
+
+void ACanival::ServerRPC_SendViewRotation_Implementation(FRotator NewRotation)
+{
+	ViewRotation = NewRotation;
+	Camera->SetRelativeRotation(FRotator(ViewRotation.Pitch, ViewRotation.Yaw, 0.f));
+}
+
 void ACanival::SetMovementState(ECanivalMoveState NewState)
 {
 	if (CurrentMoveState == NewState)
@@ -303,30 +328,13 @@ void ACanival::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ACanival, CurrentMoveState);
+	DOREPLIFETIME(ACanival, ViewRotation);
 }
-void ACanival::Look(const FInputActionValue& InputActionValue)
-{
-	FVector2D Value = InputActionValue.Get<FVector2D>();
-	AddControllerYawInput(Value.X);
-	AddControllerPitchInput(Value.Y);
-	
-}
-
 
 //망치 공격 
 void ACanival::LeftClick_Start()
 {
-	AnimInstance->PlayHammrInAnimation();
-	Hammer->SetGenerateOverlapEvents(true);
-	
-	if (HasAuthority())
-	{
-		MultiCast_LeftClickStart();
-	}
-	else
-	{
-		Server_LeftClickStart();
-	}
+	Server_LeftClickStart();
 }
 
 void ACanival::Server_LeftClickStart_Implementation()
@@ -334,58 +342,28 @@ void ACanival::Server_LeftClickStart_Implementation()
 	MultiCast_LeftClickStart();
 }
 
-bool ACanival::Server_LeftClickStart_Validate()
-{
-	return true;
-}
 void ACanival::MultiCast_LeftClickStart_Implementation()
 {
 	if (AnimInstance)
 	{
 		AnimInstance->PlayHammrInAnimation();
 	}
-	if (Hammer)
-	{
-		Hammer->SetGenerateOverlapEvents(true);
-	}
 }
 
 void ACanival::LeftClick_Complet()
 {
-	if (HasAuthority())
-	{
-		MultiCast_LeftClickComplete();
-	}
-	else
-	{
-		Server_LeftClickComplete();
-	}
+	Server_LeftClickComplete();
 }
 void ACanival::Server_LeftClickComplete_Implementation()
 {
+	Hammer->SetGenerateOverlapEvents(true);
 	MultiCast_LeftClickComplete();
-}
-
-bool ACanival::Server_LeftClickComplete_Validate()
-{
-	return true;
 }
 
 void ACanival::MultiCast_LeftClickComplete_Implementation()
 {
-	if (AnimInstance)
-	{
-		AnimInstance->PlayHammerSwingAnimation();
-	}
-	if (Hammer)
-	{
-		Hammer->SetGenerateOverlapEvents(true);
-	}
+	AnimInstance->PlayHammerSwingAnimation();
 }
-
-
-
-
 
 //전기톱 공
 void ACanival::RightClick_Start()
@@ -632,15 +610,16 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 	//어깨 부착
 	if (Survivor && Survivor->GetMesh())
 	{
-		// AActor* ParentActor, FName SocketName, EAttachmentRule LocationRule, EAttachmentRule RotationRule, EAttachmentRule ScaleRule, bool bWeldSimulatedBodies
+		// AActor* ParentActor, FName SocketName, EAttachmentRule LocationR`ule, EAttachmentRule RotationRule, EAttachmentRule ScaleRule, bool bWeldSimulatedBodies
 		// Survivor->K2_AttachToActor(this, TEXT("joint_ShoulderLT_01Socket"), );
 		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
 		Survivor->GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));
 
+		Survivor->CrawlPoint->bCanInteract = false;
 		Survivor->SetActorEnableCollision(false);
 		Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		Survivor->GetCharacterMovement()->StopMovementImmediately();
-		Survivor->GetMesh()->bPauseAnims = true;
+		// Survivor->GetMesh()->bPauseAnims = true;
 		UE_LOG(LogTemp, Warning, TEXT("어깨에 붙음"));
 	}
 	
@@ -650,26 +629,43 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 
 void ACanival::HangOnHook(class AMeatHook* Hook)
 {
+	MulticastRPC_HangOnHook(Hook);
+}
+
+void ACanival::MulticastRPC_HangOnHook_Implementation(class AMeatHook* Hook)
+{
 	AnimInstance->PlayHangAnimation(Hook);
-	UE_LOG(LogTemp, Warning, TEXT("Hang"));
 }
 
 void ACanival::KickGenerator(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickGeneratorAnimation(Point);
-	UE_LOG(LogTemp, Warning, TEXT("KickGenerator"));
+	InteractingPoint = nullptr;
+	NearPoint = nullptr;
+	MulticastRPC_KickGenerator(Point);
 }
+
+void ACanival::MulticastRPC_KickGenerator_Implementation(class UInteractionPoint* Point)
+{
+	AnimInstance->PlayKickGeneratorAnimation(Point);
+}
+
 
 void ACanival::KickPallet(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickPalletAnimation(Point);
-	UE_LOG(LogTemp, Warning, TEXT("KickPallet"));
+	InteractingPoint = nullptr;
+	NearPoint = nullptr;
+	MulticastRPC_KickPallet(Point);
 }
+
+void ACanival::MulticastRPC_KickPallet_Implementation(class UInteractionPoint* Point)
+{
+	AnimInstance->PlayKickPalletAnimation(Point);
+}
+
 
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
 	if (OtherActor == this)
 	{
 		return;
@@ -678,12 +674,10 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	// 생존자냐
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
+		NET_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
 		Hammer->SetGenerateOverlapEvents(false);
-		// Camper->야 너 맞았어
-		AnimInstance->PlayWipeAnimation();
-		UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
 		Camper->GetDamage("");
+		MulticastRPC_OnHammerHit();
 	}
 	// 벽이냐
 	// 그 외냐
@@ -726,7 +720,7 @@ void ACanival::ServerOnly_FindInteractionPoint()
 	}
 	
 	const FVector& StartEnd = GetMovementComponent()->GetFeetLocation();
-	auto* Point = UInteractionPoint::FindInteractionPoint(GetWorld(), StartEnd, StartEnd, EInteractionMode::EIM_SlasherOnly);
+	auto* Point = UInteractionPoint::FindInteractionPoint(this, StartEnd, StartEnd, EInteractionMode::EIM_SlasherOnly);
 	if (NearPoint != Point)
 	{
 		NearPoint = Point;
@@ -790,6 +784,12 @@ void ACanival::ServerRPC_TryInteraction_Implementation()
 void ACanival::StopInteract()
 {
 	ServerRPC_StopInteract();
+}
+
+void ACanival::MulticastRPC_OnHammerHit_Implementation()
+{
+	AnimInstance->PlayWipeAnimation();
+	UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
 }
 
 void ACanival::ServerRPC_StopInteract_Implementation()

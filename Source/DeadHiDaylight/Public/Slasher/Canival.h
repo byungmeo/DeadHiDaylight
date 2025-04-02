@@ -29,13 +29,23 @@ public:
 
 	
 	void Move(const struct FInputActionValue& inputValue);
+
+	UPROPERTY(ReplicatedUsing = OnRep_ViewRotation)
+	FRotator ViewRotation;
+	UFUNCTION()
+	void OnRep_ViewRotation();
+	UFUNCTION(Server, Unreliable)
+	void ServerRPC_SendViewRotation(FRotator NewRotation);
 	void Look(const FInputActionValue& InputActionValue);
+	
 	UFUNCTION(CallInEditor)
 	void LeftClick_Start();
 	UFUNCTION(CallInEditor)
 	void LeftClick_Complet();
 	UFUNCTION(CallInEditor)
 	void HangOnHook(class AMeatHook* Hook);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_HangOnHook(class AMeatHook* Hook);
 	
 public:	
 	// Called every frame
@@ -47,7 +57,7 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	class UCameraComponent* Camera = nullptr;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	class USkeletalMeshComponent* Hammer = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -80,7 +90,11 @@ public:
 	
 	void FindPoint();
 	void KickGenerator(class UInteractionPoint* Point);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_KickGenerator(class UInteractionPoint* Point);
 	void KickPallet(class UInteractionPoint* Point);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_KickPallet(class UInteractionPoint* Point);
 	
 	
 	bool bIsAttacking; //공격 실행되었는지
@@ -151,19 +165,17 @@ public:
 	virtual void MultiCast_SetMovementState_Implementation(ECanivalMoveState NewState);
 
 	// RPC 관련 함수 (좌클릭)
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void Server_LeftClickStart();
 	virtual void Server_LeftClickStart_Implementation();
-	virtual bool Server_LeftClickStart_Validate();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_LeftClickStart();
 	virtual void MultiCast_LeftClickStart_Implementation();
 
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void Server_LeftClickComplete();
 	virtual void Server_LeftClickComplete_Implementation();
-	virtual bool Server_LeftClickComplete_Validate();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_LeftClickComplete();
@@ -226,5 +238,9 @@ public:
 	// 현재 상호작용을 진행 중인 Point
 	UPROPERTY()
 	class UInteractionPoint* InteractingPoint = nullptr;
+
+	///////////
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_OnHammerHit();
 };
 

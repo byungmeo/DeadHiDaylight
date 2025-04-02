@@ -6,6 +6,7 @@
 #include "SacrificeGameState.h"
 #include "SacrificePlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "Player/Camper.h"
 
 void USacrificeCommonHUD::NativeConstruct()
 {

@@ -63,5 +63,5 @@ void ACampfireGameMode::StartSacrifice()
 		return;
 	}
 	ServerGameInstance->RoleMap = CampfireGameState->RoleMap;
-	GetWorld()->ServerTravel("/Game/Common/Maps/SacrificeMap");
+	GetWorld()->ServerTravel("/Game/Common/Maps/Sacrifice/SacrificeLastMap");
 }

@@ -25,9 +25,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_InitPlayerState(class ASacrificePlayerState* InState);
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
+
 	//Camper 매쉬 등 기본 세팅
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* glassesComp;
@@ -64,6 +66,21 @@ public:
 	class USoundCue* injuredScreamCue;
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
 	class USoundAttenuation* injuredScreamAttenuation;
+
+	// Injure sound 반복재생 세팅하는 타이머
+	FTimerHandle injureTimerHandle;
+	
+	// HookIn Sound
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundCue* hookInCue;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundAttenuation* hookInAttenuation;
+
+	// Die Sound
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundCue* dieCue;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundAttenuation* dieAttenuation;
 	
 	// 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
@@ -76,6 +93,7 @@ public:
 	class UCamperAnimInstance* Anim = nullptr;
 	UPROPERTY()
 	class ASacrificePlayerState* userState = nullptr;
+
 	// Input 변수
 	UPROPERTY(EditDefaultsOnly)
 	class UInputMappingContext* IMC_Camper; //Input IMC 변수
@@ -91,7 +109,7 @@ public:
 	class UInputAction* IA_Repair;
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_UnLock;
-
+	
 	// 타이머 핸들 변수
 	FTimerHandle hitTimerHandle;
 	
@@ -117,6 +135,8 @@ public:
 
 	// 죽었는지 살았는지
 	bool bIsDead = false;
+
+	bool bFirst = false;
 	
 	// 포인트 찾았는지 체크하는 변수
 	bool bFindPoints = false;
@@ -211,27 +231,62 @@ public:
 	void MultiCastRPC_PickUpDrop();
 	// 판자 내리는 RPC
 	void PullDownPallet();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PullDownPallet();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PullDownPallet();
+	// 쓰러지거나 상대 치유할 때 사용할때 힐 시작하는 RPC
+	void StartHealing();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StartHealing();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StartHealing();
+	// 힐 그만하는 RPC
+	void StopHealing();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StopHealing();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StopHealing();
 
+	// 힐시간 체크 함수
+	void HealingTimingCheck(float deltaTime);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_HealingTimingCheck(float deltaTime);
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_StartHealing(ACamper* camper);
+	void MultiCastRPC_HealingTimingCheck(float deltaTime);
+
+	// 힐링 시작 애니메이션 동기화 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StartHealingAnimation(ACamper* camper);
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_EndHealing(ACamper* camper);
+	void MultiCastRPC_StartHealingAnimation(ACamper* camper);
+	
+	// 힐링 끝 애니메이션 동기화 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_EndHealingAnimation(ACamper* camper);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_EndHealingAnimation(ACamper* camper);
+	
+	float curhealingTime = 0;
+	float healingTime = 5;
+	
 	// 뛸 때 왼발, 오른 발 사운드 재생 함수
 	void PlayLeftSound();
 	void PlayRightSound();
 
 	// 다친 상태일 때 사운드 랜덤 반복 재생
 	void PlayInjureSound();
-	UFUNCTION()
-	void OnInjureSoundFinished(); // 사운드 반복재생하는 델리게이트
-	void StopInjureSound(); // 사운드 멈추는 함수
 
 	// 맞을 때 소리 지르는 함수
 	void PlayScreamSound();
 
+	// 후크 걸릴 때 소리 지르는 함수
+	void PlayHookInSound();
+
+	// 죽을 때 사운드 함수
+	void PlayDieSound();
 	
+	// 캐릭터 Log 띄워주는 함수
 	void PrintNetLog();
 
 	float testCheckTime = 0;
@@ -279,4 +334,8 @@ public:
 	// 현재 상호작용을 진행 중인 Point
 	UPROPERTY()
 	class UInteractionPoint* InteractingPoint = nullptr;
+	
+	void OnRescued();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_OnRescued();
 };

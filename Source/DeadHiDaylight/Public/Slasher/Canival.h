@@ -50,6 +50,8 @@ public:
 	void LeftClick_Complet();
 	UFUNCTION(CallInEditor)
 	void HangOnHook(class AMeatHook* Hook);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_HangOnHook(class AMeatHook* Hook);
 	
 public:	
 	// Called every frame
@@ -92,9 +94,12 @@ public:
 	UFUNCTION()
 	void OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
-	void FindPoint();
 	void KickGenerator(class UInteractionPoint* Point);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_KickGenerator(class UInteractionPoint* Point);
 	void KickPallet(class UInteractionPoint* Point);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_KickPallet(class UInteractionPoint* Point);
 	
 	
 	bool bIsAttacking; //공격 실행되었는지
@@ -113,8 +118,8 @@ public:
 	void CheckAndAttachSurvivor();
 	
 	//죽은 생존자 어깨에 붙이기
-	UFUNCTION()
-	void AttachSurvivorToShoulder(class ACamper* Survivor);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_AttachSurvivorToShoulder(class ACamper* Survivor);
 	
 
 
@@ -239,5 +244,8 @@ public:
 	///////////
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_OnHammerHit();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_OnChainSawHit();
 };
 

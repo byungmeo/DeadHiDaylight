@@ -38,13 +38,13 @@ public:
 	
 	/**
 	 * 근처에 상호작용 할 수 있는 Point가 있는지 탐색
-	 * @param WorldContext static 함수라 GetWorld() 사용 못해서 필요함
+	 * @param Actor
 	 * @param Start 
 	 * @param End 
 	 * @param FindMode 생존자면 EIM_CamperOnly, 살인마면 EIM_SlasherOnly
 	 * @return 조건을 충족하는 Point 중 가장 거리가 가까운 Point 
 	 */
-	static UInteractionPoint* FindInteractionPoint(const UWorld* WorldContext, const FVector& Start, const FVector& End, EInteractionMode FindMode);
+	static UInteractionPoint* FindInteractionPoint(const AActor* Actor, const FVector& Start, const FVector& End, EInteractionMode FindMode);
 
 protected:
 	virtual void BeginPlay() override;
@@ -91,4 +91,6 @@ public:
 	float SkillCheckCooldown = 2.0f;
 	float SkillCheckCooldownRemaining = 0.0f;
 	FOnSkillCheck OnSkillCheck;
+	
+	bool IsCanInteractionWithThisActor(const AActor* Actor) const;
 };

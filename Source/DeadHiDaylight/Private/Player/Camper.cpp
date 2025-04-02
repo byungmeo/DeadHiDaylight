@@ -13,6 +13,7 @@
 #include "MeatHook.h"
 #include "Pallet.h"
 #include "SacrificeCommonHUD.h"
+#include "SacrificeGameState.h"
 #include "SacrificePlayerController.h"
 #include "SacrificePlayerState.h"
 #include "Camera/CameraComponent.h"
@@ -160,6 +161,34 @@ ACamper::ACamper()
 		injuredScreamAttenuation = tempInjureScreamAttenuation.Object;
 	}
 
+	static const ConstructorHelpers::FObjectFinder<UAnimMontage> tempMontage(TEXT("/Script/Engine.AnimMontage'/Game/JS/Blueprints/Animation/MTG_HitCrawl.MTG_HitCrawl'"));
+	if (tempMontage.Succeeded())
+	{
+		hitcrawlMontage = tempMontage.Object;
+	}
+
+	static const ConstructorHelpers::FObjectFinder<USoundCue> tempHookInCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/hook/SC_HookIn.SC_HookIn'"));
+	if (tempHookInCue.Succeeded())
+	{
+		hookInCue = tempHookInCue.Object;
+	}
+	static const ConstructorHelpers::FObjectFinder<USoundAttenuation> tempHookInAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/hook/SA_HookIn.SA_HookIn'"));
+	if (tempHookInAttenuation.Succeeded())
+	{
+		hookInAttenuation = tempHookInAttenuation.Object;
+	}
+	// DieSound
+	static const ConstructorHelpers::FObjectFinder<USoundCue> tempDieCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/die/SC_Die.SC_Die'"));
+	if (tempDieCue.Succeeded())
+	{
+		dieCue = tempDieCue.Object;
+	}
+	static const ConstructorHelpers::FObjectFinder<USoundAttenuation> tempDieAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/die/SA_Die.SA_Die'"));
+	if (tempDieAttenuation.Succeeded())
+	{
+		dieAttenuation = tempDieAttenuation.Object;
+	}
+	
 	// CharacterMovement 컴포넌트
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -227,14 +256,23 @@ void ACamper::OnRep_PlayerState()
 
 	// 클라이언트에서 초기화
 	userState = Cast<ASacrificePlayerState>(GetPlayerState());
+	ServerRPC_InitPlayerState(userState);
 	if (userState) UE_LOG(LogTemp, Warning, TEXT("[Client] PlayerState successfully casted!"));
+	
+}
+
+void ACamper::ServerRPC_InitPlayerState_Implementation(class ASacrificePlayerState* InState)
+{
+	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_InitPlayerState_Implementation"));
+	userState = InState;
 }
 
 // Called every frame
 void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
+	if (HasAuthority()) HealingTimingCheck(DeltaTime);
 	
 	// if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_ResueHooking)
 	// {
@@ -265,7 +303,6 @@ void ACamper::Tick(float DeltaTime)
 		// 쓰러진 상태에서 돌아갈 때 Crawlhealing이 끝나면
 		ServerRPC_HealthCheck();
 		SetStanceState(ECamperStanceState::ECSS_Idle);
-		StopInjureSound();
 	}
 	// Hook 걸리는 거 테스트 용
 	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Four))
@@ -322,13 +359,6 @@ void ACamper::Tick(float DeltaTime)
 	}
 	PrintNetLog();
 
-	// if (curHP == maxHP && camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
-
-	// UE_LOG(LogTemp, Warning, TEXT("Current speed: %f"), curSpeed);
-	if (!bPlayInjureSound)
-	{
-		StopInjureSound();
-	}
 }
 
 // Called to bind functionality to input
@@ -358,8 +388,11 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void ACamper::CamperMove(const FInputActionValue& value)
 {
 	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair ||
-		camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing ||
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_UnLock ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Carry ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_HookRescue ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Healing ||
 		Anim->Montage_IsPlaying(hitcrawlMontage)) return;
 
 	FVector2D moveDirection = value.Get<FVector2D>();
@@ -431,33 +464,41 @@ void ACamper::SetStanceState(ECamperStanceState NewState)
 void ACamper::ServerRPC_SetStanceState_Implementation(ECamperStanceState NewState)
 {
 	MultiCastRPC_SetStanceState(NewState);
+	
+	if (userState == nullptr)
+    {
+    	UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+    	return;
+    }
+
+    FUserState NewUserState = userState->UserState;
+    NewUserState.Stance = NewState;
+	userState->UserState = NewUserState;
 }
 
 void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewState)
 {
 	camperFSMComp->curStanceState = NewState;
-
-	if (userState == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
-	}
+	
 	switch (NewState)
 	{
 	case ECamperStanceState::ECSS_Idle:
-		// curSpeed = 0;
-		// moveComp->MaxWalkSpeed = moveSpeed;
-		userState->UserState.Stance = ECamperStanceState::ECSS_Idle;
-		springArmComp->SetRelativeLocation(FVector(0, 0, 210));
-		
-		break;
+		{
+			// curSpeed = 0;
+			// moveComp->MaxWalkSpeed = moveSpeed;
+			springArmComp->SetRelativeLocation(FVector(0, 0, 210));
+			break;
+		}
 	case ECamperStanceState::ECSS_Crouch:
-		userState->UserState.Stance = ECamperStanceState::ECSS_Crouch;
-		springArmComp->SetRelativeLocation(FVector(0, 0, 160));
-		break;
+		{
+			springArmComp->SetRelativeLocation(FVector(0, 0, 160));
+			break;
+		}
 	case ECamperStanceState::ECSS_Crawl:
-		userState->UserState.Stance = ECamperStanceState::ECSS_Crawl;
-		Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
-		break;
+		{
+			Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
+			break;
+		}
 	}
 }
 
@@ -470,17 +511,21 @@ void ACamper::SetMovementState(ECamperMoveState NewState)
 void ACamper::ServerRPC_SetMovementState_Implementation(ECamperMoveState NewState)
 {
 	MultiCastRPC_SetMovementState(NewState);
+
+	if (userState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+		return;
+	}
+
+	FUserState NewUserState = userState->UserState;
+	NewUserState.Move = NewState;
+	userState->UserState = NewUserState;
 }
 
 void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewState)
 {
 	camperFSMComp->curMoveState = NewState;
-
-	
-	if (userState == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
-	}
 	
 	FString s = UEnum::GetValueAsString(camperFSMComp->curMoveState);
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *s);
@@ -488,40 +533,44 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 	switch (NewState)
 	{
 	case ECamperMoveState::ECS_NONE:
-		userState->UserState.Move = ECamperMoveState::ECS_NONE;
-		curSpeed = 0;
-		moveComp->StopMovementImmediately();
-		break;
+		{
+			curSpeed = 0;
+			moveComp->StopMovementImmediately();
+			break;
+		}
 	case ECamperMoveState::ECS_Move:
-		// Croch 상태
-		userState->UserState.Move = ECamperMoveState::ECS_Move;
-		if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch)
 		{
-			curSpeed = crouchSpeed * 2;
-			moveComp->MaxWalkSpeed = curSpeed;
+			// Croch 상태
+			if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch)
+			{
+				curSpeed = crouchSpeed * 2;
+				moveComp->MaxWalkSpeed = curSpeed;
+			}
+			else if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+			{
+				curSpeed = crawlSpeed;
+				moveComp->MaxWalkSpeed = curSpeed;
+			}
+			else
+			{
+				curSpeed = moveSpeed * 2;
+				moveComp->MaxWalkSpeed = curSpeed;
+			}
+			break;
 		}
-		else if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
-		{
-			curSpeed = crawlSpeed;
-			moveComp->MaxWalkSpeed = curSpeed;
-		}
-		else
-		{
-			curSpeed = moveSpeed * 2;
-			moveComp->MaxWalkSpeed = curSpeed;
-		}
-		break;
 	case ECamperMoveState::ECS_Run:
-		userState->UserState.Move = ECamperMoveState::ECS_Run;
-		if (camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crouch &&
-			camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crawl)
 		{
-			curSpeed = maxSpeed * 2;
-			moveComp->MaxWalkSpeed = curSpeed;
+			if (camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crouch &&
+				camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crawl)
+			{
+				curSpeed = maxSpeed * 2;
+				moveComp->MaxWalkSpeed = curSpeed;
 			
+			}
+			break;
 		}
-		break;
 	}
+	
 	UE_LOG(LogTemp, Warning, TEXT("State : %s curSpeed : %f"), *s, curSpeed);
 }
 
@@ -538,7 +587,7 @@ void ACamper::ServerOnly_FindInteractionPoint()
 	}
 	
 	const FVector& StartEnd = GetMovementComponent()->GetFeetLocation();
-	auto* Point = UInteractionPoint::FindInteractionPoint(GetWorld(), StartEnd, StartEnd, EInteractionMode::EIM_CamperOnly);
+	auto* Point = UInteractionPoint::FindInteractionPoint(this, StartEnd, StartEnd, EInteractionMode::EIM_CamperOnly);
 	if (NearPoint != Point)
 	{
 		NearPoint = Point;
@@ -613,9 +662,6 @@ void ACamper::CheckInteractPoint()
 
 void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 {
-	// if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair ||
-	// 	camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing) return; // 자가 치유 중이라면 리턴
-	// || Anim->bCrawl
 	// InteractionPoint 찾는 Trace
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -752,6 +798,10 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 
 	if (curHP <= 0)
 	{
+		if (HasAuthority())
+		{
+			SetHealthState(ECamperHealth::ECH_Injury);
+		}
 		if (HasAuthority()) Crawling();
 	}
 	else
@@ -763,7 +813,10 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 void ACamper::ChangeSpeed()
 {
 	// 다친 상태로 전환 (서버와 로컬 모두 실행)
-	camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
+	if (HasAuthority())
+	{
+		SetHealthState(ECamperHealth::ECH_Injury);
+	}
 
 	// 이전 속도를 저장
 	beforeSpeed = moveComp->MaxWalkSpeed;
@@ -813,13 +866,34 @@ void ACamper::MultiCastRPC_EndUnLock_Implementation()
 
 void ACamper::Hooking(FName sectionName)
 {
-	SetInteractionState(ECamperInteraction::ECI_Hook);
 	MultiCastRPC_Hooking(sectionName);
 }
 
 void ACamper::MultiCastRPC_Hooking_Implementation(FName sectionName)
 {
 	if (Anim == nullptr) return;
+	
+	if (bFirst == false && camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook) // State가 Hook라면
+	{
+		bFirst = true;
+		// Injure 사운드를 끄고
+		GetWorldTimerManager().ClearTimer(injureTimerHandle);
+		
+		// 후크 걸릴 때 비명 한 번 재생
+		FTimerHandle hookInTimerHandle;
+		GetWorldTimerManager().SetTimer(hookInTimerHandle, [this]()
+		{
+			PlayHookInSound(); // 후크에 걸릴 때 소리 지르는 부분
+		}, 0.9f, false);
+	}
+	else if (bFirst && camperFSMComp->curInteractionState == ECamperInteraction::ECI_NONE) // State가 NONE이라면
+	{
+		bFirst = false;
+		// 다시 InjureSound를 재생
+		PlayInjureSound();
+		
+	}
+	
 	Anim->ServerRPC_PlayHookingAnimation(sectionName);
 }
 
@@ -884,43 +958,21 @@ void ACamper::SetInteractionState(ECamperInteraction NewState)
 void ACamper::ServerRPC_SetInteractionState_Implementation(ECamperInteraction NewState)
 {
 	MultiCastRPC_SetInteractionState(NewState);
+
+	if (userState == nullptr)
+    {
+    	UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+    	return;
+    }
+
+    FUserState NewUserState = userState->UserState;
+    NewUserState.Interaction = NewState;
+    userState->UserState = NewUserState;
 }
 
 void ACamper::MultiCastRPC_SetInteractionState_Implementation(ECamperInteraction NewState)
 {
 	camperFSMComp->curInteractionState = NewState;
-
-	if (userState == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
-	}
-	switch (NewState)
-	{
-		case ECamperInteraction::ECI_NONE:
-			userState->UserState.Interaction = ECamperInteraction::ECI_NONE;
-			break;
-		case ECamperInteraction::ECI_Repair:
-			userState->UserState.Interaction = ECamperInteraction::ECI_Repair;
-			break;
-		case ECamperInteraction::ECI_DeadHard:
-			userState->UserState.Interaction = ECamperInteraction::ECI_DeadHard;
-			break;
-		case ECamperInteraction::ECI_SelfHealing:
-			userState->UserState.Interaction = ECamperInteraction::ECI_SelfHealing;
-			break;
-		case ECamperInteraction::ECI_Carry:
-			userState->UserState.Interaction = ECamperInteraction::ECI_Carry;
-			break;
-		case ECamperInteraction::ECI_Hook:
-			userState->UserState.Interaction = ECamperInteraction::ECI_Hook;
-			break;
-		case ECamperInteraction::ECI_HookRescue:
-			userState->UserState.Interaction = ECamperInteraction::ECI_HookRescue;
-			break;
-		case ECamperInteraction::ECI_UnLock:
-			userState->UserState.Interaction = ECamperInteraction::ECI_UnLock;
-			break;
-	}
 }
 
 void ACamper::SetHealthState(ECamperHealth NewState)
@@ -931,23 +983,123 @@ void ACamper::SetHealthState(ECamperHealth NewState)
 void ACamper::ServerRPC_SetHealthState_Implementation(ECamperHealth NewState)
 {
 	MultiCastRPC_SetHealthState(NewState);
+	
+	if (userState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+		return;
+	}
+
+	NET_LOG(LogTemp, Warning, TEXT("MultiCastRPC_SetHealthState_Implementation"));
+	FUserState NewUserState = userState->UserState;
+	NewUserState.Health = NewState;
+	userState->UserState = NewUserState;
+
+	if (NewState == ECamperHealth::ECH_Dead)
+	{
+		ASacrificeGameState* GameState = Cast<ASacrificeGameState>(GetWorld()->GetGameState());
+		if (GameState)
+		{
+			GameState->ServerOnly_OnCamperExitOrDie();
+		}
+	}
 }
 
 void ACamper::MultiCastRPC_SetHealthState_Implementation(ECamperHealth NewState)
 {
 	camperFSMComp->curHealthState = NewState;
+
 	switch (NewState)
 	{
 		case ECamperHealth::ECH_Healthy:
+			// Healthy 상태가 되면 Injury 사운드 끄기  
+			GetWorldTimerManager().ClearTimer(injureTimerHandle);
 			break;
 		case ECamperHealth::ECH_Injury:
 			break;
 		case ECamperHealth::ECH_Dead:
-			break;
+			// 죽는 사운드 재생
+			PlayDieSound();
 	}
 }
 
+
+// 누웠을 때 힐링 및 상대 치료 하는 함수 RPC
+void ACamper::StartHealing()
+{
+	ServerRPC_StartHealing();
+}
+void ACamper::ServerRPC_StartHealing_Implementation()
+{
+	MultiCastRPC_StartHealing();
+}
+void ACamper::MultiCastRPC_StartHealing_Implementation()
+{
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair
+		|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_UnLock
+		|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_Healing
+					) return;
+	
+	// 상태 전환
+	camperFSMComp->curInteractionState = ECamperInteraction::ECI_Healing;
+	camperFSMComp->curMoveState = ECamperMoveState::ECS_NONE;
+}
+// Stop Healing
+void ACamper::StopHealing()
+{
+	ServerRPC_StopHealing();
+}
+
+void ACamper::ServerRPC_StopHealing_Implementation()
+{
+	MultiCastRPC_StopHealing();
+}
+
+void ACamper::MultiCastRPC_StopHealing_Implementation()
+{
+	if (camperFSMComp->curInteractionState != ECamperInteraction::ECI_Healing) return;
+	
+	// 생존자의 상호작용 상태를 NONE으로 변경
+	camperFSMComp->curInteractionState = ECamperInteraction::ECI_NONE;
+}
+// Healing Time Check
+void ACamper::HealingTimingCheck(float deltaTime)
+{
+	ServerRPC_HealingTimingCheck(deltaTime);
+}
+void ACamper::ServerRPC_HealingTimingCheck_Implementation(float deltaTime)
+{
+	MultiCastRPC_HealingTimingCheck(deltaTime);
+}
+void ACamper::MultiCastRPC_HealingTimingCheck_Implementation(float deltaTime)
+{
+	// 치유를 사용할 때 자가치유중이고 발전기 고치고 있거나 문 여는 중이면 return
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Healing &&
+		camperFSMComp->curInteractionState != ECamperInteraction::ECI_Repair &&
+		camperFSMComp->curInteractionState != ECamperInteraction::ECI_UnLock &&
+		camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+	{
+		// 현재치유시간이 치유 시간을 넘어가면 힐링 시간을 초기화하고 HP를 풀로 채우며 다친 상태를 회복시키고 상호작용을 NONE으로 초기화
+		if (curhealingTime >= healingTime)
+		{
+			curhealingTime = 0;
+			curHP = 2;
+			camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
+			camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
+			camperFSMComp->curInteractionState = ECamperInteraction::ECI_NONE;
+			CrawlPoint->bCanInteract = false;
+		}
+		// 32초동안 치유 해야함.
+		curhealingTime += deltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("curhealingTime : %f"), curhealingTime);
+	}
+}
 void ACamper::PullDownPallet()
+{
+	ServerRPC_PullDownPallet();
+}
+
+void ACamper::ServerRPC_PullDownPallet_Implementation()
 {
 	MultiCastRPC_PullDownPallet();
 }
@@ -993,51 +1145,21 @@ void ACamper::PlayRightSound()
 
 void ACamper::PlayInjureSound()
 {
-	if (!injureCue || !bPlayInjureSound) return;
+	if (!injureCue || !injureAttenuation) return;
 	
-	// 기존 사운드가 있으면 정지 후 해제
-	if (injuredAudioComp)
+	// 맞은 후 지속적으로 신음소리 내는 부분
+	GetWorldTimerManager().SetTimer(injureTimerHandle, [this]()
 	{
-		injuredAudioComp->Stop();
-		injuredAudioComp = nullptr;
-	}
-
-	injuredAudioComp = UGameplayStatics::SpawnSoundAttached(
-		injureCue,
-		GetRootComponent(),
-		NAME_None,
-		FVector::ZeroVector,
-		EAttachLocation::KeepRelativeOffset,
-		false
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			injureCue,
+			GetActorLocation(),
+			1.0f,
+			1.0f,
+			0.0f,
+			injureAttenuation
 		);
-	if (injuredAudioComp)
-	{
-		injuredAudioComp->OnAudioFinished.AddDynamic(this, &ACamper::OnInjureSoundFinished);
-		injuredAudioComp->Play();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT(" InjuredAudioComp Fail"));
-	}
-}
-
-void ACamper::OnInjureSoundFinished()
-{
-	if (bPlayInjureSound)
-	{
-		PlayInjureSound();
-	}
-}
-
-void ACamper::StopInjureSound()
-{
-	bPlayInjureSound = false;
-
-	if (injuredAudioComp)
-	{
-		injuredAudioComp->Stop();
-		injuredAudioComp = nullptr;
-	}
+	}, 1.0f, true);
 }
 
 void ACamper::PlayScreamSound()
@@ -1052,6 +1174,37 @@ void ACamper::PlayScreamSound()
 			1.0f,
 			0.0f,
 			injuredScreamAttenuation
+		);
+	}
+}
+
+void ACamper::PlayHookInSound()
+{
+	if (hookInCue)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			hookInCue,
+			GetActorLocation(),
+			1.5f,
+			1.0f,
+			0.0f,
+			hookInAttenuation
+		);
+	}
+}
+
+void ACamper::PlayDieSound()
+{
+	if (dieCue)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			dieCue,
+			GetActorLocation(),
+			1.5f,
+			1.0f,
+			0.0f
 		);
 	}
 }
@@ -1089,32 +1242,38 @@ void ACamper::MultiCastRPC_HealthCheck_Implementation()
 	curHP = maxHP;
 }
 
-void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) // 스페이스바 누른애
+void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) // 쓰러진 생존자 기준으로 OtherActor는 서있는 생존자
 {
 	UE_LOG(LogTemp, Warning, TEXT("1"));
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *OtherActor->GetActorNameOrLabel());
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
-		Slasher->AttachSurvivorToShoulder(this);
+		Slasher->MulticastRPC_AttachSurvivorToShoulder(this);
+		Slasher->InteractingPoint = nullptr;
+		Slasher->NearPoint = nullptr;
+		Slasher->ClientRPC_ChangeNearPoint(nullptr);
 	}
 	else if (auto* camper = Cast<ACamper>(OtherActor))
 	{
-		FString s = UEnum::GetValueAsString(camperFSMComp->curHealthState);
-		UE_LOG(LogTemp, Warning, TEXT("This Player : %s, Other Player : %s, camper->Anim의 오너 : %s, curHealthState : %s"),
-			*GetActorNameOrLabel(), *OtherActor->GetActorNameOrLabel(), *camper->Anim->TryGetPawnOwner()->GetActorNameOrLabel(), *s);
+		// FString s = UEnum::GetValueAsString(camperFSMComp->curHealthState);
+		// UE_LOG(LogTemp, Warning, TEXT("This Player : %s, Other Player : %s, camper->Anim의 오너 : %s, curHealthState : %s"),
+			// *GetActorNameOrLabel(), *OtherActor->GetActorNameOrLabel(), *camper->Anim->TryGetPawnOwner()->GetActorNameOrLabel(), *s);
 		
 		// 다친 상태일 때 상대 힐하는 몽타주 실행
- 		if (Anim && camperFSMComp->curHealthState == ECamperHealth::ECH_Injury)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("3"));
- 			MultiCastRPC_StartHealing(camper);
-			// 상대방 SelfHealing 켜주기
-			perksComp->PerksSelfHealing();
-		}
+		UE_LOG(LogTemp, Warning, TEXT("3"));
+ 		// 자신한테는 치료하라고 함수 실행
+ 		StartHealing();
+ 		ServerRPC_StartHealingAnimation(camper);
 	}
 }
-
-void ACamper::MultiCastRPC_StartHealing_Implementation(ACamper* camper)
+void ACamper::ServerRPC_StartHealingAnimation_Implementation(ACamper* camper)
 {
+	MultiCastRPC_StartHealingAnimation(camper);
+}
+
+void ACamper::MultiCastRPC_StartHealingAnimation_Implementation(ACamper* camper)
+{
+	// 상대방 애니메이션 몽타주 켜주기
 	camper->Anim->ServerRPC_HealingAnimation(TEXT("StartHealing"));
 }
 
@@ -1125,14 +1284,43 @@ void ACamper::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherAct
 	{
 		if (camper->Anim)
 		{
-			// 자신의 몽타주를 끝내고
-			MultiCastRPC_EndHealing(camper);
-			// 상대방 힐도 멈추기
-			perksComp->StopPerksSelfHealing();
+			// 자신의 치료를 멈추고
+			StopHealing();
+			ServerRPC_EndHealingAnimation(camper);
 		}
 	}
 }
-void ACamper::MultiCastRPC_EndHealing_Implementation(ACamper* camper)
+void ACamper::ServerRPC_EndHealingAnimation_Implementation(ACamper* camper)
 {
+	MultiCastRPC_EndHealingAnimation(camper);
+}
+void ACamper::MultiCastRPC_EndHealingAnimation_Implementation(ACamper* camper)
+{
+	// 상대방 애니메이션도 멈추기
 	camper->Anim->ServerRPC_HealingAnimation(TEXT("EndHealing"));
+}
+
+
+void ACamper::OnRescued()
+{
+	if (HasAuthority())
+	{
+		MulticastRPC_OnRescued();
+	}
+}
+
+void ACamper::MulticastRPC_OnRescued_Implementation()
+{
+	if (camperFSMComp && HasAuthority())
+	{
+		SetHealthState(ECamperHealth::ECH_Healthy);
+		SetMovementState(ECamperMoveState::ECS_NONE);
+		SetStanceState(ECamperStanceState::ECSS_Idle);
+		SetInteractionState(ECamperInteraction::ECI_NONE);
+	}
+	curHP = maxHP;
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -210), FRotator(0, -90, 0));
+    SetActorEnableCollision(true);
+    GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    GetCharacterMovement()->StopMovementImmediately();
 }

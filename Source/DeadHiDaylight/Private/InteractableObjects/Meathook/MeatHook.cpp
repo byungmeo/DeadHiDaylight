@@ -6,7 +6,10 @@
 #include "Canival.h"
 #include "Player/Camper.h"
 #include "InteractionPoint.h"
+#include "SacrificePlayerState.h"
+#include "CamperComps/CamperFSM.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 // Sets default values
@@ -78,7 +81,13 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			Camper->RescueHooking(TEXT("HookRescue"));
 			auto* HookedCamper = Cast<ACamper>(CamperPoint->AttachedActor);
 			HookedCamper->Hooking(TEXT("HookRescued"));
-
+			
+			FTimerHandle RescueHandle;
+			GetWorldTimerManager().SetTimer(RescueHandle, this, &AMeatHook::OnRescued, 2.5f, false);
+			Camper->InteractingPoint = nullptr;
+			Camper->NearPoint = nullptr;
+			Camper->ClientRPC_ChangeNearPoint(nullptr);
+			
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = false;
 		}
@@ -91,10 +100,21 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 		if (auto* HookingCamper = Slasher->AttachedSurvivor)
 		{
 			Point->AttachActor(Slasher, 0, false);
-			
-			// 1. 생존자 및 살인자에게 알림
+			HookingCamper->InteractingPoint = CamperPoint;
+			HookingCamper->NearPoint = nullptr;
+			HookingCamper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+			CamperPoint->AttachActor(HookingCamper, 0, false);
+			HookingCamper->SetActorLocation(HookingCamper->GetActorLocation() + FVector(0, 0, 250));
+			HookingCamper->SetActorRotation(HookingCamper->GetActorRotation() + FRotator(0, -180, 0));
+			HookingCamper->SetInteractionState(ECamperInteraction::ECI_Hook);
 			HookingCamper->Hooking(TEXT("HookIn"));
+			
+			
 			Slasher->HangOnHook(this);
+			Slasher->AttachedSurvivor = nullptr;
+			Slasher->InteractingPoint = nullptr;
+			Slasher->NearPoint = nullptr;
+			Slasher->ClientRPC_ChangeNearPoint(nullptr);
 
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = true;
@@ -102,7 +122,6 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 		}
 	}
 }
-
 void AMeatHook::OnStopInteraction(UInteractionPoint* Point, AActor* OtherActor)
 {
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
@@ -126,12 +145,20 @@ void AMeatHook::OnHooked(class ACanival* Slasher)
 {
 	if (auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor))
 	{
-		Camper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		CamperPoint->AttachActor(Camper, 0, false);
-		Slasher->AttachedSurvivor = nullptr;
-		Camper->Hooking(TEXT("HookIn"));
+		Camper->Hooking(TEXT("HookLoop"));
+		Camper->SetInteractionState(ECamperInteraction::ECI_Hook);
 	}
+	
+	if (false == HasAuthority())
+	{
+		return;
+	}
+
 	SlasherPoint->DetachActor();
+	Slasher->AttachedSurvivor = nullptr;
+	Slasher->InteractingPoint = nullptr;
+	Slasher->NearPoint = nullptr;
+	Slasher->ClientRPC_ChangeNearPoint(nullptr);
 
 	// 30초 뒤에 희생
 	GetWorldTimerManager().SetTimer(SacrificeHandle, this, &AMeatHook::OnSacrificed, 30.0f, false);
@@ -139,7 +166,15 @@ void AMeatHook::OnHooked(class ACanival* Slasher)
 
 void AMeatHook::OnRescued()
 {
+	auto* RescuedCamper = Cast<ACamper>(CamperPoint->AttachedActor);
 	CamperPoint->DetachActor();
+	if (RescuedCamper)
+	{
+		RescuedCamper->InteractingPoint = nullptr;
+		RescuedCamper->NearPoint = nullptr;
+		RescuedCamper->ClientRPC_ChangeNearPoint(nullptr);
+		RescuedCamper->OnRescued();
+	}
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;
 	GetWorldTimerManager().ClearTimer(SacrificeHandle);
@@ -147,11 +182,30 @@ void AMeatHook::OnRescued()
 
 void AMeatHook::OnSacrificed()
 {
-	if (auto* Camper = Cast<ACamper>(CamperPoint->AttachedActor))
-	{
-		Camper->Hooking(TEXT("HookKilled"));
-	}
+	auto* Camper = Cast<ACamper>(CamperPoint->AttachedActor);
 	CamperPoint->DetachActor();
+	if (Camper)
+	{
+		Camper->InteractingPoint = nullptr;
+		Camper->NearPoint = nullptr;
+		Camper->Hooking(TEXT("HookKilled"));
+		FTimerHandle KilledTimer;
+		GetWorldTimerManager().SetTimer(KilledTimer, [this, Camper]() {
+			if (Camper)
+			{
+				Camper->SetHealthState(ECamperHealth::ECH_Dead);
+				// Camper->UnPossessed();
+				Camper->GetMesh()->SetVisibility(false);
+				Camper->SetActorEnableCollision(false);
+				if (Camper->CrawlPoint)
+				{
+					Camper->CrawlPoint->DestroyComponent();
+				}
+				Camper->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+				Camper->GetCharacterMovement()->StopMovementImmediately();
+			}
+		}, 13.0f, false);
+	}
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;
 }

@@ -22,11 +22,6 @@ UPerksComponent::UPerksComponent()
 	{
 		IA_DeadHard = tempDeadHard.Object;
 	}
-	ConstructorHelpers::FObjectFinder<UInputAction> tempSelfHealing(TEXT("/Script/EnhancedInput.InputAction'/Game/JS/Input/IA/IA_SelfHealing.IA_SelfHealing'"));
-	if (tempSelfHealing.Succeeded())
-	{
-		IA_SelfHealing = tempSelfHealing.Object;
-	}
 	
 }
 
@@ -57,7 +52,7 @@ void UPerksComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	if(anim)
 	{
 		DeadHardTimingCheck(DeltaTime);
-		SelfHealingTimingCheck(DeltaTime);
+		// SelfHealingTimingCheck(DeltaTime);
 	}
 }
 
@@ -66,8 +61,8 @@ void UPerksComponent::SetupInputBinding(class UEnhancedInputComponent* pi)
 	Super::SetupInputBinding(pi);
 
 	pi->BindAction(IA_DeadHard, ETriggerEvent::Started, this, &UPerksComponent::PerksDeadHard);
-	pi->BindAction(IA_SelfHealing, ETriggerEvent::Started, this, &UPerksComponent::PerksSelfHealing);
-	pi->BindAction(IA_SelfHealing, ETriggerEvent::Completed, this, &UPerksComponent::StopPerksSelfHealing);
+	// pi->BindAction(IA_SelfHealing, ETriggerEvent::Started, this, &UPerksComponent::PerksSelfHealing);
+	// pi->BindAction(IA_SelfHealing, ETriggerEvent::Completed, this, &UPerksComponent::StopPerksSelfHealing);
 	
 }
 
@@ -116,90 +111,91 @@ void UPerksComponent::DeadHardTimingCheck(float deltaTime)
 	
 }
 
-void UPerksComponent::PerksSelfHealing()
-{
-	ServerRPC_PerksSelfHealing();
-}
-void UPerksComponent::ServerRPC_PerksSelfHealing_Implementation()
-{
-	NetMultiCastRPC_PerksSelfHealing();
-}
-
-void UPerksComponent::NetMultiCastRPC_PerksSelfHealing_Implementation()
-{
-	if (anim == nullptr || Camper->bFindPoints
-						|| fsm->curInteractionState == ECamperInteraction::ECI_SelfHealing
-						|| fsm->curHealthState != ECamperHealth::ECH_Injury
-						|| fsm->curInteractionState == ECamperInteraction::ECI_Repair
-						|| fsm->curInteractionState == ECamperInteraction::ECI_UnLock) return;
-	
-	if (fsm->curStanceState == ECamperStanceState::ECSS_Crouch)
-	{
-		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
-		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartCrouchSelfHealing"));
-	}
-	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
-	{
-		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
-	}
-	else
-	{
-		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
-		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartSelfHealing"));
-	}
-}
-void UPerksComponent::StopPerksSelfHealing()
-{
-	ServerRPC_StopPerSelfHealing();
-}
-
-void UPerksComponent::ServerRPC_StopPerSelfHealing_Implementation()
-{
-	NetMultiCastRPC_StopPerSelfHealing();
-}
-
-void UPerksComponent::NetMultiCastRPC_StopPerSelfHealing_Implementation()
-{
-	if (anim == nullptr || Camper->bFindPoints || fsm->curInteractionState != ECamperInteraction::ECI_SelfHealing) return;
-
-	Camper->StopInjureSound();
-	if (fsm->curStanceState == ECamperStanceState::ECSS_Crouch)
-	{
-		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
-		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndCrouchSelfHealing"));
-	}
-	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
-	{
-		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
-	}
-	else
-	{
-		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
-		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndSelfHealing"));
-	}
-}
-
-void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
-{
-	// 자가치유를 사용할 때
-	// 자가치유중이고 다친상태일 때 anim->bSelfHealing && anim->bInjure
-	if (fsm->curInteractionState == ECamperInteraction::ECI_SelfHealing &&
-		fsm->curHealthState == ECamperHealth::ECH_Injury &&
-		fsm->curInteractionState != ECamperInteraction::ECI_Repair &&
-		fsm->curInteractionState != ECamperInteraction::ECI_UnLock)
-	{
-		// 치유시간이 자가치유 시간을 넘어가면 힐링 시간을 초기화하고 HP를 풀로 채우며 다친 상태를 회복시킨다.
-		if (healingTime >= selfhealingTime)
-		{
-			healingTime = 0;
-			Camper->curHP = 2;
-			Camper->camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
-			Camper->camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
-		}
-		// 32초동안 치유 해야함.
-		healingTime += deltaTime;
-		UE_LOG(LogTemp, Warning, TEXT("healingTime : %f"), healingTime);
-	}
-}
+// void UPerksComponent::PerksSelfHealing()
+// {
+// 	ServerRPC_PerksSelfHealing();
+// }
+// void UPerksComponent::ServerRPC_PerksSelfHealing_Implementation()
+// {
+// 	NetMultiCastRPC_PerksSelfHealing();
+// }
+//
+// void UPerksComponent::NetMultiCastRPC_PerksSelfHealing_Implementation()
+// {
+// 	if (anim == nullptr || Camper->bFindPoints
+// 						|| fsm->curInteractionState == ECamperInteraction::ECI_SelfHealing
+// 						|| fsm->curHealthState != ECamperHealth::ECH_Injury
+// 						|| fsm->curInteractionState == ECamperInteraction::ECI_Repair
+// 						|| fsm->curInteractionState == ECamperInteraction::ECI_UnLock
+// 						|| fsm->curInteractionState == ECamperInteraction::ECI_Healing) return;
+// 	
+// 	if (fsm->curStanceState == ECamperStanceState::ECSS_Crouch)
+// 	{
+// 		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
+// 		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartCrouchSelfHealing"));
+// 	}
+// 	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
+// 	{
+// 		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
+// 	}
+// 	else
+// 	{
+// 		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
+// 		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartSelfHealing"));
+// 	}
+// }
+// void UPerksComponent::StopPerksSelfHealing()
+// {
+// 	ServerRPC_StopPerSelfHealing();
+// }
+//
+// void UPerksComponent::ServerRPC_StopPerSelfHealing_Implementation()
+// {
+// 	NetMultiCastRPC_StopPerSelfHealing();
+// }
+//
+// void UPerksComponent::NetMultiCastRPC_StopPerSelfHealing_Implementation()
+// {
+// 	if (anim == nullptr || Camper->bFindPoints || fsm->curInteractionState != ECamperInteraction::ECI_SelfHealing) return;
+//
+// 	Camper->StopInjureSound();
+// 	if (fsm->curStanceState == ECamperStanceState::ECSS_Crouch)
+// 	{
+// 		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
+// 		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndCrouchSelfHealing"));
+// 	}
+// 	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
+// 	{
+// 		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
+// 	}
+// 	else
+// 	{
+// 		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
+// 		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndSelfHealing"));
+// 	}
+// }
+//
+// void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
+// {
+// 	// 자가치유를 사용할 때
+// 	// 자가치유중이고 다친상태일 때 anim->bSelfHealing && anim->bInjure
+// 	if (fsm->curInteractionState == ECamperInteraction::ECI_SelfHealing &&
+// 		fsm->curHealthState == ECamperHealth::ECH_Injury &&
+// 		fsm->curInteractionState != ECamperInteraction::ECI_Repair &&
+// 		fsm->curInteractionState != ECamperInteraction::ECI_UnLock)
+// 	{
+// 		// 치유시간이 자가치유 시간을 넘어가면 힐링 시간을 초기화하고 HP를 풀로 채우며 다친 상태를 회복시킨다.
+// 		if (healingTime >= selfhealingTime)
+// 		{
+// 			healingTime = 0;
+// 			Camper->curHP = 2;
+// 			Camper->camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
+// 			Camper->camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
+// 		}
+// 		// 32초동안 치유 해야함.
+// 		healingTime += deltaTime;
+// 		UE_LOG(LogTemp, Warning, TEXT("healingTime : %f"), healingTime);
+// 	}
+// }
 
 

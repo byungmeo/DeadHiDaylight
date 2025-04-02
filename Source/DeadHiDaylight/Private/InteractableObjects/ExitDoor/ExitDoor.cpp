@@ -151,7 +151,8 @@ void AExitDoor::ServerOnly_OnExitAreaBeginOverlap(UPrimitiveComponent* Overlappe
 				GameState->ServerOnly_OnCamperExitOrDie();
 			}
 		}
-		Camper->UnPossessed();
+		
+		// Camper->UnPossessed();
 		Camper->GetMesh()->SetVisibility(false);
 		Camper->SetActorEnableCollision(false);
 		Camper->CrawlPoint->DestroyComponent();

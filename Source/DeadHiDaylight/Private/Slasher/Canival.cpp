@@ -37,8 +37,6 @@ ACanival::ACanival()
 	bReplicates = true;
 	bAlwaysRelevant = true;
 	bNetLoadOnClient = true;
-
-
 	
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Character/Carnival.Carnival'"));
 	if (MeshObj.Succeeded())
@@ -488,10 +486,6 @@ void ACanival::Server_RightAttack_Implementation()
 void ACanival::MultiCast_RightAttack_Implementation()
 {
 	bIsAttacking = true;
-	if (IsLocallyControlled())
-	{
-		CommonHud->OnDisplayBlood();
-	}
 	
 	if (ChainSaw)
 	{
@@ -544,7 +538,7 @@ void ACanival::CheckAndAttachSurvivor()
 	if (NearestCamper)
 	{
 		// 가장 가까운 생존자를 어깨 소켓에 부착
-		AttachSurvivorToShoulder(NearestCamper);
+		MulticastRPC_AttachSurvivorToShoulder(NearestCamper);
 		AttachedSurvivor = NearestCamper;
 		UE_LOG(LogTemp, Warning, TEXT("Attached survivor %s to shoulder."), *NearestCamper->GetName());
 	}
@@ -598,9 +592,12 @@ void ACanival::CheckAndAttachSurvivor()
 	
 }
 
-void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
+void ACanival::MulticastRPC_AttachSurvivorToShoulder_Implementation(class ACamper* Survivor)
 {
-	AttachedSurvivor = Survivor;
+	if (HasAuthority())
+	{
+		AttachedSurvivor = Survivor;
+	}
 	
 	AnimInstance->PlayAttackShoulderAnimation();
 	//어깨 부착
@@ -611,34 +608,71 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
 		Survivor->GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));
 
+		if (HasAuthority())
+		{
+			Survivor->SetInteractionState(ECamperInteraction::ECI_Carry);
+			Survivor->CrawlPoint->bCanInteract = false;
+		}
+		
 		Survivor->SetActorEnableCollision(false);
 		Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		Survivor->GetCharacterMovement()->StopMovementImmediately();
-		Survivor->GetMesh()->bPauseAnims = true;
+		// Survivor->GetMesh()->bPauseAnims = true;
 		UE_LOG(LogTemp, Warning, TEXT("어깨에 붙음"));
 	}
-	
+
+	if (IsLocallyControlled())
+	{
+		TArray<AActor*> OutMeatHooks;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMeatHook::StaticClass(), OutMeatHooks);
+		if (OutMeatHooks.Num() > 0)
+		{
+			for (const auto OutMeatHook : OutMeatHooks)
+			{
+				if (auto* MeatHook = Cast<AMeatHook>(OutMeatHook))
+				{
+					MeatHook->DisplaySilhouette(10.0f);	
+				}
+			}
+		}
+	}
 }
-
-
 
 void ACanival::HangOnHook(class AMeatHook* Hook)
 {
+	MulticastRPC_HangOnHook(Hook);
+}
+
+void ACanival::MulticastRPC_HangOnHook_Implementation(class AMeatHook* Hook)
+{
 	AnimInstance->PlayHangAnimation(Hook);
-	UE_LOG(LogTemp, Warning, TEXT("Hang"));
 }
 
 void ACanival::KickGenerator(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickGeneratorAnimation(Point);
-	UE_LOG(LogTemp, Warning, TEXT("KickGenerator"));
+	InteractingPoint = nullptr;
+	NearPoint = nullptr;
+	MulticastRPC_KickGenerator(Point);
 }
+
+void ACanival::MulticastRPC_KickGenerator_Implementation(class UInteractionPoint* Point)
+{
+	AnimInstance->PlayKickGeneratorAnimation(Point);
+}
+
 
 void ACanival::KickPallet(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickPalletAnimation(Point);
-	UE_LOG(LogTemp, Warning, TEXT("KickPallet"));
+	InteractingPoint = nullptr;
+	NearPoint = nullptr;
+	MulticastRPC_KickPallet(Point);
 }
+
+void ACanival::MulticastRPC_KickPallet_Implementation(class UInteractionPoint* Point)
+{
+	AnimInstance->PlayKickPalletAnimation(Point);
+}
+
 
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -651,6 +685,13 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	// 생존자냐
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
+		if (Camper->camperFSMComp)
+		{
+			if (Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+			{
+				return;
+			}
+		}
 		NET_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
 		Hammer->SetGenerateOverlapEvents(false);
 		Camper->GetDamage("");
@@ -673,11 +714,12 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		//UE_LOG(LogTemp, Warning, TEXT("ACanival::OnChainSawBeginOverlap"));
 		// ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
-		if (Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+		if (Camper->camperFSMComp && Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
 		{
 			return;
 		}
 		Camper->GetDamage("Chainsaw");
+		MulticastRPC_OnChainSawHit();
 	}
 	
 	// 벽이냐
@@ -697,7 +739,7 @@ void ACanival::ServerOnly_FindInteractionPoint()
 	}
 	
 	const FVector& StartEnd = GetMovementComponent()->GetFeetLocation();
-	auto* Point = UInteractionPoint::FindInteractionPoint(GetWorld(), StartEnd, StartEnd, EInteractionMode::EIM_SlasherOnly);
+	auto* Point = UInteractionPoint::FindInteractionPoint(this, StartEnd, StartEnd, EInteractionMode::EIM_SlasherOnly);
 	if (NearPoint != Point)
 	{
 		NearPoint = Point;
@@ -763,6 +805,15 @@ void ACanival::StopInteract()
 	ServerRPC_StopInteract();
 }
 
+void ACanival::MulticastRPC_OnChainSawHit_Implementation()
+{
+	if (IsLocallyControlled())
+	{
+		CommonHud->OnDisplayBlood();
+	}
+	UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
+}
+
 void ACanival::MulticastRPC_OnHammerHit_Implementation()
 {
 	if (IsLocallyControlled())
@@ -771,6 +822,7 @@ void ACanival::MulticastRPC_OnHammerHit_Implementation()
 	}
 	AnimInstance->PlayWipeAnimation();
 	UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
+	NET_LOG(LogTemp, Warning, TEXT("MulticastRPC_OnHammerHit_Implementation"));
 }
 
 void ACanival::ServerRPC_StopInteract_Implementation()
@@ -779,37 +831,5 @@ void ACanival::ServerRPC_StopInteract_Implementation()
 	{
 		InteractingPoint->StopInteraction(this);
 		InteractingPoint = nullptr;
-	}
-}
-
-void ACanival::FindPoint()
-{
-	// InteractionPoint 찾는 Trace
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
-	TArray<FHitResult> OutHits;
-	const bool bHit = UKismetSystemLibrary::SphereTraceMultiByProfile(
-		GetWorld(),
-		GetMovementComponent()->GetFeetLocation(),
-		GetMovementComponent()->GetFeetLocation(),
-		500,
-		TEXT("InteractionPoint"),
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
-		OutHits,
-		true
-	);
-	if (bHit)
-	{
-		for (const auto HitResult : OutHits)
-		{
-			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Find InteractionPoint"));
-				interact->Interaction(this);
-				break;
-			}
-		}
 	}
 }

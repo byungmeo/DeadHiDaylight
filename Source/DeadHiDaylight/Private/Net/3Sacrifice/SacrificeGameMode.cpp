@@ -3,6 +3,7 @@
 
 #include "SacrificeGameMode.h"
 
+#include "CamperSpawnPoint.h"
 #include "Player/Camper.h"
 #include "DHDGameInstance.h"
 #include "Generator.h"
@@ -12,6 +13,7 @@
 #include "SacrificePlayerController.h"
 #include "SacrificePlayerState.h"
 #include "Canival.h"
+#include "SlasherSpawnPoint.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -75,27 +77,42 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 		return;
 	}
 	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	
 	switch (PlayerRole)
 	{
 	case EPlayerRole::EPR_Slasher:
 		{
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Slasher"));
-			if (ACanival* Canival = GetWorld()->SpawnActor<ACanival>(SlasherFactory))
+			auto* SlasherSpawnPoint = Cast<ASlasherSpawnPoint>(UGameplayStatics::GetActorOfClass(GetWorld(), ASlasherSpawnPoint::StaticClass()));
+			if (SlasherSpawnPoint)
 			{
-				Canival->SetActorLocation(FVector(1450, 0, 250));
-				Controller->Possess(Canival);
-				Slasher = Canival;
+				if (ACanival* Canival = GetWorld()->SpawnActor<ACanival>(SlasherFactory, SlasherSpawnPoint->GetActorLocation(), SlasherSpawnPoint->GetActorRotation(), SpawnParams))
+				{
+					Controller->Possess(Canival);
+					Slasher = Canival;
+				}
+			}
+			else
+			{
+				
 			}
 			break;
 		}
 	case EPlayerRole::EPR_Camper:
 		{
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Camper"));
-			if (ACamper* Camper = GetWorld()->SpawnActor<ACamper>(CamperFactory))
+			TArray<AActor*> OutActors;
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACamperSpawnPoint::StaticClass(), OutActors);
+			if (OutActors.Num() > 0)
 			{
-				Camper->SetActorLocation(FVector(0, 0, 250), false, nullptr, ETeleportType::TeleportPhysics);
-				Controller->Possess(Camper);
-				Campers.Add(Camper);
+				auto* CamperSpawnPoint = Cast<ACamperSpawnPoint>(OutActors[FMath::RandRange(0, OutActors.Num() - 1)]);
+				if (ACamper* Camper = GetWorld()->SpawnActor<ACamper>(CamperFactory, CamperSpawnPoint->GetActorLocation(), CamperSpawnPoint->GetActorRotation(), SpawnParams))
+				{
+					Controller->Possess(Camper);
+					Campers.Add(Camper);
+				}
 			}
 			break;
 		}

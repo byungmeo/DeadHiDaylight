@@ -71,7 +71,6 @@ public:
 	void NONEState();
 	void RepairState();
 	void DeadHardState();
-	void SelfHealingState();
 	void CarryState();
 	void HookState();
 	void HookRescueState();

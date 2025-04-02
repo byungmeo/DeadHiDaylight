@@ -13,6 +13,7 @@
 #include "MeatHook.h"
 #include "Pallet.h"
 #include "SacrificeCommonHUD.h"
+#include "SacrificeGameState.h"
 #include "SacrificePlayerController.h"
 #include "SacrificePlayerState.h"
 #include "Camera/CameraComponent.h"
@@ -985,6 +986,15 @@ void ACamper::ServerRPC_SetHealthState_Implementation(ECamperHealth NewState)
 	FUserState NewUserState = userState->UserState;
 	NewUserState.Health = NewState;
 	userState->UserState = NewUserState;
+
+	if (NewState == ECamperHealth::ECH_Dead)
+	{
+		ASacrificeGameState* GameState = Cast<ASacrificeGameState>(GetWorld()->GetGameState());
+		if (GameState)
+		{
+			GameState->ServerOnly_OnCamperExitOrDie();
+		}
+	}
 }
 
 void ACamper::MultiCastRPC_SetHealthState_Implementation(ECamperHealth NewState)

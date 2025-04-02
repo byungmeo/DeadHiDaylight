@@ -93,9 +93,16 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			Point->AttachActor(Slasher, 0, false);
 			HookingCamper->InteractingPoint = CamperPoint;
 			HookingCamper->NearPoint = nullptr;
-			// 1. 생존자 및 살인자에게 알림
+			HookingCamper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+			CamperPoint->AttachActor(HookingCamper, 0, false);
+			HookingCamper->SetActorLocation(HookingCamper->GetActorLocation() + FVector(0, 0, 250));
+			HookingCamper->SetActorRotation(HookingCamper->GetActorRotation() + FRotator(0, -180, 0));
 			HookingCamper->Hooking(TEXT("HookIn"));
+			
 			Slasher->HangOnHook(this);
+			Slasher->AttachedSurvivor = nullptr;
+			Slasher->InteractingPoint = nullptr;
+			Slasher->NearPoint = nullptr;
 
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = true;
@@ -103,7 +110,6 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 		}
 	}
 }
-
 void AMeatHook::OnStopInteraction(UInteractionPoint* Point, AActor* OtherActor)
 {
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
@@ -132,11 +138,6 @@ void AMeatHook::OnHooked(class ACanival* Slasher)
 	
 	if (auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor))
 	{
-		Camper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		CamperPoint->AttachActor(Camper, 0, false);
-		Slasher->AttachedSurvivor = nullptr;
-		Slasher->InteractingPoint = nullptr;
-		Slasher->NearPoint = nullptr;
 		Camper->Hooking(TEXT("HookLoop"));
 	}
 	SlasherPoint->DetachActor();

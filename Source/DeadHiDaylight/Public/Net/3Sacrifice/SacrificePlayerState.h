@@ -115,7 +115,4 @@ public:
 	UFUNCTION()
 	void OnRep_UserState();
 	FOnUpdatedUserState OnUpdatedUserState;
-	
-	UFUNCTION(CallInEditor, Category="Test")
-    void ChangeHealth();
 };

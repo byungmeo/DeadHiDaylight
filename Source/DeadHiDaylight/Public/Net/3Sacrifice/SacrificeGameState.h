@@ -9,9 +9,6 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRepGeneratorCount, int, Count);
 
-/**
- * 희생제에서 생존자, 살인마 모두가 가지고 있는(혹은 알아야 하는) 상태
- */
 UCLASS()
 class DEADHIDAYLIGHT_API ASacrificeGameState : public AGameStateBase
 {
@@ -46,6 +43,7 @@ public:
 
 	// BeginPlay에서 계산된다
 	int RemCamperCount = 0;
-	void ServerOnly_OnCamperOutGame(ASacrificePlayerState* State);
-	void ServerOnly_GameEnd();
+	void ServerOnly_OnCamperExitOrDie(ASacrificePlayerState* State);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_GameEnd();
 };

@@ -290,7 +290,7 @@ void ACamper::Tick(float DeltaTime)
 	// 	
 	// }
 	
-	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
+	/*if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		GetDamage(TEXT(""));
 	}
@@ -357,8 +357,23 @@ void ACamper::Tick(float DeltaTime)
 	{
 		PullDownPallet();
 	}
-	// PrintNetLog();
+	PrintNetLog();*/
 
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
+	{
+		if (IsLocallyControlled())
+		{
+			ServerRPC_ComeHere();
+		}
+	}
+
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
+	{
+		if (IsLocallyControlled())
+		{
+			ServerRPC_PointTo();
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -798,6 +813,10 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 
 	if (curHP <= 0)
 	{
+		if (HasAuthority())
+		{
+			SetHealthState(ECamperHealth::ECH_Injury);
+		}
 		if (HasAuthority()) Crawling();
 	}
 	else
@@ -973,6 +992,10 @@ void ACamper::MultiCastRPC_SetInteractionState_Implementation(ECamperInteraction
 
 void ACamper::SetHealthState(ECamperHealth NewState)
 {
+	if (userState != nullptr)
+	{
+		userState->UserState.Health = NewState;
+	}
 	ServerRPC_SetHealthState(NewState);
 }
 
@@ -1244,7 +1267,7 @@ void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) 
 	// UE_LOG(LogTemp, Warning, TEXT("%s"), *OtherActor->GetActorNameOrLabel());
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
-		Slasher->AttachSurvivorToShoulder(this);
+		Slasher->MulticastRPC_AttachSurvivorToShoulder(this);
 		Slasher->InteractingPoint = nullptr;
 		Slasher->NearPoint = nullptr;
 		Slasher->ClientRPC_ChangeNearPoint(nullptr);
@@ -1303,6 +1326,47 @@ void ACamper::OnRescued()
 	{
 		MulticastRPC_OnRescued();
 	}
+}
+
+void ACamper::MulticastRPC_PointTo_Implementation(bool bIsInjury, bool bIsCrouch)
+{
+	if (Anim)
+	{
+		Anim->PlayPointTo(bIsInjury, bIsCrouch);
+	}
+}
+
+void ACamper::MulticastRPC_ComeHere_Implementation(bool bIsInjury, bool bIsCrouch)
+{
+	if (Anim)
+	{
+		NET_LOG(LogTemp, Warning, TEXT("ASD"));
+		Anim->PlayComeHere(bIsInjury, bIsCrouch);
+	}
+}
+
+void ACamper::ServerRPC_PointTo_Implementation()
+{
+	bool bIsInjury = false;
+	bool bIsCrouch = false;
+	if (userState)
+	{
+		bIsInjury = userState->UserState.Health != ECamperHealth::ECH_Healthy;
+		bIsCrouch = userState->UserState.Stance == ECamperStanceState::ECSS_Crouch;
+	}
+	MulticastRPC_PointTo(bIsInjury, bIsCrouch);
+}
+
+void ACamper::ServerRPC_ComeHere_Implementation()
+{
+	bool bIsInjury = false;
+	bool bIsCrouch = false;
+	if (userState)
+	{
+		bIsInjury = userState->UserState.Health != ECamperHealth::ECH_Healthy;
+		bIsCrouch = userState->UserState.Stance == ECamperStanceState::ECSS_Crouch;
+	}
+	MulticastRPC_ComeHere(bIsInjury, bIsCrouch);
 }
 
 void ACamper::MulticastRPC_OnRescued_Implementation()

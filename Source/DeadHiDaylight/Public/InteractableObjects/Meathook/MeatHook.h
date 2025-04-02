@@ -44,4 +44,7 @@ public:
 	void OnSacrificed();
 
 	FTimerHandle SacrificeHandle;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void DisplaySilhouette(float Duration);
 };

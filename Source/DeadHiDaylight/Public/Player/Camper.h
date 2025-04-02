@@ -338,4 +338,14 @@ public:
 	void OnRescued();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_OnRescued();
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ComeHere();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PointTo();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_ComeHere(bool bIsInjury, bool bIsCrouch);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_PointTo(bool bIsInjury, bool bIsCrouch);
 };

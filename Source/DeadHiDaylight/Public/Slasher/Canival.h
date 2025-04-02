@@ -244,5 +244,8 @@ public:
 	///////////
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_OnHammerHit();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_OnChainSawHit();
 };
 

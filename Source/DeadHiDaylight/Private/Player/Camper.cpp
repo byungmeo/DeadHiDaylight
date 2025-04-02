@@ -798,6 +798,10 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 
 	if (curHP <= 0)
 	{
+		if (HasAuthority())
+		{
+			SetHealthState(ECamperHealth::ECH_Injury);
+		}
 		if (HasAuthority()) Crawling();
 	}
 	else

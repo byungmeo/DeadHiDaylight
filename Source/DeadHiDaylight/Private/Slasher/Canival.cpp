@@ -486,10 +486,6 @@ void ACanival::Server_RightAttack_Implementation()
 void ACanival::MultiCast_RightAttack_Implementation()
 {
 	bIsAttacking = true;
-	if (IsLocallyControlled())
-	{
-		CommonHud->OnDisplayBlood();
-	}
 	
 	if (ChainSaw)
 	{
@@ -702,11 +698,12 @@ void ACanival::OnChainSawBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		//UE_LOG(LogTemp, Warning, TEXT("ACanival::OnChainSawBeginOverlap"));
 		// ChainSaw->SetGenerateOverlapEvents(false);
 		// Camper->야 너 맞았어
-		if (Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+		if (Camper->camperFSMComp && Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
 		{
 			return;
 		}
 		Camper->GetDamage("Chainsaw");
+		MulticastRPC_OnChainSawHit();
 	}
 	
 	// 벽이냐
@@ -790,6 +787,15 @@ void ACanival::ServerRPC_TryInteraction_Implementation()
 void ACanival::StopInteract()
 {
 	ServerRPC_StopInteract();
+}
+
+void ACanival::MulticastRPC_OnChainSawHit_Implementation()
+{
+	if (IsLocallyControlled())
+	{
+		CommonHud->OnDisplayBlood();
+	}
+	UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
 }
 
 void ACanival::MulticastRPC_OnHammerHit_Implementation()

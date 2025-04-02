@@ -118,8 +118,8 @@ public:
 	void CheckAndAttachSurvivor();
 	
 	//죽은 생존자 어깨에 붙이기
-	UFUNCTION()
-	void AttachSurvivorToShoulder(class ACamper* Survivor);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_AttachSurvivorToShoulder(class ACamper* Survivor);
 	
 
 

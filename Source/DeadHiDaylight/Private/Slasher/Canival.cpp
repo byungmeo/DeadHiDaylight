@@ -542,7 +542,7 @@ void ACanival::CheckAndAttachSurvivor()
 	if (NearestCamper)
 	{
 		// 가장 가까운 생존자를 어깨 소켓에 부착
-		AttachSurvivorToShoulder(NearestCamper);
+		MulticastRPC_AttachSurvivorToShoulder(NearestCamper);
 		AttachedSurvivor = NearestCamper;
 		UE_LOG(LogTemp, Warning, TEXT("Attached survivor %s to shoulder."), *NearestCamper->GetName());
 	}
@@ -596,9 +596,12 @@ void ACanival::CheckAndAttachSurvivor()
 	
 }
 
-void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
+void ACanival::MulticastRPC_AttachSurvivorToShoulder_Implementation(class ACamper* Survivor)
 {
-	AttachedSurvivor = Survivor;
+	if (HasAuthority())
+	{
+		AttachedSurvivor = Survivor;
+	}
 	
 	AnimInstance->PlayAttackShoulderAnimation();
 	//어깨 부착
@@ -609,18 +612,19 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
 		Survivor->GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));
 
-		Survivor->SetInteractionState(ECamperInteraction::ECI_Carry);
-		Survivor->CrawlPoint->bCanInteract = false;
+		if (HasAuthority())
+		{
+			Survivor->SetInteractionState(ECamperInteraction::ECI_Carry);
+			Survivor->CrawlPoint->bCanInteract = false;
+		}
+		
 		Survivor->SetActorEnableCollision(false);
 		Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		Survivor->GetCharacterMovement()->StopMovementImmediately();
 		// Survivor->GetMesh()->bPauseAnims = true;
 		UE_LOG(LogTemp, Warning, TEXT("어깨에 붙음"));
 	}
-	
 }
-
-
 
 void ACanival::HangOnHook(class AMeatHook* Hook)
 {

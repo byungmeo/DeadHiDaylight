@@ -1244,7 +1244,7 @@ void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) 
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *OtherActor->GetActorNameOrLabel());
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
-		Slasher->AttachSurvivorToShoulder(this);
+		Slasher->MulticastRPC_AttachSurvivorToShoulder(this);
 		Slasher->InteractingPoint = nullptr;
 		Slasher->NearPoint = nullptr;
 		Slasher->ClientRPC_ChangeNearPoint(nullptr);

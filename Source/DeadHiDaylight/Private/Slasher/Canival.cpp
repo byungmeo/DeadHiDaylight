@@ -674,6 +674,13 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	// 생존자냐
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
+		if (Camper->camperFSMComp)
+		{
+			if (Camper->camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+			{
+				return;
+			}
+		}
 		NET_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
 		Hammer->SetGenerateOverlapEvents(false);
 		Camper->GetDamage("");
@@ -790,6 +797,7 @@ void ACanival::MulticastRPC_OnHammerHit_Implementation()
 {
 	AnimInstance->PlayWipeAnimation();
 	UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
+	NET_LOG(LogTemp, Warning, TEXT("MulticastRPC_OnHammerHit_Implementation"));
 }
 
 void ACanival::ServerRPC_StopInteract_Implementation()

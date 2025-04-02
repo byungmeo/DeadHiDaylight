@@ -43,7 +43,7 @@ public:
 
 	// BeginPlay에서 계산된다
 	int RemCamperCount = 0;
-	void ServerOnly_OnCamperExitOrDie(ASacrificePlayerState* State);
+	void ServerOnly_OnCamperExitOrDie();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_GameEnd();
 };

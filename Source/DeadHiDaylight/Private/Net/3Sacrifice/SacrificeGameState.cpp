@@ -59,7 +59,7 @@ void ASacrificeGameState::OnRep_ReqGeneratorCount()
 	OnRepGeneratorCount.Broadcast(ReqGeneratorCount);
 }
 
-void ASacrificeGameState::ServerOnly_OnCamperExitOrDie(ASacrificePlayerState* State)
+void ASacrificeGameState::ServerOnly_OnCamperExitOrDie()
 {
 	if (--RemCamperCount <= 0)
 	{

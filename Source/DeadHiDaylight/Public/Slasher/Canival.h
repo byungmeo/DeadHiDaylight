@@ -5,6 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Canival.generated.h"
+UENUM(BlueprintType)
+enum class ECanivalMoveState : uint8
+{
+	CMS_Idle UMETA(DisplayName="Idle"),
+	CMS_Move UMETA(DisplayName="Move"),
+	CMS_Run  UMETA(DisplayName="Run")
+};
+
 
 UCLASS()
 class DEADHIDAYLIGHT_API ACanival : public ACharacter
@@ -127,6 +135,77 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* HammerHitSound;
 
+	// RPC 관련 함수 (이동)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	ECanivalMoveState CurrentMoveState;
+
+	void SetMovementState(ECanivalMoveState NewState);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetMovementState(ECanivalMoveState NewState);
+	virtual void Server_SetMovementState_Implementation(ECanivalMoveState NewState);
+	virtual bool Server_SetMovementState_Validate(ECanivalMoveState NewState);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_SetMovementState(ECanivalMoveState NewState);
+	virtual void MultiCast_SetMovementState_Implementation(ECanivalMoveState NewState);
+
+	// RPC 관련 함수 (좌클릭)
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_LeftClickStart();
+	virtual void Server_LeftClickStart_Implementation();
+	virtual bool Server_LeftClickStart_Validate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_LeftClickStart();
+	virtual void MultiCast_LeftClickStart_Implementation();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_LeftClickComplete();
+	virtual void Server_LeftClickComplete_Implementation();
+	virtual bool Server_LeftClickComplete_Validate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_LeftClickComplete();
+	virtual void MultiCast_LeftClickComplete_Implementation();
+
+	// RPC 관련 함수 (우클릭)
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_RightClickStart();
+	virtual void Server_RightClickStart_Implementation();
+	virtual bool Server_RightClickStart_Validate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_RightClickStart();
+	virtual void MultiCast_RightClickStart_Implementation();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_RightClickComplete();
+	virtual void Server_RightClickComplete_Implementation();
+	virtual bool Server_RightClickComplete_Validate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_RightClickComplete();
+	virtual void MultiCast_RightClickComplete_Implementation();
+
+	// RPC 관련 함수 (전기톱)
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_RightAttack();
+	virtual void Server_RightAttack_Implementation();
+	virtual bool Server_RightAttack_Validate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_RightAttack();
+	virtual void MultiCast_RightAttack_Implementation();
+
+
+
+
+
+
+
+
+	
 	/*
 	 *	상호작용 관련
 	 */

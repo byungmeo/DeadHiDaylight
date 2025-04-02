@@ -26,6 +26,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Player/Camper.h"
 #include "Sound/SoundBase.h"
+#include "Net/UnrealNetwork.h"
+
+
 
 // Sets default values
 ACanival::ACanival()
@@ -36,6 +39,8 @@ ACanival::ACanival()
 	bAlwaysRelevant = true;
 	bNetLoadOnClient = true;
 
+
+	
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshObj(TEXT("/Script/Engine.SkeletalMesh'/Game/KHA/Carnival/Character/Carnival.Carnival'"));
 	if (MeshObj.Succeeded())
 	{
@@ -101,9 +106,9 @@ ACanival::ACanival()
 		Hammer->SetSkeletalMesh(HammerObj.Object);
 	}
 	Hammer->SetupAttachment(GetMesh(), TEXT("joint_Hand_RT_01_IK"));
-	Hammer->SetRelativeLocation(FVector(17.197212, -14.791651, 20.419429));
-	Hammer->SetRelativeRotation(FRotator(85.793405, 6.474225, 59.887648));
-	Hammer->SetRelativeScale3D(FVector(0.7f, 0.7f, 0.7f));
+	Hammer->SetRelativeLocation(FVector(1.114717,-4.765961,15.095930));
+	Hammer->SetRelativeRotation(FRotator(6.474225,59.887648,105.793405));
+	Hammer->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));
 	Hammer->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
 
@@ -115,9 +120,9 @@ ACanival::ACanival()
 		ChainSaw->SetSkeletalMesh(ChainSawObj.Object);
 	}
 	ChainSaw->SetupAttachment(GetMesh(), TEXT("joint_Hand_LT_01_IK"));
-	ChainSaw->SetRelativeLocation(FVector(3.396842,-41.498392,-5.774845));
-	ChainSaw->SetRelativeRotation(FRotator(-66.141346,18.747237,143.994784));
-	ChainSaw->SetRelativeScale3D(FVector(0.7f,0.7f,0.7f));
+	ChainSaw->SetRelativeLocation(FVector(-3.069078,-40.038100,2.546956));
+	ChainSaw->SetRelativeRotation(FRotator(4.950710,137.963032,-67.389997));
+	ChainSaw->SetRelativeScale3D(FVector(0.5f,0.5f,0.5f));
 	ChainSaw->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
 
@@ -243,7 +248,62 @@ void ACanival::Move(const struct FInputActionValue& inputValue)
 	AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 	AddMovementInput(GetActorRightVector(), MovementVector.X);
 }
+void ACanival::SetMovementState(ECanivalMoveState NewState)
+{
+	if (CurrentMoveState == NewState)
+		return;
 
+	if (HasAuthority())
+	{
+		// 서버인 경우 바로 멀티캐스트 호출
+		MultiCast_SetMovementState(NewState);
+	}
+	else
+	{
+		// 클라이언트인 경우 서버에 요청
+		Server_SetMovementState(NewState);
+	}
+}
+
+// 서버 RPC 구현: 클라이언트 요청을 받아 모든 클라이언트에 전파
+void ACanival::Server_SetMovementState_Implementation(ECanivalMoveState NewState)
+{
+	MultiCast_SetMovementState(NewState);
+}
+
+bool ACanival::Server_SetMovementState_Validate(ECanivalMoveState NewState)
+{
+	return true;
+}
+
+// 멀티캐스트 RPC 구현: 모든 클라이언트에서 이동 상태 및 관련 속도를 업데이트
+void ACanival::MultiCast_SetMovementState_Implementation(ECanivalMoveState NewState)
+{
+	CurrentMoveState = NewState;
+	// 예시: 이동 상태에 따라 이동 속도 업데이트 (InitSpeed는 기본 속도)
+	switch (NewState)
+	{
+	case ECanivalMoveState::CMS_Idle:
+		GetCharacterMovement()->MaxWalkSpeed = InitSpeed;
+		break;
+	case ECanivalMoveState::CMS_Move:
+		GetCharacterMovement()->MaxWalkSpeed = InitSpeed * 1.5f; // 예시 값
+		break;
+	case ECanivalMoveState::CMS_Run:
+		GetCharacterMovement()->MaxWalkSpeed = InitSpeed * 2.0f; // 예시 값
+		break;
+	default:
+		break;
+	}
+}
+
+// Replication 설정
+void ACanival::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACanival, CurrentMoveState);
+}
 void ACanival::Look(const FInputActionValue& InputActionValue)
 {
 	FVector2D Value = InputActionValue.Get<FVector2D>();
@@ -252,19 +312,82 @@ void ACanival::Look(const FInputActionValue& InputActionValue)
 	
 }
 
+
+//망치 공격 
 void ACanival::LeftClick_Start()
 {
 	AnimInstance->PlayHammrInAnimation();
 	Hammer->SetGenerateOverlapEvents(true);
+	
+	if (HasAuthority())
+	{
+		MultiCast_LeftClickStart();
+	}
+	else
+	{
+		Server_LeftClickStart();
+	}
+}
+
+void ACanival::Server_LeftClickStart_Implementation()
+{
+	MultiCast_LeftClickStart();
+}
+
+bool ACanival::Server_LeftClickStart_Validate()
+{
+	return true;
+}
+void ACanival::MultiCast_LeftClickStart_Implementation()
+{
+	if (AnimInstance)
+	{
+		AnimInstance->PlayHammrInAnimation();
+	}
+	if (Hammer)
+	{
+		Hammer->SetGenerateOverlapEvents(true);
+	}
 }
 
 void ACanival::LeftClick_Complet()
 {
-	
-	AnimInstance->PlayHammerSwingAnimation();
-	Hammer->SetGenerateOverlapEvents(true);
+	if (HasAuthority())
+	{
+		MultiCast_LeftClickComplete();
+	}
+	else
+	{
+		Server_LeftClickComplete();
+	}
+}
+void ACanival::Server_LeftClickComplete_Implementation()
+{
+	MultiCast_LeftClickComplete();
 }
 
+bool ACanival::Server_LeftClickComplete_Validate()
+{
+	return true;
+}
+
+void ACanival::MultiCast_LeftClickComplete_Implementation()
+{
+	if (AnimInstance)
+	{
+		AnimInstance->PlayHammerSwingAnimation();
+	}
+	if (Hammer)
+	{
+		Hammer->SetGenerateOverlapEvents(true);
+	}
+}
+
+
+
+
+
+//전기톱 공
 void ACanival::RightClick_Start()
 {
 	GetCharacterMovement()->MaxWalkSpeed *= 0.8f;
@@ -283,7 +406,89 @@ void ACanival::RightClick_Start()
 		CommonHud->OnVisibleGaugeBar(FText::FromName(TEXT("USE CHAINSAW")), 0);
 	}
 	bChainSawCharging = true;
+	
+	
+	if (HasAuthority())
+	{
+		MultiCast_RightClickStart();
+	}
+	else
+	{
+		Server_RightClickStart();
+	}
 }
+
+void ACanival::Server_RightClickStart_Implementation()
+{
+	MultiCast_RightClickStart();
+}
+
+bool ACanival::Server_RightClickStart_Validate()
+{
+	return true;
+}
+void ACanival::MultiCast_RightClickStart_Implementation()
+{
+	GetCharacterMovement()->MaxWalkSpeed *= 0.8f;
+	if (ChainSawGauge <= 0)
+	{
+		if (AnimInstance)
+		{
+			AnimInstance->PlayChainSawAttackAnimation();
+		}
+	}
+	bIsAttacking = false;
+	if (CommonHud)
+	{
+		CommonHud->OnVisibleGaugeBar(FText::FromName(TEXT("USE CHAINSAW")), 0);
+	}
+	bChainSawCharging = true;
+}
+
+
+void ACanival::RightClick_Complet()
+{
+	if (bChainSawCharging)
+	{
+		bChainSawCharging = false;
+	}
+	
+	//버튼 떼었을 때 타이머가 아직 실행중이면
+	if (!bIsAttacking)
+	{
+		// GetCharacterMovement()->MaxWalkSpeed *= 2;
+		// GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);//타이머 취소
+		//AnimInstance->PlayChainSawRunAnimation(); //아이들상태로 (코드 변경해야함)
+		
+	}
+
+
+	if (HasAuthority())
+	{
+		MultiCast_RightClickComplete();
+	}
+	else
+	{
+		Server_RightClickComplete();
+	}
+}
+void ACanival::Server_RightClickComplete_Implementation()
+{
+	MultiCast_RightClickComplete();
+}
+
+bool ACanival::Server_RightClickComplete_Validate()
+{
+	return true;
+}
+void ACanival::MultiCast_RightClickComplete_Implementation()
+{
+	if (bChainSawCharging)
+	{
+		bChainSawCharging = false;
+	}
+}
+
 
 void ACanival::RightAttack()
 {
@@ -291,7 +496,40 @@ void ACanival::RightAttack()
 	bIsAttacking=true;
 	ChainSaw->SetGenerateOverlapEvents(true);
 	AnimInstance->PlayChainSawRunAnimation();
+
+	if (HasAuthority())
+	{
+		MultiCast_RightAttack();
+	}
+	else
+	{
+		Server_RightAttack();
+	}
 }
+void ACanival::Server_RightAttack_Implementation()
+{
+	MultiCast_RightAttack();
+}
+
+bool ACanival::Server_RightAttack_Validate()
+{
+	return true;
+}
+
+void ACanival::MultiCast_RightAttack_Implementation()
+{
+	bIsAttacking = true;
+	if (ChainSaw)
+	{
+		ChainSaw->SetGenerateOverlapEvents(true);
+	}
+	if (AnimInstance)
+	{
+		AnimInstance->PlayChainSawRunAnimation();
+	}
+}
+
+
 
 void ACanival::CheckAndAttachSurvivor()
 {
@@ -409,22 +647,6 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 }
 
 
-void ACanival::RightClick_Complet()
-{
-	if (bChainSawCharging)
-	{
-		bChainSawCharging = false;
-	}
-	
-	//버튼 떼었을 때 타이머가 아직 실행중이면
-	if (!bIsAttacking)
-	{
-		// GetCharacterMovement()->MaxWalkSpeed *= 2;
-		// GetWorld()->GetTimerManager().ClearTimer(RigthAttackTimerHandle);//타이머 취소
-		//AnimInstance->PlayChainSawRunAnimation(); //아이들상태로 (코드 변경해야함)
-		
-	}
-}
 
 void ACanival::HangOnHook(class AMeatHook* Hook)
 {

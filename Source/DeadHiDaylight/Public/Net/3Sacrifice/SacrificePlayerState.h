@@ -51,7 +51,8 @@ enum class ECamperHealth : uint8
 {
 	ECH_Healthy		UMETA(DisplayName = "Healthy"),
 	ECH_Injury		UMETA(DisplayName = "Injury"),
-	ECH_Dead		UMETA(DisplayName = "Dead")
+	ECH_Dead		UMETA(DisplayName = "Dead"),
+	ECH_Exit		UMETA(DisplayName = "Exit")
 };
 /*
  * 생존자 상호작용 상태

@@ -6,6 +6,7 @@
 #include "Player/Camper.h"
 #include "InteractionPoint.h"
 #include "SacrificeGameState.h"
+#include "SacrificePlayerController.h"
 #include "SacrificePlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -135,7 +136,7 @@ void AExitDoor::ServerOnly_OnExitAreaBeginOverlap(UPrimitiveComponent* Overlappe
 {
 	if (auto* Camper = Cast<ACamper>(OtherActor))
 	{
-		if (Camper->GetMesh()->IsVisible() == false)
+		if (Camper->userState && Camper->userState->UserState.Health == ECamperHealth::ECH_Exit)
 		{
 			return;
 		}
@@ -151,12 +152,17 @@ void AExitDoor::ServerOnly_OnExitAreaBeginOverlap(UPrimitiveComponent* Overlappe
 				GameState->ServerOnly_OnCamperExitOrDie();
 			}
 		}
-		
-		// Camper->UnPossessed();
-		Camper->GetMesh()->SetVisibility(false);
-		Camper->SetActorEnableCollision(false);
-		Camper->CrawlPoint->DestroyComponent();
-		Camper->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-		Camper->GetCharacterMovement()->StopMovementImmediately();
+
+		Camper->SetHealthState(ECamperHealth::ECH_Exit);
+		MulticastRPC_OnCamperExit(Camper);
 	}
+}
+
+void AExitDoor::MulticastRPC_OnCamperExit_Implementation(class ACamper* Camper)
+{
+	Camper->SetActorHiddenInGame(true);
+	Camper->SetActorEnableCollision(false);
+	Camper->CrawlPoint->DestroyComponent();
+	Camper->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	Camper->GetCharacterMovement()->StopMovementImmediately();
 }

@@ -977,6 +977,10 @@ void ACamper::MultiCastRPC_SetInteractionState_Implementation(ECamperInteraction
 
 void ACamper::SetHealthState(ECamperHealth NewState)
 {
+	if (userState != nullptr)
+	{
+		userState->UserState.Health = NewState;
+	}
 	ServerRPC_SetHealthState(NewState);
 }
 

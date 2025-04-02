@@ -44,6 +44,8 @@ public:
 	void LeftClick_Complet();
 	UFUNCTION(CallInEditor)
 	void HangOnHook(class AMeatHook* Hook);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_HangOnHook(class AMeatHook* Hook);
 	
 public:	
 	// Called every frame
@@ -88,7 +90,11 @@ public:
 	
 	void FindPoint();
 	void KickGenerator(class UInteractionPoint* Point);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_KickGenerator(class UInteractionPoint* Point);
 	void KickPallet(class UInteractionPoint* Point);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_KickPallet(class UInteractionPoint* Point);
 	
 	
 	bool bIsAttacking; //공격 실행되었는지

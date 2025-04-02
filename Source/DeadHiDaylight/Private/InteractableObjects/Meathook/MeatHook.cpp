@@ -125,6 +125,11 @@ void AMeatHook::OnStopInteraction(UInteractionPoint* Point, AActor* OtherActor)
 
 void AMeatHook::OnHooked(class ACanival* Slasher)
 {
+	if (false == HasAuthority())
+	{
+		return;
+	}
+	
 	if (auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor))
 	{
 		Camper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);

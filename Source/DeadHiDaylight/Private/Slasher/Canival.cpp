@@ -629,21 +629,39 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 
 void ACanival::HangOnHook(class AMeatHook* Hook)
 {
+	MulticastRPC_HangOnHook(Hook);
+}
+
+void ACanival::MulticastRPC_HangOnHook_Implementation(class AMeatHook* Hook)
+{
 	AnimInstance->PlayHangAnimation(Hook);
-	UE_LOG(LogTemp, Warning, TEXT("Hang"));
 }
 
 void ACanival::KickGenerator(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickGeneratorAnimation(Point);
-	UE_LOG(LogTemp, Warning, TEXT("KickGenerator"));
+	InteractingPoint = nullptr;
+	NearPoint = nullptr;
+	MulticastRPC_KickGenerator(Point);
 }
+
+void ACanival::MulticastRPC_KickGenerator_Implementation(class UInteractionPoint* Point)
+{
+	AnimInstance->PlayKickGeneratorAnimation(Point);
+}
+
 
 void ACanival::KickPallet(class UInteractionPoint* Point)
 {
-	AnimInstance->PlayKickPalletAnimation(Point);
-	UE_LOG(LogTemp, Warning, TEXT("KickPallet"));
+	InteractingPoint = nullptr;
+	NearPoint = nullptr;
+	MulticastRPC_KickPallet(Point);
 }
+
+void ACanival::MulticastRPC_KickPallet_Implementation(class UInteractionPoint* Point)
+{
+	AnimInstance->PlayKickPalletAnimation(Point);
+}
+
 
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

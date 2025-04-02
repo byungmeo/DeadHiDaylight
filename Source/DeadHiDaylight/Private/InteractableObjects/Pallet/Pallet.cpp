@@ -128,6 +128,10 @@ void APallet::MulticastRPC_FallGround_Implementation()
 
 void APallet::Broken(class UInteractionPoint* Point)
 {
+	if (false == HasAuthority())
+	{
+		return;
+	}
 	AttachPoint1->bCanInteract = false;
 	AttachPoint1->InteractionMode = EInteractionMode::EIM_None;
 	AttachPoint1->DetachActor();

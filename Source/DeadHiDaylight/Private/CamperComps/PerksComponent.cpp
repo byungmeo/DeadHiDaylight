@@ -106,7 +106,7 @@ void UPerksComponent::DeadHardTimingCheck(float deltaTime)
 		}
 		// 40초 동안 탈진상태
 		exTime += deltaTime;
-		UE_LOG(LogTemp, Warning, TEXT("%f"), exTime);
+		// UE_LOG(LogTemp, Warning, TEXT("%f"), exTime);
 	}
 	
 }

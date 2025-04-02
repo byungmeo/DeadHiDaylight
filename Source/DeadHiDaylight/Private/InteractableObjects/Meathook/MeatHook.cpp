@@ -7,6 +7,7 @@
 #include "Player/Camper.h"
 #include "InteractionPoint.h"
 #include "SacrificePlayerState.h"
+#include "CamperComps/CamperFSM.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 
 
@@ -180,6 +181,9 @@ void AMeatHook::OnSacrificed()
 		Camper->InteractingPoint = nullptr;
 		Camper->NearPoint = nullptr;
 		Camper->Hooking(TEXT("HookKilled"));
+		// JS 작성 : 상태를 Die 변경하고 DieSound재생
+		Camper->SetHealthState(ECamperHealth::ECH_Dead);
+		
 	}
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;

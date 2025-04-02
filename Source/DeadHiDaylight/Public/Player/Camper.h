@@ -73,6 +73,12 @@ public:
 	class USoundCue* hookInCue;
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
 	class USoundAttenuation* hookInAttenuation;
+
+	// Die Sound
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundCue* dieCue;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundAttenuation* dieAttenuation;
 	
 	// 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
@@ -271,7 +277,8 @@ public:
 	// 후크 걸릴 때 소리 지르는 함수
 	void PlayHookInSound();
 
-	
+	// 죽을 때 사운드 함수
+	void PlayDieSound();
 	
 	// 캐릭터 Log 띄워주는 함수
 	void PrintNetLog();

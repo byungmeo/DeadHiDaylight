@@ -165,7 +165,7 @@ ACamper::ACamper()
 	{
 		hitcrawlMontage = tempMontage.Object;
 	}
-
+	// HookInSoundQue
 	static const ConstructorHelpers::FObjectFinder<USoundCue> tempHookInCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/hook/SC_HookIn.SC_HookIn'"));
 	if (tempHookInCue.Succeeded())
 	{
@@ -175,6 +175,17 @@ ACamper::ACamper()
 	if (tempHookInAttenuation.Succeeded())
 	{
 		hookInAttenuation = tempHookInAttenuation.Object;
+	}
+	// DieSound
+	static const ConstructorHelpers::FObjectFinder<USoundCue> tempDieCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/die/SC_Die.SC_Die'"));
+	if (tempDieCue.Succeeded())
+	{
+		dieCue = tempDieCue.Object;
+	}
+	static const ConstructorHelpers::FObjectFinder<USoundAttenuation> tempDieAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/die/SA_Die.SA_Die'"));
+	if (tempDieAttenuation.Succeeded())
+	{
+		dieAttenuation = tempDieAttenuation.Object;
 	}
 	
 	// CharacterMovement 컴포넌트
@@ -833,12 +844,13 @@ void ACamper::Hooking(FName sectionName)
 		SetInteractionState(ECamperInteraction::ECI_NONE);
 		MultiCastRPC_Hooking(sectionName);
 	}
+
 }
 
 void ACamper::MultiCastRPC_Hooking_Implementation(FName sectionName)
 {
 	if (Anim == nullptr) return;
-
+	
 	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook) // State가 Hook라면
 	{
 		// Injure 사운드를 끄고
@@ -981,6 +993,15 @@ void ACamper::MultiCastRPC_SetHealthState_Implementation(ECamperHealth NewState)
 		case ECamperHealth::ECH_Injury:
 			break;
 		case ECamperHealth::ECH_Dead:
+			// 죽는 사운드 재생
+			PlayDieSound();
+			// 다 올라가면 Visibility False로 설정
+			FTimerHandle dieTimerHandle;
+			GetWorldTimerManager().SetTimer(dieTimerHandle, [this]()
+			{
+				GetMesh()->SetVisibility(false);
+				hairComp->SetVisibility(false);
+			}, 12.0f, false);
 			break;
 	}
 }
@@ -1146,6 +1167,21 @@ void ACamper::PlayHookInSound()
 			1.0f,
 			0.0f,
 			hookInAttenuation
+		);
+	}
+}
+
+void ACamper::PlayDieSound()
+{
+	if (dieCue)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			dieCue,
+			GetActorLocation(),
+			1.5f,
+			1.0f,
+			0.0f
 		);
 	}
 }

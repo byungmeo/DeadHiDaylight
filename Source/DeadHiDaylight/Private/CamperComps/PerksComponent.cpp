@@ -170,6 +170,7 @@ void UPerksComponent::NetMultiCastRPC_StopPerSelfHealing_Implementation()
 	}
 	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
 	{
+		fsm->curStanceState = ECamperStanceState::ECSS_Idle;
 		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
 	}
 	else

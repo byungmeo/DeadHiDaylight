@@ -110,6 +110,14 @@ public:
 	void ServerRPC_PullDownPalletAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PullDownPalletAnimation(FName sectionName);
+	// 상대 힐링 애니메이션 몽타주 실행하는 RPC
+	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
+	void PlayHealingAnimation(FName sectionName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_HealingAnimation(FName sectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_HealingAnimation(FName sectionName);
+
 	
 	UFUNCTION()
 	void AnimNotify_LeftFoot();

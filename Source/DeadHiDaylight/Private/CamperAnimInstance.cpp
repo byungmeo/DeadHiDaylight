@@ -100,12 +100,11 @@ void UCamperAnimInstance::ServerRPC_PickUpAnimation_Implementation(FName section
 {
 	MultiCastRPC_PickUpAnimation(sectionName);
 }
-
 void UCamperAnimInstance::MultiCastRPC_PickUpAnimation_Implementation(FName sectionName)
 {
 	PlayPickUpAnimation(sectionName);
 }
-
+// 판자 내리는 애니메이션 RPC
 void UCamperAnimInstance::ServerRPC_PullDownPalletAnimation_Implementation(FName sectionName)
 {
 	MultiCastRPC_PullDownPalletAnimation(sectionName);
@@ -114,6 +113,15 @@ void UCamperAnimInstance::ServerRPC_PullDownPalletAnimation_Implementation(FName
 void UCamperAnimInstance::MultiCastRPC_PullDownPalletAnimation_Implementation(FName sectionName)
 {
 	PlayPullDownPalletAnimation(sectionName);
+}
+// 상대 치유 하는 애니메이션 RPC
+void UCamperAnimInstance::ServerRPC_HealingAnimation_Implementation(FName sectionName)
+{
+	MultiCastRPC_HealingAnimation(sectionName);
+}
+void UCamperAnimInstance::MultiCastRPC_HealingAnimation_Implementation(FName sectionName)
+{
+	PlayHealingAnimation(sectionName);
 }
 
 void UCamperAnimInstance::AnimNotify_LeftFoot()

@@ -640,7 +640,6 @@ void ACamper::MultiCastRPC_StartRepair_Implementation()
 		UE_LOG(LogTemp, Warning, TEXT("Camper : StartRepair : Anim : nullptr"));
 		return;
 	}
-	// || Anim->bCrawl
 	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
 	// Interaction 상태 전환
 	camperFSMComp->curInteractionState = ECamperInteraction::ECI_Repair;
@@ -1071,6 +1070,10 @@ void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor)
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
 		Slasher->AttachSurvivorToShoulder(this);
+	}
+	else if (auto* Camper = Cast<ACamper>(OtherActor))
+	{
+		// 몽타주 
 	}
 }
 

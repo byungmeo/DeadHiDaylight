@@ -113,6 +113,9 @@ public:
 	float crawlSpeed = 70;
 	UPROPERTY(EditAnywhere)
 	float beforeSpeed = 0; // 이전 속도 저장용 변수
+
+	// 죽었는지 살았는지
+	bool bIsDead = false;
 	
 	// 포인트 찾았는지 체크하는 변수
 	bool bFindPoints = false;

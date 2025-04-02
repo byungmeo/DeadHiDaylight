@@ -75,14 +75,16 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 		return;
 	}
 	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	
 	switch (PlayerRole)
 	{
 	case EPlayerRole::EPR_Slasher:
 		{
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Slasher"));
-			if (ACanival* Canival = GetWorld()->SpawnActor<ACanival>(SlasherFactory))
+			if (ACanival* Canival = GetWorld()->SpawnActor<ACanival>(SlasherFactory, FVector(1450, 0, 250), FRotator(0, 0, 0), SpawnParams))
 			{
-				Canival->SetActorLocation(FVector(1450, 0, 250));
 				Controller->Possess(Canival);
 				Slasher = Canival;
 			}
@@ -91,7 +93,7 @@ void ASacrificeGameMode::RequestCreatePawn(ASacrificePlayerController* Controlle
 	case EPlayerRole::EPR_Camper:
 		{
 			NET_LOG(LogTemp, Warning, TEXT("SacrificeGameMode::RequestCreatePawn Camper"));
-			if (ACamper* Camper = GetWorld()->SpawnActor<ACamper>(CamperFactory))
+			if (ACamper* Camper = GetWorld()->SpawnActor<ACamper>(CamperFactory, SpawnParams))
 			{
 				Camper->SetActorLocation(FVector(0, 0, 250), false, nullptr, ETeleportType::TeleportPhysics);
 				Controller->Possess(Camper);

@@ -29,7 +29,13 @@ public:
 
 	
 	void Move(const struct FInputActionValue& inputValue);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	float InitSpeed;
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SyncWalkSpeed(float Speed);
+
+	
 	UPROPERTY(ReplicatedUsing = OnRep_ViewRotation)
 	FRotator ViewRotation;
 	UFUNCTION()
@@ -88,7 +94,6 @@ public:
 	UFUNCTION()
 	void OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
-	void FindPoint();
 	void KickGenerator(class UInteractionPoint* Point);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_KickGenerator(class UInteractionPoint* Point);
@@ -131,7 +136,7 @@ public:
 	 */
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<class USacrificeCommonHUD> CommonHud = nullptr;
-	float InitSpeed = 600.0f;
+	//float InitSpeed = 600.0f;
 	bool bChainSawCharging = false;
 	float ChainSawIncPerSec = 0.33f;
 	float ChainSawGauge = 0.0f;
@@ -185,26 +190,23 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_RightClickStart();
 	virtual void Server_RightClickStart_Implementation();
-	virtual bool Server_RightClickStart_Validate();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_RightClickStart();
 	virtual void MultiCast_RightClickStart_Implementation();
 
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void Server_RightClickComplete();
 	virtual void Server_RightClickComplete_Implementation();
-	virtual bool Server_RightClickComplete_Validate();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_RightClickComplete();
 	virtual void MultiCast_RightClickComplete_Implementation();
 
 	// RPC 관련 함수 (전기톱)
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void Server_RightAttack();
 	virtual void Server_RightAttack_Implementation();
-	virtual bool Server_RightAttack_Validate();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_RightAttack();

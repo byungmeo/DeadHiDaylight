@@ -43,4 +43,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnUpdatedNearPoint(class UInteractionPoint* Point, const FText& Description);
+
+	// 피를 일단 표시했다가 Delay걸어서 2초 뒤에 사라지게 한다
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDisplayBlood();
 };

@@ -9,6 +9,7 @@
 #include "SacrificePlayerState.h"
 #include "CamperComps/CamperFSM.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 // Sets default values
@@ -81,13 +82,12 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			auto* HookedCamper = Cast<ACamper>(CamperPoint->AttachedActor);
 			HookedCamper->Hooking(TEXT("HookRescued"));
 			
-			// 갈고리에서 구해진 후 상태 세팅
-			HookedCamper->SetStanceState(ECamperStanceState::ECSS_Idle);
-			HookedCamper->SetHealthState(ECamperHealth::ECH_Injury);
-			HookedCamper->SetMovementState(ECamperMoveState::ECS_NONE);
-			HookedCamper->SetInteractionState(ECamperInteraction::ECI_NONE);
+			FTimerHandle RescueHandle;
+			GetWorldTimerManager().SetTimer(RescueHandle, this, &AMeatHook::OnRescued, 2.5f, false);
+			Camper->InteractingPoint = nullptr;
+			Camper->NearPoint = nullptr;
+			Camper->ClientRPC_ChangeNearPoint(nullptr);
 			
-
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = false;
 		}
@@ -106,6 +106,7 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			CamperPoint->AttachActor(HookingCamper, 0, false);
 			HookingCamper->SetActorLocation(HookingCamper->GetActorLocation() + FVector(0, 0, 250));
 			HookingCamper->SetActorRotation(HookingCamper->GetActorRotation() + FRotator(0, -180, 0));
+			HookingCamper->SetInteractionState(ECamperInteraction::ECI_Hook);
 			HookingCamper->Hooking(TEXT("HookIn"));
 			
 			
@@ -113,6 +114,7 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			Slasher->AttachedSurvivor = nullptr;
 			Slasher->InteractingPoint = nullptr;
 			Slasher->NearPoint = nullptr;
+			Slasher->ClientRPC_ChangeNearPoint(nullptr);
 
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = true;
@@ -141,16 +143,22 @@ void AMeatHook::OnStopInteraction(UInteractionPoint* Point, AActor* OtherActor)
 
 void AMeatHook::OnHooked(class ACanival* Slasher)
 {
+	if (auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor))
+	{
+		Camper->Hooking(TEXT("HookLoop"));
+		Camper->SetInteractionState(ECamperInteraction::ECI_Hook);
+	}
+	
 	if (false == HasAuthority())
 	{
 		return;
 	}
-	
-	if (auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor))
-	{
-		Camper->Hooking(TEXT("HookLoop"));
-	}
+
 	SlasherPoint->DetachActor();
+	Slasher->AttachedSurvivor = nullptr;
+	Slasher->InteractingPoint = nullptr;
+	Slasher->NearPoint = nullptr;
+	Slasher->ClientRPC_ChangeNearPoint(nullptr);
 
 	// 30초 뒤에 희생
 	GetWorldTimerManager().SetTimer(SacrificeHandle, this, &AMeatHook::OnSacrificed, 30.0f, false);
@@ -164,8 +172,8 @@ void AMeatHook::OnRescued()
 	{
 		RescuedCamper->InteractingPoint = nullptr;
 		RescuedCamper->NearPoint = nullptr;
+		RescuedCamper->ClientRPC_ChangeNearPoint(nullptr);
 		RescuedCamper->OnRescued();
-		
 	}
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;
@@ -181,9 +189,22 @@ void AMeatHook::OnSacrificed()
 		Camper->InteractingPoint = nullptr;
 		Camper->NearPoint = nullptr;
 		Camper->Hooking(TEXT("HookKilled"));
-		// JS 작성 : 상태를 Die 변경하고 DieSound재생
-		Camper->SetHealthState(ECamperHealth::ECH_Dead);
-		
+		FTimerHandle KilledTimer;
+		GetWorldTimerManager().SetTimer(KilledTimer, [this, Camper]() {
+			if (Camper)
+			{
+				Camper->SetHealthState(ECamperHealth::ECH_Dead);
+				// Camper->UnPossessed();
+				Camper->GetMesh()->SetVisibility(false);
+				Camper->SetActorEnableCollision(false);
+				if (Camper->CrawlPoint)
+				{
+					Camper->CrawlPoint->DestroyComponent();
+				}
+				Camper->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+				Camper->GetCharacterMovement()->StopMovementImmediately();
+			}
+		}, 13.0f, false);
 	}
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;

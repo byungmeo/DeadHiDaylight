@@ -25,6 +25,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_InitPlayerState(class ASacrificePlayerState* InState);
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

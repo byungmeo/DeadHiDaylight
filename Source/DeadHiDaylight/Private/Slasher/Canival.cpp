@@ -620,6 +620,22 @@ void ACanival::MulticastRPC_AttachSurvivorToShoulder_Implementation(class ACampe
 		// Survivor->GetMesh()->bPauseAnims = true;
 		UE_LOG(LogTemp, Warning, TEXT("어깨에 붙음"));
 	}
+
+	if (IsLocallyControlled())
+	{
+		TArray<AActor*> OutMeatHooks;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMeatHook::StaticClass(), OutMeatHooks);
+		if (OutMeatHooks.Num() > 0)
+		{
+			for (const auto OutMeatHook : OutMeatHooks)
+			{
+				if (auto* MeatHook = Cast<AMeatHook>(OutMeatHook))
+				{
+					MeatHook->DisplaySilhouette(10.0f);	
+				}
+			}
+		}
+	}
 }
 
 void ACanival::HangOnHook(class AMeatHook* Hook)

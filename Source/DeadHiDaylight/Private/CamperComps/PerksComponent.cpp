@@ -131,7 +131,8 @@ void UPerksComponent::NetMultiCastRPC_PerksSelfHealing_Implementation()
 						|| fsm->curInteractionState == ECamperInteraction::ECI_SelfHealing
 						|| fsm->curHealthState != ECamperHealth::ECH_Injury
 						|| fsm->curInteractionState == ECamperInteraction::ECI_Repair
-						|| fsm->curInteractionState == ECamperInteraction::ECI_UnLock) return;
+						|| fsm->curInteractionState == ECamperInteraction::ECI_UnLock
+						|| fsm->curInteractionState == ECamperInteraction::ECI_Healing) return;
 	
 	if (fsm->curStanceState == ECamperStanceState::ECSS_Crouch)
 	{
@@ -141,7 +142,6 @@ void UPerksComponent::NetMultiCastRPC_PerksSelfHealing_Implementation()
 	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
 	{
 		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
-		fsm->curMoveState = ECamperMoveState::ECS_NONE;
 	}
 	else
 	{

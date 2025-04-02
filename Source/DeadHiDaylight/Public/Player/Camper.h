@@ -76,6 +76,7 @@ public:
 	class UCamperAnimInstance* Anim = nullptr;
 	UPROPERTY()
 	class ASacrificePlayerState* userState = nullptr;
+
 	// Input 변수
 	UPROPERTY(EditDefaultsOnly)
 	class UInputMappingContext* IMC_Camper; //Input IMC 변수
@@ -91,7 +92,7 @@ public:
 	class UInputAction* IA_Repair;
 	UPROPERTY(EditAnywhere)
 	class UInputAction* IA_UnLock;
-
+	
 	// 타이머 핸들 변수
 	FTimerHandle hitTimerHandle;
 	
@@ -213,11 +214,41 @@ public:
 	void PullDownPallet();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PullDownPallet();
+	// 쓰러지거나 상대 치유할 때 사용할때 힐 시작하는 RPC
+	void StartHealing();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StartHealing();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StartHealing();
+	// 힐 그만하는 RPC
+	void StopHealing();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StopHealing();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StopHealing();
 
+	// 힐시간 체크 함수
+	void HealingTimingCheck(float deltaTime);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_HealingTimingCheck(float deltaTime);
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_StartHealing(ACamper* camper);
+	void MultiCastRPC_HealingTimingCheck(float deltaTime);
+
+	// 힐링 시작 애니메이션 동기화 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StartHealingAnimation(ACamper* camper);
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_EndHealing(ACamper* camper);
+	void MultiCastRPC_StartHealingAnimation(ACamper* camper);
+	
+	// 힐링 끝 애니메이션 동기화 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_EndHealingAnimation(ACamper* camper);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_EndHealingAnimation(ACamper* camper);
+	
+	float curhealingTime = 0;
+	float healingTime = 5;
+	
 	// 뛸 때 왼발, 오른 발 사운드 재생 함수
 	void PlayLeftSound();
 	void PlayRightSound();

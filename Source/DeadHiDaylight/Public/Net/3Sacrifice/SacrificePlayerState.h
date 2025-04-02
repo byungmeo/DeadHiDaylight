@@ -66,7 +66,8 @@ enum class ECamperInteraction : uint8
 	ECI_Carry		UMETA(DisplayName = "Carry"),
 	ECI_Hook		UMETA(DisplayName = "Hook"),
 	ECI_HookRescue		UMETA(DisplayName = "HookRescue"),
-	ECI_UnLock		UMETA(DisplayName = "UnLock")
+	ECI_UnLock		UMETA(DisplayName = "UnLock"),
+	ECI_Healing		UMETA(DisplayName = "Healing")
 };
 
 

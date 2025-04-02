@@ -240,7 +240,12 @@ void ACamper::OnRep_PlayerState()
 void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
+
+	if (IsLocallyControlled())
+	{
+		HealingTimingCheck(DeltaTime);
+	}
 	
 	// if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_ResueHooking)
 	// {
@@ -353,6 +358,7 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACamper::Look);
 		input->BindAction(IA_Repair, ETriggerEvent::Started, this, &ACamper::TryInteraction);
 		input->BindAction(IA_Repair, ETriggerEvent::Completed, this, &ACamper::StopInteract);
+		
 
 		if (perksComp)
 		{
@@ -369,6 +375,7 @@ void ACamper::CamperMove(const FInputActionValue& value)
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Carry ||
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook ||
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_HookRescue ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Healing ||
 		Anim->Montage_IsPlaying(hitcrawlMontage)) return;
 
 	FVector2D moveDirection = value.Get<FVector2D>();
@@ -725,10 +732,7 @@ void ACamper::ServerRPC_StopInteract_Implementation()
 
 void ACamper::GetDamage(FString weapon)
 {
-	if (IsLocallyControlled())
-	{
-		ServerRPC_GetDamage(weapon);
-	}
+	ServerRPC_GetDamage(weapon);
 }
 
 void ACamper::ServerRPC_GetDamage_Implementation(const FString& weapon)
@@ -932,6 +936,9 @@ void ACamper::MultiCastRPC_SetInteractionState_Implementation(ECamperInteraction
 		case ECamperInteraction::ECI_UnLock:
 			userState->UserState.Interaction = ECamperInteraction::ECI_UnLock;
 			break;
+		case ECamperInteraction::ECI_Healing:
+			userState->UserState.Interaction = ECamperInteraction::ECI_Healing;
+			break;
 	}
 }
 
@@ -962,6 +969,77 @@ void ACamper::MultiCastRPC_SetHealthState_Implementation(ECamperHealth NewState)
 void ACamper::PullDownPallet()
 {
 	MultiCastRPC_PullDownPallet();
+}
+// 누웠을 때 힐링 및 상대 치료 하는 함수 RPC
+void ACamper::StartHealing()
+{
+	ServerRPC_StartHealing();
+}
+void ACamper::ServerRPC_StartHealing_Implementation()
+{
+	MultiCastRPC_StartHealing();
+}
+void ACamper::MultiCastRPC_StartHealing_Implementation()
+{
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing
+					|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair
+					|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_UnLock
+					|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_Healing
+					) return;
+	
+	// 상태 전환
+	camperFSMComp->curInteractionState = ECamperInteraction::ECI_Healing;
+	camperFSMComp->curMoveState = ECamperMoveState::ECS_NONE;
+}
+// Stop Healing
+void ACamper::StopHealing()
+{
+	ServerRPC_StopHealing();
+}
+
+void ACamper::ServerRPC_StopHealing_Implementation()
+{
+	MultiCastRPC_StopHealing();
+}
+
+void ACamper::MultiCastRPC_StopHealing_Implementation()
+{
+	if (camperFSMComp->curInteractionState != ECamperInteraction::ECI_Healing) return;
+	
+	// 생존자의 상호작용 상태를 NONE으로 변경
+	camperFSMComp->curInteractionState = ECamperInteraction::ECI_NONE;
+}
+// Healing Time Check
+void ACamper::HealingTimingCheck(float deltaTime)
+{
+	ServerRPC_HealingTimingCheck(deltaTime);
+}
+void ACamper::ServerRPC_HealingTimingCheck_Implementation(float deltaTime)
+{
+	MultiCastRPC_HealingTimingCheck(deltaTime);
+}
+void ACamper::MultiCastRPC_HealingTimingCheck_Implementation(float deltaTime)
+{
+	// 치유를 사용할 때 자가치유중이고 발전기 고치고 있거나 문 여는 중이면 return
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Healing &&
+		camperFSMComp->curInteractionState != ECamperInteraction::ECI_Repair &&
+		camperFSMComp->curInteractionState != ECamperInteraction::ECI_UnLock &&
+		camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+	{
+		// 현재치유시간이 치유 시간을 넘어가면 힐링 시간을 초기화하고 HP를 풀로 채우며 다친 상태를 회복시키고 상호작용을 NONE으로 초기화
+		if (curhealingTime >= healingTime)
+		{
+			curhealingTime = 0;
+			curHP = 2;
+			camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
+			camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
+			camperFSMComp->curInteractionState = ECamperInteraction::ECI_NONE;
+			CrawlPoint->bCanInteract = false;
+		}
+		// 32초동안 치유 해야함.
+		curhealingTime += deltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("curhealingTime : %f"), curhealingTime);
+	}
 }
 
 void ACamper::MultiCastRPC_PullDownPallet_Implementation()
@@ -1101,33 +1179,36 @@ void ACamper::MultiCastRPC_HealthCheck_Implementation()
 	curHP = maxHP;
 }
 
-void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) // 스페이스바 누른애
+void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) // 쓰러진 생존자 기준으로 OtherActor는 서있는 생존자
 {
+	
 	UE_LOG(LogTemp, Warning, TEXT("1"));
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *OtherActor->GetActorNameOrLabel());
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
 		Slasher->AttachSurvivorToShoulder(this);
 	}
 	else if (auto* camper = Cast<ACamper>(OtherActor))
 	{
-		FString s = UEnum::GetValueAsString(camperFSMComp->curHealthState);
-		UE_LOG(LogTemp, Warning, TEXT("This Player : %s, Other Player : %s, camper->Anim의 오너 : %s, curHealthState : %s"),
-			*GetActorNameOrLabel(), *OtherActor->GetActorNameOrLabel(), *camper->Anim->TryGetPawnOwner()->GetActorNameOrLabel(), *s);
+		// FString s = UEnum::GetValueAsString(camperFSMComp->curHealthState);
+		// UE_LOG(LogTemp, Warning, TEXT("This Player : %s, Other Player : %s, camper->Anim의 오너 : %s, curHealthState : %s"),
+			// *GetActorNameOrLabel(), *OtherActor->GetActorNameOrLabel(), *camper->Anim->TryGetPawnOwner()->GetActorNameOrLabel(), *s);
 		
 		// 다친 상태일 때 상대 힐하는 몽타주 실행
- 		if (Anim && camperFSMComp->curHealthState == ECamperHealth::ECH_Injury &&
- 			camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crawl)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("3"));
- 			MultiCastRPC_StartHealing(camper);
-			// 상대방 SelfHealing 켜주기
-			perksComp->PerksSelfHealing();
-		}
+		UE_LOG(LogTemp, Warning, TEXT("3"));
+ 		// 자신한테는 치료하라고 함수 실행
+ 		StartHealing();
+ 		ServerRPC_StartHealingAnimation(camper);
 	}
 }
-
-void ACamper::MultiCastRPC_StartHealing_Implementation(ACamper* camper)
+void ACamper::ServerRPC_StartHealingAnimation_Implementation(ACamper* camper)
 {
+	MultiCastRPC_StartHealingAnimation(camper);
+}
+
+void ACamper::MultiCastRPC_StartHealingAnimation_Implementation(ACamper* camper)
+{
+	// 상대방 애니메이션 몽타주 켜주기
 	camper->Anim->ServerRPC_HealingAnimation(TEXT("StartHealing"));
 }
 
@@ -1138,14 +1219,18 @@ void ACamper::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherAct
 	{
 		if (camper->Anim)
 		{
-			// 자신의 몽타주를 끝내고
-			MultiCastRPC_EndHealing(camper);
-			// 상대방 힐도 멈추기
-			perksComp->StopPerksSelfHealing();
+			// 자신의 치료를 멈추고
+			StopHealing();
+			ServerRPC_EndHealingAnimation(camper);
 		}
 	}
 }
-void ACamper::MultiCastRPC_EndHealing_Implementation(ACamper* camper)
+void ACamper::ServerRPC_EndHealingAnimation_Implementation(ACamper* camper)
 {
+	MultiCastRPC_EndHealingAnimation(camper);
+}
+void ACamper::MultiCastRPC_EndHealingAnimation_Implementation(ACamper* camper)
+{
+	// 상대방 애니메이션도 멈추기
 	camper->Anim->ServerRPC_HealingAnimation(TEXT("EndHealing"));
 }

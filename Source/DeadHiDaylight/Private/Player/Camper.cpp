@@ -179,7 +179,7 @@ ACamper::ACamper()
 	CrawlPoint->OnInteraction.AddDynamic(this, &ACamper::OnInteraction);
 	CrawlPoint->OnStopInteraction.AddDynamic(this, &ACamper::OnStopInteraction);
 	// TODO: 생존자가 치료해서 살릴 수 있게도 바꿔야 함.
-	CrawlPoint->InteractionMode = EInteractionMode::EIM_SlasherOnly;
+	CrawlPoint->InteractionMode = EInteractionMode::EIM_Both;
 	CrawlPoint->bCanInteract = false;
 	
 	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnimInstance(TEXT("/Script/Engine.AnimBlueprint'/Game/JS/Blueprints/Animation/ABP_Player.ABP_Player_C'"));
@@ -1092,20 +1092,50 @@ void ACamper::MultiCastRPC_HealthCheck_Implementation()
 	curHP = maxHP;
 }
 
-void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor)
+void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) // 스페이스바 누른애
 {
+	UE_LOG(LogTemp, Warning, TEXT("1"));
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
 		Slasher->AttachSurvivorToShoulder(this);
 	}
-	else if (auto* Camper = Cast<ACamper>(OtherActor))
+	else if (auto* camper = Cast<ACamper>(OtherActor))
 	{
-		// 몽타주 
+		FString s = UEnum::GetValueAsString(camperFSMComp->curHealthState);
+		UE_LOG(LogTemp, Warning, TEXT("This Player : %s, Other Player : %s, camper->Anim의 오너 : %s, curHealthState : %s"),
+			*GetActorNameOrLabel(), *OtherActor->GetActorNameOrLabel(), *camper->Anim->TryGetPawnOwner()->GetActorNameOrLabel(), *s);
+		
+		// 다친 상태일 때 상대 힐하는 몽타주 실행
+ 		if (Anim && camperFSMComp->curHealthState == ECamperHealth::ECH_Injury)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("3"));
+ 			MultiCastRPC_StartHealing(camper);
+			// 상대방 SelfHealing 켜주기
+			perksComp->PerksSelfHealing();
+		}
 	}
 }
 
+void ACamper::MultiCastRPC_StartHealing_Implementation(ACamper* camper)
+{
+	camper->Anim->ServerRPC_HealingAnimation(TEXT("StartHealing"));
+}
 
 void ACamper::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherActor)
 {
 	// TODO: 생존자 치료
+	if (auto* camper = Cast<ACamper>(OtherActor))
+	{
+		if (camper->Anim)
+		{
+			// 자신의 몽타주를 끝내고
+			MultiCastRPC_EndHealing(camper);
+			// 상대방 힐도 멈추기
+			perksComp->StopPerksSelfHealing();
+		}
+	}
+}
+void ACamper::MultiCastRPC_EndHealing_Implementation(ACamper* camper)
+{
+	camper->Anim->ServerRPC_HealingAnimation(TEXT("EndHealing"));
 }

@@ -170,7 +170,6 @@ void UPerksComponent::NetMultiCastRPC_StopPerSelfHealing_Implementation()
 	}
 	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
 	{
-		fsm->curStanceState = ECamperStanceState::ECSS_Idle;
 		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
 	}
 	else
@@ -194,6 +193,7 @@ void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
 		{
 			healingTime = 0;
 			Camper->curHP = 2;
+			Camper->camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
 			Camper->camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 		}
 		// 32초동안 치유 해야함.

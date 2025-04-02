@@ -692,7 +692,7 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 				return;
 			}
 		}
-		NET_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
+		//NET_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
 		Hammer->SetGenerateOverlapEvents(false);
 		Camper->GetDamage("");
 		MulticastRPC_OnHammerHit();
@@ -743,7 +743,7 @@ void ACanival::ServerOnly_FindInteractionPoint()
 	if (NearPoint != Point)
 	{
 		NearPoint = Point;
-		NET_LOG(LogTemp, Warning, TEXT("ServerOnly_FindInteractionPoint"));
+		//NET_LOG(LogTemp, Warning, TEXT("ServerOnly_FindInteractionPoint"));
 		ClientRPC_ChangeNearPoint(NearPoint);
 	}
 }
@@ -774,7 +774,7 @@ void ACanival::ClientRPC_ChangeNearPoint_Implementation(class UInteractionPoint*
 	}
 	
 	NearPoint = NewPoint;
-	NET_LOG(LogTemp, Warning, TEXT("ClientRPC_ChangeNearPoint : %s"), *Description.ToString());
+	//NET_LOG(LogTemp, Warning, TEXT("ClientRPC_ChangeNearPoint : %s"), *Description.ToString());
 	if (const auto* SacrificeController = Cast<ASacrificePlayerController>(GetController()))
 	{
 		if (SacrificeController->Hud)
@@ -822,7 +822,7 @@ void ACanival::MulticastRPC_OnHammerHit_Implementation()
 	}
 	AnimInstance->PlayWipeAnimation();
 	UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
-	NET_LOG(LogTemp, Warning, TEXT("MulticastRPC_OnHammerHit_Implementation"));
+	//NET_LOG(LogTemp, Warning, TEXT("MulticastRPC_OnHammerHit_Implementation"));
 }
 
 void ACanival::ServerRPC_StopInteract_Implementation()

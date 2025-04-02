@@ -226,5 +226,9 @@ public:
 	// 현재 상호작용을 진행 중인 Point
 	UPROPERTY()
 	class UInteractionPoint* InteractingPoint = nullptr;
+
+	///////////
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_OnHammerHit();
 };
 

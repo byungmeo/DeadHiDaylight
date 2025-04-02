@@ -316,17 +316,7 @@ void ACanival::Look(const FInputActionValue& InputActionValue)
 //망치 공격 
 void ACanival::LeftClick_Start()
 {
-	AnimInstance->PlayHammrInAnimation();
-	Hammer->SetGenerateOverlapEvents(true);
-	
-	if (HasAuthority())
-	{
-		MultiCast_LeftClickStart();
-	}
-	else
-	{
-		Server_LeftClickStart();
-	}
+	Server_LeftClickStart();
 }
 
 void ACanival::Server_LeftClickStart_Implementation()
@@ -344,25 +334,15 @@ void ACanival::MultiCast_LeftClickStart_Implementation()
 	{
 		AnimInstance->PlayHammrInAnimation();
 	}
-	if (Hammer)
-	{
-		Hammer->SetGenerateOverlapEvents(true);
-	}
 }
 
 void ACanival::LeftClick_Complet()
 {
-	if (HasAuthority())
-	{
-		MultiCast_LeftClickComplete();
-	}
-	else
-	{
-		Server_LeftClickComplete();
-	}
+	Server_LeftClickComplete();
 }
 void ACanival::Server_LeftClickComplete_Implementation()
 {
+	Hammer->SetGenerateOverlapEvents(true);
 	MultiCast_LeftClickComplete();
 }
 
@@ -373,19 +353,8 @@ bool ACanival::Server_LeftClickComplete_Validate()
 
 void ACanival::MultiCast_LeftClickComplete_Implementation()
 {
-	if (AnimInstance)
-	{
-		AnimInstance->PlayHammerSwingAnimation();
-	}
-	if (Hammer)
-	{
-		Hammer->SetGenerateOverlapEvents(true);
-	}
+	AnimInstance->PlayHammerSwingAnimation();
 }
-
-
-
-
 
 //전기톱 공
 void ACanival::RightClick_Start()
@@ -669,7 +638,6 @@ void ACanival::KickPallet(class UInteractionPoint* Point)
 void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
 	if (OtherActor == this)
 	{
 		return;
@@ -678,12 +646,10 @@ void ACanival::OnHammerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	// 생존자냐
 	if (ACamper* Camper = Cast<ACamper>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
+		NET_LOG(LogTemp, Warning, TEXT("ACanival::OnHammerBeginOverlap"));
 		Hammer->SetGenerateOverlapEvents(false);
-		// Camper->야 너 맞았어
-		AnimInstance->PlayWipeAnimation();
-		UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
 		Camper->GetDamage("");
+		MulticastRPC_OnHammerHit();
 	}
 	// 벽이냐
 	// 그 외냐
@@ -790,6 +756,12 @@ void ACanival::ServerRPC_TryInteraction_Implementation()
 void ACanival::StopInteract()
 {
 	ServerRPC_StopInteract();
+}
+
+void ACanival::MulticastRPC_OnHammerHit_Implementation()
+{
+	AnimInstance->PlayWipeAnimation();
+	UGameplayStatics::PlaySoundAtLocation(this, HammerHitSound, GetActorLocation());
 }
 
 void ACanival::ServerRPC_StopInteract_Implementation()

@@ -121,5 +121,9 @@ public:
 	UFUNCTION()
 	void AnimNotify_InjureRightFoot();
 	
-	
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayComeHere(bool bIsInjury, bool bIsCrouch);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayPointTo(bool bIsInjury, bool bIsCrouch);
 };

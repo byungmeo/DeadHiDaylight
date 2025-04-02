@@ -290,7 +290,7 @@ void ACamper::Tick(float DeltaTime)
 	// 	
 	// }
 	
-	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
+	/*if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
 	{
 		GetDamage(TEXT(""));
 	}
@@ -357,8 +357,23 @@ void ACamper::Tick(float DeltaTime)
 	{
 		PullDownPallet();
 	}
-	PrintNetLog();
+	PrintNetLog();*/
 
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::One))
+	{
+		if (IsLocallyControlled())
+		{
+			ServerRPC_ComeHere();
+		}
+	}
+
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Two))
+	{
+		if (IsLocallyControlled())
+		{
+			ServerRPC_PointTo();
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -1311,6 +1326,47 @@ void ACamper::OnRescued()
 	{
 		MulticastRPC_OnRescued();
 	}
+}
+
+void ACamper::MulticastRPC_PointTo_Implementation(bool bIsInjury, bool bIsCrouch)
+{
+	if (Anim)
+	{
+		Anim->PlayPointTo(bIsInjury, bIsCrouch);
+	}
+}
+
+void ACamper::MulticastRPC_ComeHere_Implementation(bool bIsInjury, bool bIsCrouch)
+{
+	if (Anim)
+	{
+		NET_LOG(LogTemp, Warning, TEXT("ASD"));
+		Anim->PlayComeHere(bIsInjury, bIsCrouch);
+	}
+}
+
+void ACamper::ServerRPC_PointTo_Implementation()
+{
+	bool bIsInjury = false;
+	bool bIsCrouch = false;
+	if (userState)
+	{
+		bIsInjury = userState->UserState.Health != ECamperHealth::ECH_Healthy;
+		bIsCrouch = userState->UserState.Stance == ECamperStanceState::ECSS_Crouch;
+	}
+	MulticastRPC_PointTo(bIsInjury, bIsCrouch);
+}
+
+void ACamper::ServerRPC_ComeHere_Implementation()
+{
+	bool bIsInjury = false;
+	bool bIsCrouch = false;
+	if (userState)
+	{
+		bIsInjury = userState->UserState.Health != ECamperHealth::ECH_Healthy;
+		bIsCrouch = userState->UserState.Stance == ECamperStanceState::ECSS_Crouch;
+	}
+	MulticastRPC_ComeHere(bIsInjury, bIsCrouch);
 }
 
 void ACamper::MulticastRPC_OnRescued_Implementation()

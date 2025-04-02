@@ -57,6 +57,7 @@ void ASacrificePlayerController::BeginPlay()
 		RequestCallbackWithGuid();
 		DisplayHud();
 	}
+	
 }
 
 void ASacrificePlayerController::PrevPlayer()

@@ -80,11 +80,13 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			Camper->RescueHooking(TEXT("HookRescue"));
 			auto* HookedCamper = Cast<ACamper>(CamperPoint->AttachedActor);
 			HookedCamper->Hooking(TEXT("HookRescued"));
+			
 			FTimerHandle RescueHandle;
 			GetWorldTimerManager().SetTimer(RescueHandle, this, &AMeatHook::OnRescued, 2.5f, false);
 			Camper->InteractingPoint = nullptr;
 			Camper->NearPoint = nullptr;
 			Camper->ClientRPC_ChangeNearPoint(nullptr);
+			
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = false;
 		}
@@ -104,6 +106,7 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			HookingCamper->SetActorLocation(HookingCamper->GetActorLocation() + FVector(0, 0, 250));
 			HookingCamper->SetActorRotation(HookingCamper->GetActorRotation() + FRotator(0, -180, 0));
 			HookingCamper->Hooking(TEXT("HookIn"));
+			
 			
 			Slasher->HangOnHook(this);
 			Slasher->AttachedSurvivor = nullptr;

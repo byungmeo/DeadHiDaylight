@@ -35,27 +35,24 @@ AExitDoor::AExitDoor()
 		Mesh->SetAnimInstanceClass(AnimClass.Class);
 	}
 
-	if (Mesh)
-	{
-		CamperPoint = CreateDefaultSubobject<UInteractionPoint>(TEXT("CamperPoint"));
-		CamperPoint->SetupAttachment(Mesh, TEXT("joint_AttachCamper"));
-		CamperPoint->SetRelativeRotation(FRotator(0, 0, -90));
-		CamperPoint->OnInteraction.AddDynamic(this, &AExitDoor::OnInteraction);
-		CamperPoint->OnStopInteraction.AddDynamic(this, &AExitDoor::OnStopInteraction);
-		CamperPoint->InteractionMode = EInteractionMode::EIM_CamperOnly;
+	CamperPoint = CreateDefaultSubobject<UInteractionPoint>(TEXT("CamperPoint"));
+	CamperPoint->SetupAttachment(Mesh, TEXT("joint_AttachCamper"));
+	CamperPoint->SetRelativeRotation(FRotator(0, 0, -90));
+	CamperPoint->OnInteraction.AddDynamic(this, &AExitDoor::OnInteraction);
+	CamperPoint->OnStopInteraction.AddDynamic(this, &AExitDoor::OnStopInteraction);
+	CamperPoint->InteractionMode = EInteractionMode::EIM_CamperOnly;
 
-		ExitArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ExitArea"));
-		ExitArea->SetupAttachment(Mesh);
-		ExitArea->SetRelativeLocation(FVector(500, 0, 0));
-		ExitArea->SetBoxExtent(FVector(200, 1000, 1000));
-	}
+	ExitArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ExitArea"));
+	ExitArea->SetupAttachment(Mesh);
+	ExitArea->SetRelativeLocation(FVector(500, 0, 0));
+	ExitArea->SetBoxExtent(FVector(200, 1000, 1000));
 }
 
 void AExitDoor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HasAuthority())
+	if (HasAuthority() && ExitArea)
 	{
 		ExitArea->OnComponentBeginOverlap.AddDynamic(this, &AExitDoor::ServerOnly_OnExitAreaBeginOverlap);
 	}

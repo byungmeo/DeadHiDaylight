@@ -54,16 +54,6 @@ void UCamperAnimInstance::MultiCastRPC_PlayDeadHardAnimation_Implementation(FNam
 {
 	PlayDeadHardAnimation(sectionName);
 }
-// 자가치유퍽 애니메이션 RPC
-void UCamperAnimInstance::ServerRPC_PlaySelfHealingAnimation_Implementation(FName sectionName)
-{
-	MultiCastRPC_PlaySelfHealingAnimation(sectionName);
-}
-
-void UCamperAnimInstance::MultiCastRPC_PlaySelfHealingAnimation_Implementation(FName sectionName)
-{
-	PlaySelfHealingAnimation(sectionName);
-}
 // 문여는 애니메이션 RPC
 void UCamperAnimInstance::ServerRPC_PlayUnLockAnimation_Implementation(FName sectionName)
 {

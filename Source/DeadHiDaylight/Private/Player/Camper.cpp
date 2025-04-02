@@ -241,11 +241,7 @@ void ACamper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
-	if (IsLocallyControlled())
-	{
-		HealingTimingCheck(DeltaTime);
-	}
+	if (HasAuthority()) HealingTimingCheck(DeltaTime);
 	
 	// if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_ResueHooking)
 	// {
@@ -370,7 +366,6 @@ void ACamper::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void ACamper::CamperMove(const FInputActionValue& value)
 {
 	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair ||
-		camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing ||
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_UnLock ||
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Carry ||
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook ||
@@ -629,9 +624,6 @@ void ACamper::CheckInteractPoint()
 
 void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 {
-	// if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair ||
-	// 	camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing) return; // 자가 치유 중이라면 리턴
-	// || Anim->bCrawl
 	// InteractionPoint 찾는 Trace
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -921,9 +913,6 @@ void ACamper::MultiCastRPC_SetInteractionState_Implementation(ECamperInteraction
 		case ECamperInteraction::ECI_DeadHard:
 			userState->UserState.Interaction = ECamperInteraction::ECI_DeadHard;
 			break;
-		case ECamperInteraction::ECI_SelfHealing:
-			userState->UserState.Interaction = ECamperInteraction::ECI_SelfHealing;
-			break;
 		case ECamperInteraction::ECI_Carry:
 			userState->UserState.Interaction = ECamperInteraction::ECI_Carry;
 			break;
@@ -981,10 +970,9 @@ void ACamper::ServerRPC_StartHealing_Implementation()
 }
 void ACamper::MultiCastRPC_StartHealing_Implementation()
 {
-	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing
-					|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair
-					|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_UnLock
-					|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_Healing
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair
+		|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_UnLock
+		|| camperFSMComp->curInteractionState == ECamperInteraction::ECI_Healing
 					) return;
 	
 	// 상태 전환

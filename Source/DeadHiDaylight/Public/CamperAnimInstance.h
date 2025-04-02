@@ -68,13 +68,6 @@ public:
 	void ServerRPC_PlayDeadHardAnimation(FName sectionName);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PlayDeadHardAnimation(FName sectionName);
-	// 자가치유퍽 애니메이션 몽타주 실행하는 RPC
-	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
-	void PlaySelfHealingAnimation(FName sectionName);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_PlaySelfHealingAnimation(FName sectionName);
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiCastRPC_PlaySelfHealingAnimation(FName sectionName);
 	// 문여는 애니메이션 몽타주 실행하는 RPC
 	UFUNCTION(BlueprintImplementableEvent, Category = "Anim")
 	void PlayUnLockAnimation(FName sectionName);

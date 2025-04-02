@@ -57,17 +57,17 @@ public:
 	// 데드하드 탈진 상태 체크 함수
 	void DeadHardTimingCheck(float deltaTime);
 	// 자가치유퍽 시작 함수
-	void PerksSelfHealing();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_PerksSelfHealing();
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMultiCastRPC_PerksSelfHealing();
-	// 자가치유퍽 끝 함수
-	void StopPerksSelfHealing();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_StopPerSelfHealing();
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMultiCastRPC_StopPerSelfHealing();
-	
-	void SelfHealingTimingCheck(float deltaTime);
+	// void PerksSelfHealing();
+	// UFUNCTION(Server, Reliable)
+	// void ServerRPC_PerksSelfHealing();
+	// UFUNCTION(NetMulticast, Reliable)
+	// void NetMultiCastRPC_PerksSelfHealing();
+	// // 자가치유퍽 끝 함수
+	// void StopPerksSelfHealing();
+	// UFUNCTION(Server, Reliable)
+	// void ServerRPC_StopPerSelfHealing();
+	// UFUNCTION(NetMulticast, Reliable)
+	// void NetMultiCastRPC_StopPerSelfHealing();
+	//
+	// void SelfHealingTimingCheck(float deltaTime);
 };

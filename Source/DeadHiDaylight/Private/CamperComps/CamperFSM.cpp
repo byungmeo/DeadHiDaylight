@@ -136,9 +136,6 @@ void UCamperFSM::SetCamperInteractionState(ECamperInteraction newInteractionStat
 	case ECamperInteraction::ECI_DeadHard:
 		DeadHardState();
 		break;
-	case ECamperInteraction::ECI_SelfHealing:
-		SelfHealingState();
-		break;
 	case ECamperInteraction::ECI_Carry:
 		CarryState();
 		break;
@@ -274,15 +271,7 @@ void UCamperFSM::DeadHardState()
 	}
 	anim->animCamperInteractionState =	ECamperInteraction::ECI_DeadHard;
 }
-void UCamperFSM::SelfHealingState()
-{
-	if (anim == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
-		return;
-	}
-	anim->animCamperInteractionState = ECamperInteraction::ECI_SelfHealing;	
-}
+
 void UCamperFSM::CarryState() // 살인마한테 얹힌 상태
 {
 	if (anim == nullptr)

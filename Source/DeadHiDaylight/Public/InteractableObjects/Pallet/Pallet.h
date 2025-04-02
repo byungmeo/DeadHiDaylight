@@ -50,4 +50,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Test")
 	void Broken(class UInteractionPoint* Point);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Broken();
 };

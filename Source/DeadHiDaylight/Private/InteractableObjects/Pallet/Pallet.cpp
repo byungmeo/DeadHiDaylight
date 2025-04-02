@@ -141,6 +141,11 @@ void APallet::Broken(class UInteractionPoint* Point)
 	AttachPoint2->InteractionMode = EInteractionMode::EIM_None;
 	AttachPoint2->DetachActor();
 
+	MulticastRPC_Broken();
+}
+
+void APallet::MulticastRPC_Broken_Implementation()
+{
 	SetActorEnableCollision(false);
 	Mesh->SetVisibility(false);
 	BrokenMesh->SetVisibility(true);

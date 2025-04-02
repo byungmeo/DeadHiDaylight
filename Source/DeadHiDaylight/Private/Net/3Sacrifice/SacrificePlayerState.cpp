@@ -35,11 +35,3 @@ void ASacrificePlayerState::OnRep_UserState()
 	}
 	OnUpdatedUserState.Broadcast(UserState);
 }
-
-void ASacrificePlayerState::ChangeHealth()
-{
-	FUserState NewState = UserState;
-    NewState.Health = (ECamperHealth)(((int)NewState.Health + 1) % 6);
-    UserState = NewState;
-	OnRep_UserState();
-}

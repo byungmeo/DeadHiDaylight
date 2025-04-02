@@ -3,7 +3,9 @@
 
 #include "SacrificeGameState.h"
 
+#include "DHDGameInstance.h"
 #include "Generator.h"
+#include "SacrificePlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -23,6 +25,13 @@ void ASacrificeGameState::BeginPlay()
 		{
 			Generator->OnPowerOn.AddDynamic(this, &ASacrificeGameState::OnPowerOn);
 		}
+	}
+	ReqGeneratorCount = OutActors.Num();
+
+	if (HasAuthority())
+	{
+		const auto* GameInstance = Cast<UDHDGameInstance>(GetGameInstance());
+		RemCamperCount = GameInstance->RoleMap.Num() - 2;
 	}
 }
 
@@ -48,4 +57,16 @@ void ASacrificeGameState::OnRep_ReqGeneratorCount()
 {
 	NET_LOG(LogTemp, Warning, TEXT("ASacrificeGameState::OnRep_ReqGeneratorCount = %d"), ReqGeneratorCount);
 	OnRepGeneratorCount.Broadcast(ReqGeneratorCount);
+}
+
+void ASacrificeGameState::ServerOnly_OnCamperExitOrDie()
+{
+	if (--RemCamperCount <= 0)
+	{
+		MulticastRPC_GameEnd();
+	} 
+}
+
+void ASacrificeGameState::MulticastRPC_GameEnd_Implementation()
+{
 }

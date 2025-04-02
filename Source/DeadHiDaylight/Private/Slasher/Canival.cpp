@@ -188,6 +188,11 @@ void ACanival::BeginPlay()
 void ACanival::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (IsLocallyControlled())
+	{
+		ServerRPC_SendViewRotation(Camera->GetRelativeRotation());
+	}
 	
 	if (bChainSawCharging || ChainSawGauge > 0)
 	{
@@ -248,6 +253,28 @@ void ACanival::Move(const struct FInputActionValue& inputValue)
 	AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 	AddMovementInput(GetActorRightVector(), MovementVector.X);
 }
+
+void ACanival::OnRep_ViewRotation()
+{
+	if (false == IsLocallyControlled())
+	{
+		Camera->SetRelativeRotation(FRotator(ViewRotation.Pitch, ViewRotation.Yaw, 0.f));
+	}
+}
+
+void ACanival::Look(const FInputActionValue& InputActionValue)
+{
+	FVector2D Value = InputActionValue.Get<FVector2D>();
+	AddControllerYawInput(Value.X);
+	AddControllerPitchInput(Value.Y);
+}
+
+void ACanival::ServerRPC_SendViewRotation_Implementation(FRotator NewRotation)
+{
+	ViewRotation = NewRotation;
+	Camera->SetRelativeRotation(FRotator(ViewRotation.Pitch, ViewRotation.Yaw, 0.f));
+}
+
 void ACanival::SetMovementState(ECanivalMoveState NewState)
 {
 	if (CurrentMoveState == NewState)
@@ -303,15 +330,8 @@ void ACanival::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ACanival, CurrentMoveState);
+	DOREPLIFETIME(ACanival, ViewRotation);
 }
-void ACanival::Look(const FInputActionValue& InputActionValue)
-{
-	FVector2D Value = InputActionValue.Get<FVector2D>();
-	AddControllerYawInput(Value.X);
-	AddControllerPitchInput(Value.Y);
-	
-}
-
 
 //망치 공격 
 void ACanival::LeftClick_Start()
@@ -324,10 +344,6 @@ void ACanival::Server_LeftClickStart_Implementation()
 	MultiCast_LeftClickStart();
 }
 
-bool ACanival::Server_LeftClickStart_Validate()
-{
-	return true;
-}
 void ACanival::MultiCast_LeftClickStart_Implementation()
 {
 	if (AnimInstance)
@@ -344,11 +360,6 @@ void ACanival::Server_LeftClickComplete_Implementation()
 {
 	Hammer->SetGenerateOverlapEvents(true);
 	MultiCast_LeftClickComplete();
-}
-
-bool ACanival::Server_LeftClickComplete_Validate()
-{
-	return true;
 }
 
 void ACanival::MultiCast_LeftClickComplete_Implementation()
@@ -601,7 +612,7 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 	//어깨 부착
 	if (Survivor && Survivor->GetMesh())
 	{
-		// AActor* ParentActor, FName SocketName, EAttachmentRule LocationRule, EAttachmentRule RotationRule, EAttachmentRule ScaleRule, bool bWeldSimulatedBodies
+		// AActor* ParentActor, FName SocketName, EAttachmentRule LocationR`ule, EAttachmentRule RotationRule, EAttachmentRule ScaleRule, bool bWeldSimulatedBodies
 		// Survivor->K2_AttachToActor(this, TEXT("joint_ShoulderLT_01Socket"), );
 		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
 		Survivor->GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));

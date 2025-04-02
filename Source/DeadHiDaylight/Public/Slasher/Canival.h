@@ -29,7 +29,15 @@ public:
 
 	
 	void Move(const struct FInputActionValue& inputValue);
+
+	UPROPERTY(ReplicatedUsing = OnRep_ViewRotation)
+	FRotator ViewRotation;
+	UFUNCTION()
+	void OnRep_ViewRotation();
+	UFUNCTION(Server, Unreliable)
+	void ServerRPC_SendViewRotation(FRotator NewRotation);
 	void Look(const FInputActionValue& InputActionValue);
+	
 	UFUNCTION(CallInEditor)
 	void LeftClick_Start();
 	UFUNCTION(CallInEditor)
@@ -47,7 +55,7 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	class UCameraComponent* Camera = nullptr;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	class USkeletalMeshComponent* Hammer = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -151,19 +159,17 @@ public:
 	virtual void MultiCast_SetMovementState_Implementation(ECanivalMoveState NewState);
 
 	// RPC 관련 함수 (좌클릭)
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void Server_LeftClickStart();
 	virtual void Server_LeftClickStart_Implementation();
-	virtual bool Server_LeftClickStart_Validate();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_LeftClickStart();
 	virtual void MultiCast_LeftClickStart_Implementation();
 
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void Server_LeftClickComplete();
 	virtual void Server_LeftClickComplete_Implementation();
-	virtual bool Server_LeftClickComplete_Validate();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCast_LeftClickComplete();

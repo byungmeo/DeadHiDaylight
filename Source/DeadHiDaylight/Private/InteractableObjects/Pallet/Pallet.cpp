@@ -86,6 +86,7 @@ void APallet::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			FallGround();
 			Camper->NearPoint = nullptr;
 			Camper->InteractingPoint = nullptr;
+			Camper->PullDownPallet();
 		}
 		else
 		{

@@ -867,11 +867,13 @@ void ACamper::Hooking(FName sectionName)
 void ACamper::MultiCastRPC_Hooking_Implementation(FName sectionName)
 {
 	if (Anim == nullptr) return;
-
-	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook) // State가 Hook라면
+	
+	if (bFirst == false && camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook) // State가 Hook라면
 	{
+		bFirst = true;
 		// Injure 사운드를 끄고
 		GetWorldTimerManager().ClearTimer(injureTimerHandle);
+		
 		// 후크 걸릴 때 비명 한 번 재생
 		FTimerHandle hookInTimerHandle;
 		GetWorldTimerManager().SetTimer(hookInTimerHandle, [this]()
@@ -879,10 +881,12 @@ void ACamper::MultiCastRPC_Hooking_Implementation(FName sectionName)
 			PlayHookInSound(); // 후크에 걸릴 때 소리 지르는 부분
 		}, 0.9f, false);
 	}
-	else if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_NONE) // State가 NONE이라면
+	else if (bFirst && camperFSMComp->curInteractionState == ECamperInteraction::ECI_NONE) // State가 NONE이라면
 	{
+		bFirst = false;
 		// 다시 InjureSound를 재생
 		PlayInjureSound();
+		
 	}
 	
 	Anim->ServerRPC_PlayHookingAnimation(sectionName);
@@ -1005,10 +1009,7 @@ void ACamper::MultiCastRPC_SetHealthState_Implementation(ECamperHealth NewState)
 	}
 }
 
-void ACamper::PullDownPallet()
-{
-	MultiCastRPC_PullDownPallet();
-}
+
 // 누웠을 때 힐링 및 상대 치료 하는 함수 RPC
 void ACamper::StartHealing()
 {
@@ -1078,6 +1079,15 @@ void ACamper::MultiCastRPC_HealingTimingCheck_Implementation(float deltaTime)
 		curhealingTime += deltaTime;
 		UE_LOG(LogTemp, Warning, TEXT("curhealingTime : %f"), curhealingTime);
 	}
+}
+void ACamper::PullDownPallet()
+{
+	ServerRPC_PullDownPallet();
+}
+
+void ACamper::ServerRPC_PullDownPallet_Implementation()
+{
+	MultiCastRPC_PullDownPallet();
 }
 
 void ACamper::MultiCastRPC_PullDownPallet_Implementation()

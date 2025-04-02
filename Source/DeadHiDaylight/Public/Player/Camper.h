@@ -135,6 +135,8 @@ public:
 
 	// 죽었는지 살았는지
 	bool bIsDead = false;
+
+	bool bFirst = false;
 	
 	// 포인트 찾았는지 체크하는 변수
 	bool bFindPoints = false;
@@ -229,6 +231,8 @@ public:
 	void MultiCastRPC_PickUpDrop();
 	// 판자 내리는 RPC
 	void PullDownPallet();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PullDownPallet();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PullDownPallet();
 	// 쓰러지거나 상대 치유할 때 사용할때 힐 시작하는 RPC

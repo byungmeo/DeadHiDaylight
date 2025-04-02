@@ -2,7 +2,6 @@
 
 
 #include "Canival.h"
-#include "CamperAnimInstance.h"
 
 
 #include "CanivalAnim.h"
@@ -138,6 +137,8 @@ void ACanival::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	InitSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	
 	auto pc = Cast<APlayerController>(Controller);
 	if (pc)
 	{
@@ -182,13 +183,17 @@ void ACanival::BeginPlay()
 	}
 }
 
+void ACanival::ServerRPC_SyncWalkSpeed_Implementation(float Speed)
+{
+	GetCharacterMovement()->MaxWalkSpeed = Speed;
+}
 
 
 // Called every frame
 void ACanival::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	if (IsLocallyControlled())
 	{
 		ServerRPC_SendViewRotation(Camera->GetRelativeRotation());
@@ -207,7 +212,7 @@ void ACanival::Tick(float DeltaTime)
 
 		if (CommonHud)
 		{
-			if (ChainSawGauge >= 1 || ChainSawGauge < 0)
+			if (ChainSawGauge >= 1 || ChainSawGauge <= 0)
 			{
 				if (ChainSawGauge >= 1)
 				{
@@ -217,6 +222,7 @@ void ACanival::Tick(float DeltaTime)
 				ChainSawGauge = 0;
 				CommonHud->OnHiddenGaugeBar();
 				GetCharacterMovement()->MaxWalkSpeed = InitSpeed;
+				ServerRPC_SyncWalkSpeed(InitSpeed);
 			}
 			else
 			{
@@ -282,17 +288,14 @@ void ACanival::SetMovementState(ECanivalMoveState NewState)
 
 	if (HasAuthority())
 	{
-		// 서버인 경우 바로 멀티캐스트 호출
 		MultiCast_SetMovementState(NewState);
 	}
 	else
 	{
-		// 클라이언트인 경우 서버에 요청
 		Server_SetMovementState(NewState);
 	}
 }
 
-// 서버 RPC 구현: 클라이언트 요청을 받아 모든 클라이언트에 전파
 void ACanival::Server_SetMovementState_Implementation(ECanivalMoveState NewState)
 {
 	MultiCast_SetMovementState(NewState);
@@ -303,21 +306,19 @@ bool ACanival::Server_SetMovementState_Validate(ECanivalMoveState NewState)
 	return true;
 }
 
-// 멀티캐스트 RPC 구현: 모든 클라이언트에서 이동 상태 및 관련 속도를 업데이트
 void ACanival::MultiCast_SetMovementState_Implementation(ECanivalMoveState NewState)
 {
 	CurrentMoveState = NewState;
-	// 예시: 이동 상태에 따라 이동 속도 업데이트 (InitSpeed는 기본 속도)
 	switch (NewState)
 	{
 	case ECanivalMoveState::CMS_Idle:
 		GetCharacterMovement()->MaxWalkSpeed = InitSpeed;
 		break;
 	case ECanivalMoveState::CMS_Move:
-		GetCharacterMovement()->MaxWalkSpeed = InitSpeed * 1.5f; // 예시 값
+		GetCharacterMovement()->MaxWalkSpeed = InitSpeed ; 
 		break;
 	case ECanivalMoveState::CMS_Run:
-		GetCharacterMovement()->MaxWalkSpeed = InitSpeed * 2.0f; // 예시 값
+		GetCharacterMovement()->MaxWalkSpeed = InitSpeed ; 
 		break;
 	default:
 		break;
@@ -367,11 +368,14 @@ void ACanival::MultiCast_LeftClickComplete_Implementation()
 	AnimInstance->PlayHammerSwingAnimation();
 }
 
-//전기톱 공
+bool ACanival::Server_RightClickStart_Validate()
+{
+	return true;
+}
+
+//전기톱 공격
 void ACanival::RightClick_Start()
 {
-	GetCharacterMovement()->MaxWalkSpeed *= 0.8f;
-
 	if (ChainSawGauge <= 0)
 	{
 		AnimInstance->PlayChainSawAttackAnimation();
@@ -388,28 +392,21 @@ void ACanival::RightClick_Start()
 	bChainSawCharging = true;
 	
 	
-	if (HasAuthority())
-	{
-		MultiCast_RightClickStart();
-	}
-	else
-	{
-		Server_RightClickStart();
-	}
+	Server_RightClickStart();
+	
 }
 
 void ACanival::Server_RightClickStart_Implementation()
 {
 	MultiCast_RightClickStart();
+	
 }
 
-bool ACanival::Server_RightClickStart_Validate()
-{
-	return true;
-}
+
 void ACanival::MultiCast_RightClickStart_Implementation()
 {
 	GetCharacterMovement()->MaxWalkSpeed *= 0.8f;
+	ServerRPC_SyncWalkSpeed(GetCharacterMovement()->MaxWalkSpeed);
 	if (ChainSawGauge <= 0)
 	{
 		if (AnimInstance)
@@ -441,26 +438,17 @@ void ACanival::RightClick_Complet()
 		//AnimInstance->PlayChainSawRunAnimation(); //아이들상태로 (코드 변경해야함)
 		
 	}
-
-
-	if (HasAuthority())
-	{
-		MultiCast_RightClickComplete();
-	}
-	else
-	{
-		Server_RightClickComplete();
-	}
+	Server_RightClickComplete();
+	
+	//GetCharacterMovement()->MaxWalkSpeed = InitSpeed; //속도 초기화
 }
 void ACanival::Server_RightClickComplete_Implementation()
 {
+	ChainSaw->SetGenerateOverlapEvents(true);
 	MultiCast_RightClickComplete();
 }
 
-bool ACanival::Server_RightClickComplete_Validate()
-{
-	return true;
-}
+
 void ACanival::MultiCast_RightClickComplete_Implementation()
 {
 	if (bChainSawCharging)
@@ -473,10 +461,15 @@ void ACanival::MultiCast_RightClickComplete_Implementation()
 void ACanival::RightAttack()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ACanival::RightAttack"));
+	
+	//GetCharacterMovement()->MaxWalkSpeed = InitSpeed;
+	
 	bIsAttacking=true;
 	ChainSaw->SetGenerateOverlapEvents(true);
 	AnimInstance->PlayChainSawRunAnimation();
+	
 
+	
 	if (HasAuthority())
 	{
 		MultiCast_RightAttack();
@@ -491,10 +484,6 @@ void ACanival::Server_RightAttack_Implementation()
 	MultiCast_RightAttack();
 }
 
-bool ACanival::Server_RightAttack_Validate()
-{
-	return true;
-}
 
 void ACanival::MultiCast_RightAttack_Implementation()
 {

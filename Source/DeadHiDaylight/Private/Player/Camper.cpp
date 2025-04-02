@@ -1235,6 +1235,14 @@ void ACamper::OnRescued()
 
 void ACamper::MulticastRPC_OnRescued_Implementation()
 {
+	if (camperFSMComp)
+	{
+		camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
+		camperFSMComp->curMoveState = ECamperMoveState::ECS_NONE;
+		camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
+		camperFSMComp->curInteractionState = ECamperInteraction::ECI_NONE;
+		curHP = maxHP;
+	}
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -210), FRotator(0, -90, 0));
     SetActorEnableCollision(true);
     GetCharacterMovement()->SetMovementMode(MOVE_Walking);

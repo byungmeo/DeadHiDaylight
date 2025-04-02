@@ -160,6 +160,12 @@ ACamper::ACamper()
 		injuredScreamAttenuation = tempInjureScreamAttenuation.Object;
 	}
 
+	static const ConstructorHelpers::FObjectFinder<UAnimMontage> tempMontage(TEXT("/Script/Engine.AnimMontage'/Game/JS/Blueprints/Animation/MTG_HitCrawl.MTG_HitCrawl'"));
+	if (tempMontage.Succeeded())
+	{
+		hitcrawlMontage = tempMontage.Object;
+	}
+
 	// CharacterMovement 컴포넌트
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -360,6 +366,9 @@ void ACamper::CamperMove(const FInputActionValue& value)
 	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair ||
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_SelfHealing ||
 		camperFSMComp->curInteractionState == ECamperInteraction::ECI_UnLock ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Carry ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook ||
+		camperFSMComp->curInteractionState == ECamperInteraction::ECI_HookRescue ||
 		Anim->Montage_IsPlaying(hitcrawlMontage)) return;
 
 	FVector2D moveDirection = value.Get<FVector2D>();
@@ -1106,7 +1115,8 @@ void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) 
 			*GetActorNameOrLabel(), *OtherActor->GetActorNameOrLabel(), *camper->Anim->TryGetPawnOwner()->GetActorNameOrLabel(), *s);
 		
 		// 다친 상태일 때 상대 힐하는 몽타주 실행
- 		if (Anim && camperFSMComp->curHealthState == ECamperHealth::ECH_Injury)
+ 		if (Anim && camperFSMComp->curHealthState == ECamperHealth::ECH_Injury &&
+ 			camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crawl)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("3"));
  			MultiCastRPC_StartHealing(camper);

@@ -141,6 +141,7 @@ void UPerksComponent::NetMultiCastRPC_PerksSelfHealing_Implementation()
 	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
 	{
 		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
+		fsm->curMoveState = ECamperMoveState::ECS_NONE;
 	}
 	else
 	{

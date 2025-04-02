@@ -157,7 +157,7 @@ void UCamperFSM::IdleState() // 기본 상태 함수
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperStanceState = ECamperStanceState::ECSS_Idle;
@@ -167,7 +167,7 @@ void UCamperFSM::CrouchState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperStanceState = ECamperStanceState::ECSS_Crouch;
@@ -177,7 +177,7 @@ void UCamperFSM::CrawlState() // 기어다니는 상태
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperStanceState = ECamperStanceState::ECSS_Crawl;
@@ -188,7 +188,7 @@ void UCamperFSM::NoneMoveState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperMoveState = ECamperMoveState::ECS_NONE;
@@ -198,7 +198,7 @@ void UCamperFSM::MoveState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperMoveState = ECamperMoveState::ECS_Move;
@@ -208,7 +208,7 @@ void UCamperFSM::RunState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperMoveState = ECamperMoveState::ECS_Run;
@@ -219,7 +219,7 @@ void UCamperFSM::HealthyState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animHealthState = ECamperHealth::ECH_Healthy;
@@ -228,7 +228,7 @@ void UCamperFSM::InjureyState() // 다친 상태
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animHealthState = ECamperHealth::ECH_Injury;
@@ -237,7 +237,7 @@ void UCamperFSM::DeadState()// 죽은 상태
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animHealthState = ECamperHealth::ECH_Dead;
@@ -248,7 +248,7 @@ void UCamperFSM::NONEState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperInteractionState = ECamperInteraction::ECI_NONE;
@@ -257,7 +257,7 @@ void UCamperFSM::RepairState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperInteractionState =	ECamperInteraction::ECI_Repair;
@@ -266,7 +266,7 @@ void UCamperFSM::DeadHardState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperInteractionState =	ECamperInteraction::ECI_DeadHard;
@@ -276,7 +276,7 @@ void UCamperFSM::CarryState() // 살인마한테 얹힌 상태
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperInteractionState = ECamperInteraction::ECI_Carry;
@@ -285,7 +285,7 @@ void UCamperFSM::HookState() // 갈고리에 걸린 상태
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperInteractionState = ECamperInteraction::ECI_Hook;
@@ -294,7 +294,7 @@ void UCamperFSM::HookRescueState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperInteractionState = ECamperInteraction::ECI_HookRescue;
@@ -303,7 +303,7 @@ void UCamperFSM::UnLookState()
 {
 	if (anim == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
+		// UE_LOG(LogTemp, Error, TEXT("CamperFSM::IdleState"));
 		return;
 	}
 	anim->animCamperInteractionState = ECamperInteraction::ECI_UnLock;	

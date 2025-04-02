@@ -246,7 +246,7 @@ void ACamper::PossessedBy(AController* NewController)
 	userState = Cast<ASacrificePlayerState>(GetPlayerState());
 	if (userState)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Server] PlayerState successfully casted!"));
+		// UE_LOG(LogTemp, Warning, TEXT("[Server] PlayerState successfully casted!"));
 	}
 }
 
@@ -257,13 +257,13 @@ void ACamper::OnRep_PlayerState()
 	// 클라이언트에서 초기화
 	userState = Cast<ASacrificePlayerState>(GetPlayerState());
 	ServerRPC_InitPlayerState(userState);
-	if (userState) UE_LOG(LogTemp, Warning, TEXT("[Client] PlayerState successfully casted!"));
+	// if (userState) UE_LOG(LogTemp, Warning, TEXT("[Client] PlayerState successfully casted!"));
 	
 }
 
 void ACamper::ServerRPC_InitPlayerState_Implementation(class ASacrificePlayerState* InState)
 {
-	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_InitPlayerState_Implementation"));
+	// NET_LOG(LogTemp, Warning, TEXT("ServerRPC_InitPlayerState_Implementation"));
 	userState = InState;
 }
 
@@ -357,7 +357,7 @@ void ACamper::Tick(float DeltaTime)
 	{
 		PullDownPallet();
 	}
-	PrintNetLog();
+	// PrintNetLog();
 
 }
 
@@ -467,7 +467,7 @@ void ACamper::ServerRPC_SetStanceState_Implementation(ECamperStanceState NewStat
 	
 	if (userState == nullptr)
     {
-    	UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+    	// UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
     	return;
     }
 
@@ -514,7 +514,7 @@ void ACamper::ServerRPC_SetMovementState_Implementation(ECamperMoveState NewStat
 
 	if (userState == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+		// UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
 		return;
 	}
 
@@ -527,8 +527,8 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 {
 	camperFSMComp->curMoveState = NewState;
 	
-	FString s = UEnum::GetValueAsString(camperFSMComp->curMoveState);
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *s);
+	// FString s = UEnum::GetValueAsString(camperFSMComp->curMoveState);
+	// UE_LOG(LogTemp, Warning, TEXT("%s"), *s);
 	
 	switch (NewState)
 	{
@@ -571,7 +571,7 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 		}
 	}
 	
-	UE_LOG(LogTemp, Warning, TEXT("State : %s curSpeed : %f"), *s, curSpeed);
+	// UE_LOG(LogTemp, Warning, TEXT("State : %s curSpeed : %f"), *s, curSpeed);
 }
 
 void ACamper::ServerOnly_FindInteractionPoint()
@@ -591,7 +591,7 @@ void ACamper::ServerOnly_FindInteractionPoint()
 	if (NearPoint != Point)
 	{
 		NearPoint = Point;
-		NET_LOG(LogTemp, Warning, TEXT("ServerOnly_FindInteractionPoint"));
+		// NET_LOG(LogTemp, Warning, TEXT("ServerOnly_FindInteractionPoint"));
 		ClientRPC_ChangeNearPoint(NearPoint);
 	}
 }
@@ -629,7 +629,7 @@ void ACamper::ClientRPC_ChangeNearPoint_Implementation(class UInteractionPoint* 
 	}
 	
 	NearPoint = NewPoint;
-	NET_LOG(LogTemp, Warning, TEXT("ClientRPC_ChangeNearPoint : %s"), *Description.ToString());
+	// NET_LOG(LogTemp, Warning, TEXT("ClientRPC_ChangeNearPoint : %s"), *Description.ToString());
 	if (const auto* SacrificeController = Cast<ASacrificePlayerController>(GetController()))
 	{
 		if (SacrificeController->Hud)
@@ -686,7 +686,7 @@ void ACamper::ServerRPC_CheckInteractPoint_Implementation()
 			if (auto interact = Cast<UInteractionPoint>(HitResult.GetComponent()))
 			{
 				if (Anim == nullptr || camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair) return;
-				UE_LOG(LogTemp, Warning, TEXT("%s, %d"), *HitResult.GetComponent()->GetName(),camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair);
+				// UE_LOG(LogTemp, Warning, TEXT("%s, %d"), *HitResult.GetComponent()->GetName(),camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair);
 				if(interact->bCanInteract)
 				{
 					interact->Interaction(this);
@@ -706,10 +706,10 @@ void ACamper::MultiCastRPC_StartRepair_Implementation()
 {
 	if (Anim == nullptr || camperFSMComp->curInteractionState == ECamperInteraction::ECI_Repair)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Camper : StartRepair : Anim : nullptr"));
+		// UE_LOG(LogTemp, Warning, TEXT("Camper : StartRepair : Anim : nullptr"));
 		return;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
+	// UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작"));
 	// Interaction 상태 전환
 	camperFSMComp->curInteractionState = ECamperInteraction::ECI_Repair;
 	SetInteractionState(ECamperInteraction::ECI_Repair);
@@ -724,11 +724,11 @@ void ACamper::MultiCastRPC_EndRepair_Implementation()
 {
 	if (Anim == nullptr || camperFSMComp->curInteractionState != ECamperInteraction::ECI_Repair)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Camper : EndRepair : Anim : nullptr"));
+		// UE_LOG(LogTemp, Warning, TEXT("Camper : EndRepair : Anim : nullptr"));
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
+	// UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단/종료"));
 
 	// InterAction 상태 None으로 전환
 	SetInteractionState(ECamperInteraction::ECI_NONE);
@@ -774,7 +774,7 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 {
 	if (camperFSMComp == nullptr)
 	{
-		NET_LOG(LogTemp, Warning, TEXT("Camper : GetDamage (%s) !!CamperFSM is nullptr"), *weapon);
+		// NET_LOG(LogTemp, Warning, TEXT("Camper : GetDamage (%s) !!CamperFSM is nullptr"), *weapon);
 		return;
 	}
 	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_DeadHard)
@@ -909,7 +909,7 @@ void ACamper::CheckRescueTime(ACamper* camper)
 {
 	// 갈고리 구출 테스트
 	testRescueTime += GetWorld()->GetDeltaSeconds();
-	UE_LOG(LogTemp, Warning, TEXT("%f"), testRescueTime);
+	// UE_LOG(LogTemp, Warning, TEXT("%f"), testRescueTime);
 	if (testRescueTime > 1.12f)
 	{
 		camper->camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
@@ -957,7 +957,7 @@ void ACamper::ServerRPC_SetInteractionState_Implementation(ECamperInteraction Ne
 
 	if (userState == nullptr)
     {
-    	UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+    	// UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
     	return;
     }
 
@@ -982,11 +982,11 @@ void ACamper::ServerRPC_SetHealthState_Implementation(ECamperHealth NewState)
 	
 	if (userState == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+		// UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
 		return;
 	}
 
-	NET_LOG(LogTemp, Warning, TEXT("MultiCastRPC_SetHealthState_Implementation"));
+	// NET_LOG(LogTemp, Warning, TEXT("MultiCastRPC_SetHealthState_Implementation"));
 	FUserState NewUserState = userState->UserState;
 	NewUserState.Health = NewState;
 	userState->UserState = NewUserState;
@@ -1087,7 +1087,7 @@ void ACamper::MultiCastRPC_HealingTimingCheck_Implementation(float deltaTime)
 		}
 		// 32초동안 치유 해야함.
 		curhealingTime += deltaTime;
-		UE_LOG(LogTemp, Warning, TEXT("curhealingTime : %f"), curhealingTime);
+		// UE_LOG(LogTemp, Warning, TEXT("curhealingTime : %f"), curhealingTime);
 	}
 }
 void ACamper::PullDownPallet()
@@ -1240,8 +1240,8 @@ void ACamper::MultiCastRPC_HealthCheck_Implementation()
 
 void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) // 쓰러진 생존자 기준으로 OtherActor는 서있는 생존자
 {
-	UE_LOG(LogTemp, Warning, TEXT("1"));
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *OtherActor->GetActorNameOrLabel());
+	// UE_LOG(LogTemp, Warning, TEXT("1"));
+	// UE_LOG(LogTemp, Warning, TEXT("%s"), *OtherActor->GetActorNameOrLabel());
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
 		Slasher->AttachSurvivorToShoulder(this);
@@ -1256,7 +1256,7 @@ void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) 
 			// *GetActorNameOrLabel(), *OtherActor->GetActorNameOrLabel(), *camper->Anim->TryGetPawnOwner()->GetActorNameOrLabel(), *s);
 		
 		// 다친 상태일 때 상대 힐하는 몽타주 실행
-		UE_LOG(LogTemp, Warning, TEXT("3"));
+		// UE_LOG(LogTemp, Warning, TEXT("3"));
  		// 자신한테는 치료하라고 함수 실행
  		StartHealing();
  		ServerRPC_StartHealingAnimation(camper);

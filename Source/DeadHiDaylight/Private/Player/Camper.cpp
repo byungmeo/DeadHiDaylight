@@ -212,12 +212,22 @@ void ACamper::BeginPlay()
 void ACamper::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	
+
+	// 서버에서 초기화
 	userState = Cast<ASacrificePlayerState>(GetPlayerState());
 	if (userState)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState successfully casted!"));
+		UE_LOG(LogTemp, Warning, TEXT("[Server] PlayerState successfully casted!"));
 	}
+}
+
+void ACamper::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	// 클라이언트에서 초기화
+	userState = Cast<ASacrificePlayerState>(GetPlayerState());
+	if (userState) UE_LOG(LogTemp, Warning, TEXT("[Client] PlayerState successfully casted!"));
 }
 
 // Called every frame
@@ -403,11 +413,13 @@ void ACamper::Start_Crouch(const struct FInputActionValue& value)
 {
 	if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl) return;
 	SetStanceState(ECamperStanceState::ECSS_Crouch);
+	SetMovementState(ECamperMoveState::ECS_NONE);
 }
 void ACamper::End_Crouch(const struct FInputActionValue& value)
 {
 	if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl) return;
 	SetStanceState(ECamperStanceState::ECSS_Idle);
+	SetMovementState(ECamperMoveState::ECS_NONE);
 }
 // Crouch End
 
@@ -424,22 +436,26 @@ void ACamper::ServerRPC_SetStanceState_Implementation(ECamperStanceState NewStat
 void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewState)
 {
 	camperFSMComp->curStanceState = NewState;
-	
+
+	if (userState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+	}
 	switch (NewState)
 	{
 	case ECamperStanceState::ECSS_Idle:
 		// curSpeed = 0;
 		// moveComp->MaxWalkSpeed = moveSpeed;
-		// userState->UserState.Stance = ECamperStanceState::ECSS_Idle;
+		userState->UserState.Stance = ECamperStanceState::ECSS_Idle;
 		springArmComp->SetRelativeLocation(FVector(0, 0, 210));
 		
 		break;
 	case ECamperStanceState::ECSS_Crouch:
-		// userState->UserState.Stance = ECamperStanceState::ECSS_Crouch;
+		userState->UserState.Stance = ECamperStanceState::ECSS_Crouch;
 		springArmComp->SetRelativeLocation(FVector(0, 0, 160));
 		break;
 	case ECamperStanceState::ECSS_Crawl:
-		// userState->UserState.Stance = ECamperStanceState::ECSS_Crawl;
+		userState->UserState.Stance = ECamperStanceState::ECSS_Crawl;
 		Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
 		break;
 	}
@@ -460,19 +476,25 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 {
 	camperFSMComp->curMoveState = NewState;
 
+	
+	if (userState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+	}
+	
 	FString s = UEnum::GetValueAsString(camperFSMComp->curMoveState);
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *s);
 	
 	switch (NewState)
 	{
 	case ECamperMoveState::ECS_NONE:
-		// userState->UserState.Move = ECamperMoveState::ECS_NONE;
+		userState->UserState.Move = ECamperMoveState::ECS_NONE;
 		curSpeed = 0;
 		moveComp->StopMovementImmediately();
 		break;
 	case ECamperMoveState::ECS_Move:
 		// Croch 상태
-		// userState->UserState.Move = ECamperMoveState::ECS_Move;
+		userState->UserState.Move = ECamperMoveState::ECS_Move;
 		if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch)
 		{
 			curSpeed = crouchSpeed * 2;
@@ -490,16 +512,17 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 		}
 		break;
 	case ECamperMoveState::ECS_Run:
-		// userState->UserState.Move = ECamperMoveState::ECS_Run;
+		userState->UserState.Move = ECamperMoveState::ECS_Run;
 		if (camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crouch &&
 			camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crawl)
 		{
 			curSpeed = maxSpeed * 2;
 			moveComp->MaxWalkSpeed = curSpeed;
-			// UE_LOG(LogTemp, Error, TEXT("RUN"));
+			
 		}
 		break;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("State : %s curSpeed : %f"), *s, curSpeed);
 }
 
 void ACamper::ServerOnly_FindInteractionPoint()
@@ -732,7 +755,7 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 
 	if (curHP <= 0)
 	{
-		Crawling();
+		if (HasAuthority()) Crawling();
 	}
 	else
 	{
@@ -743,7 +766,7 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 void ACamper::ChangeSpeed()
 {
 	// 다친 상태로 전환 (서버와 로컬 모두 실행)
-	SetHealthState(ECamperHealth::ECH_Injury);
+	camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
 
 	// 이전 속도를 저장
 	beforeSpeed = moveComp->MaxWalkSpeed;
@@ -822,7 +845,7 @@ void ACamper::CheckRescueTime(ACamper* camper)
 	UE_LOG(LogTemp, Warning, TEXT("%f"), testRescueTime);
 	if (testRescueTime > 1.12f)
 	{
-		camper->SetHealthState(ECamperHealth::ECH_Injury);
+		camper->camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
 		camper->SetInteractionState(ECamperInteraction::ECI_NONE);
 		camper->RescueHooking(TEXT("HookRescueEnd"));
 		testRescueTime = 0.0f;
@@ -870,31 +893,35 @@ void ACamper::MultiCastRPC_SetInteractionState_Implementation(ECamperInteraction
 {
 	camperFSMComp->curInteractionState = NewState;
 
+	if (userState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+	}
 	switch (NewState)
 	{
 		case ECamperInteraction::ECI_NONE:
-			// userState->UserState.Interaction = ECamperInteraction::ECI_NONE;
+			userState->UserState.Interaction = ECamperInteraction::ECI_NONE;
 			break;
 		case ECamperInteraction::ECI_Repair:
-			// userState->UserState.Interaction = ECamperInteraction::ECI_Repair;
+			userState->UserState.Interaction = ECamperInteraction::ECI_Repair;
 			break;
 		case ECamperInteraction::ECI_DeadHard:
-			// userState->UserState.Interaction = ECamperInteraction::ECI_DeadHard;
+			userState->UserState.Interaction = ECamperInteraction::ECI_DeadHard;
 			break;
 		case ECamperInteraction::ECI_SelfHealing:
-			// userState->UserState.Interaction = ECamperInteraction::ECI_SelfHealing;
+			userState->UserState.Interaction = ECamperInteraction::ECI_SelfHealing;
 			break;
 		case ECamperInteraction::ECI_Carry:
-			// userState->UserState.Interaction = ECamperInteraction::ECI_Carry;
+			userState->UserState.Interaction = ECamperInteraction::ECI_Carry;
 			break;
 		case ECamperInteraction::ECI_Hook:
-			// userState->UserState.Interaction = ECamperInteraction::ECI_Hook;
+			userState->UserState.Interaction = ECamperInteraction::ECI_Hook;
 			break;
 		case ECamperInteraction::ECI_HookRescue:
-			// userState->UserState.Interaction = ECamperInteraction::ECI_HookRescue;
+			userState->UserState.Interaction = ECamperInteraction::ECI_HookRescue;
 			break;
 		case ECamperInteraction::ECI_UnLock:
-			// userState->UserState.Interaction = ECamperInteraction::ECI_UnLock;
+			userState->UserState.Interaction = ECamperInteraction::ECI_UnLock;
 			break;
 	}
 }
@@ -1055,7 +1082,7 @@ void ACamper::PrintNetLog()
 
 void ACamper::ServerRPC_HealthCheck_Implementation()
 {
-	MultiCastRPC_HealthCheck();
+	if (IsLocallyControlled()) MultiCastRPC_HealthCheck();
 }
 
 void ACamper::MultiCastRPC_HealthCheck_Implementation()

@@ -56,10 +56,6 @@ public:
 	void NetMultiCastRPC_PerksDeadHard();
 	// 데드하드 탈진 상태 체크 함수
 	void DeadHardTimingCheck(float deltaTime);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_PerksDeadHardTimingCheck(bool value);
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMultiCastRPC_PerksDeadHardTimingCheck(bool value);
 	// 자가치유퍽 시작 함수
 	void PerksSelfHealing();
 	UFUNCTION(Server, Reliable)
@@ -74,8 +70,4 @@ public:
 	void NetMultiCastRPC_StopPerSelfHealing();
 	
 	void SelfHealingTimingCheck(float deltaTime);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_SelfHealingTimingCheck(ECamperHealth newState);
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMultiCastRPC_SelfHealingTimingCheck(ECamperHealth newState);
 };

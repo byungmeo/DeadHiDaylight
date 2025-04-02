@@ -4,9 +4,10 @@
 #include "GameFramework/Character.h"
 #include "Camper.generated.h"
 
+enum class ECamperHealth : uint8;
 enum class ECamperMoveState : uint8;
 enum class ECamperStanceState : uint8;
-
+enum class ECamperInteraction : uint8;
 UCLASS()
 class DEADHIDAYLIGHT_API ACamper : public ACharacter
 {
@@ -22,7 +23,7 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
+	virtual void PossessedBy(AController* NewController) override;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -72,7 +73,8 @@ public:
 	class UCharacterMovementComponent* moveComp; // 캐릭터 움직임 컴포넌트
 	UPROPERTY()
 	class UCamperAnimInstance* Anim = nullptr;
-	
+	UPROPERTY()
+	class ASacrificePlayerState* userState = nullptr;
 	// Input 변수
 	UPROPERTY(EditDefaultsOnly)
 	class UInputMappingContext* IMC_Camper; //Input IMC 변수
@@ -111,6 +113,9 @@ public:
 	float crawlSpeed = 70;
 	UPROPERTY(EditAnywhere)
 	float beforeSpeed = 0; // 이전 속도 저장용 변수
+
+	// 죽었는지 살았는지
+	bool bIsDead = false;
 	
 	// 포인트 찾았는지 체크하는 변수
 	bool bFindPoints = false;
@@ -124,19 +129,31 @@ public:
 	
 	void Start_Crouch(const struct FInputActionValue& value); // 앉기 시작 함수 
 	void End_Crouch(const struct FInputActionValue& value); // 앉기 끝 함수
-	
+
+	// 자세 상태 관리 함수
 	void SetStanceState(ECamperStanceState NewState);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_SetStanceState(ECamperStanceState NewState);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_SetStanceState(ECamperStanceState NewState);
-	
+	// 움직임 상태 관리 함수
 	void SetMovementState(ECamperMoveState NewState);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_SetMovementState(ECamperMoveState NewState);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_SetMovementState(ECamperMoveState NewState);
-	
+	// 상호작용 상태 관리 함수
+	void SetInteractionState(ECamperInteraction NewState);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SetInteractionState(ECamperInteraction NewState);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_SetInteractionState(ECamperInteraction NewState);
+	// 건강 상태 관리 함수
+	void SetHealthState(ECamperHealth NewState);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SetHealthState(ECamperHealth NewState);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_SetHealthState(ECamperHealth NewState);
 	// 카메라 관련 함수
 	void Look(const struct FInputActionValue& value);  // 카메라 움직임 함수
 
@@ -168,24 +185,33 @@ public:
 
 	// 문 여는 함수 RPC
 	void StartUnLock();
-
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StartUnLock();
 	// 문 닫는 함수 RPC
 	void EndUnLock();
-
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_EndUnLock();
 	// 갈고리 걸리는 함수 RPC
 	void Hooking(FName sectionName);
-	
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_Hooking(FName sectionName);
 	// 갈고리에서 구해주는 RPC
 	void RescueHooking(FName sectionName);
-
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_RescueHooking(FName sectionName);
+	void CheckRescueTime(ACamper* camper);
 	// 살인마가 드는 RPC
 	void PickUp();
-
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PickUp();
 	// 살인마가 떨어트리는 RPC
 	void PickUpDrop();
-
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PickUpDrop();
 	// 판자 내리는 RPC
 	void PullDownPallet();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_PullDownPallet();
 	
 	// 뛸 때 왼발, 오른 발 사운드 재생 함수
 	void PlayLeftSound();

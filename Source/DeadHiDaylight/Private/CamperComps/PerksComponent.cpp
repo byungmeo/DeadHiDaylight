@@ -84,29 +84,30 @@ void UPerksComponent::ServerRPC_PerksDeadHard_Implementation()
 void UPerksComponent::NetMultiCastRPC_PerksDeadHard_Implementation()
 {
 	// 데드하드를 사용했고, 다친 상태가 아니고 달리는 상태가 아니면 return
-	if (bDeadHard == true || fsm->curHealthState != ECamperHealth::ECH_Injury
-						  || fsm->curMoveState != ECamperMoveState::ECS_Run) return;
+	if (fsm->curInteractionState == ECamperInteraction::ECI_DeadHard ||
+		fsm->curHealthState != ECamperHealth::ECH_Injury ||
+		fsm->curMoveState != ECamperMoveState::ECS_Run) return;
 	
-	bDeadHard = true;
-	fsm->curInteractionState = ECamperInteraction::ECI_DeadHard;
+	Camper->SetInteractionState(ECamperInteraction::ECI_DeadHard);
 	anim->ServerRPC_PlayDeadHardAnimation(TEXT("DeadHard"));
-	FTimerHandle deadHardHandle;
-	GetWorld()->GetTimerManager().SetTimer(deadHardHandle, [this]()
-	{
-		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
-	}, 0.5f, false);
+	// FTimerHandle deadHardHandle;
+	// GetWorld()->GetTimerManager().SetTimer(deadHardHandle, [this]()
+	// {
+	// 	Camper->SetInteractionState(ECamperInteraction::ECI_NONE);
+	// }, 0.5f, false);
 }
 
 void UPerksComponent::DeadHardTimingCheck(float deltaTime)
 {
 	// 데드하드를 사용하고 뛰지 않을 때만 시간 카운트
-	if (bDeadHard && fsm->curMoveState != ECamperMoveState::ECS_Run)
+	if (fsm->curInteractionState == ECamperInteraction::ECI_DeadHard &&
+		fsm->curMoveState != ECamperMoveState::ECS_Run)
 	{
 		// 탈진시간이 exhaustionTime(40초)보다 크거나 같아지면 시간을 초기화하고 데드하드 사용 가능 상태로 변경
 		if (exTime >= exhaustionTime)
 		{
 			exTime = 0;
-			ServerRPC_PerksDeadHardTimingCheck(false);	
+			Camper->SetInteractionState(ECamperInteraction::ECI_NONE);
 		}
 		// 40초 동안 탈진상태
 		exTime += deltaTime;
@@ -114,15 +115,7 @@ void UPerksComponent::DeadHardTimingCheck(float deltaTime)
 	}
 	
 }
-void UPerksComponent::ServerRPC_PerksDeadHardTimingCheck_Implementation(bool value)
-{
-	NetMultiCastRPC_PerksDeadHardTimingCheck(value);
-}
 
-void UPerksComponent::NetMultiCastRPC_PerksDeadHardTimingCheck_Implementation(bool value)
-{
-	bDeadHard = value;
-}
 void UPerksComponent::PerksSelfHealing()
 {
 	ServerRPC_PerksSelfHealing();
@@ -139,12 +132,15 @@ void UPerksComponent::NetMultiCastRPC_PerksSelfHealing_Implementation()
 						|| fsm->curHealthState != ECamperHealth::ECH_Injury
 						|| fsm->curInteractionState == ECamperInteraction::ECI_Repair
 						|| fsm->curInteractionState == ECamperInteraction::ECI_UnLock) return;
-	UE_LOG(LogTemp, Warning, TEXT("PerksSelfHealing"));
-
+	
 	if (fsm->curStanceState == ECamperStanceState::ECSS_Crouch)
 	{
 		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
 		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("StartCrouchSelfHealing"));
+	}
+	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
+	{
+		fsm->curInteractionState = ECamperInteraction::ECI_SelfHealing;
 	}
 	else
 	{
@@ -172,6 +168,11 @@ void UPerksComponent::NetMultiCastRPC_StopPerSelfHealing_Implementation()
 		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
 		anim->ServerRPC_PlaySelfHealingAnimation(TEXT("EndCrouchSelfHealing"));
 	}
+	else if (fsm->curStanceState == ECamperStanceState::ECSS_Crawl)
+	{
+		fsm->curStanceState = ECamperStanceState::ECSS_Idle;
+		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
+	}
 	else
 	{
 		fsm->curInteractionState = ECamperInteraction::ECI_NONE;
@@ -193,22 +194,12 @@ void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
 		{
 			healingTime = 0;
 			Camper->curHP = 2;
-			ServerRPC_SelfHealingTimingCheck(ECamperHealth::ECH_Healthy);
+			Camper->SetHealthState(ECamperHealth::ECH_Healthy);
 		}
 		// 32초동안 치유 해야함.
 		healingTime += deltaTime;
 		UE_LOG(LogTemp, Warning, TEXT("healingTime : %f"), healingTime);
 	}
-}
-
-void UPerksComponent::ServerRPC_SelfHealingTimingCheck_Implementation(ECamperHealth newState)
-{
-	NetMultiCastRPC_SelfHealingTimingCheck(newState);
-}
-
-void UPerksComponent::NetMultiCastRPC_SelfHealingTimingCheck_Implementation(ECamperHealth newState)
-{
-	fsm->curHealthState = newState;
 }
 
 

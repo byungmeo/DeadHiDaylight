@@ -194,7 +194,7 @@ void UPerksComponent::SelfHealingTimingCheck(float deltaTime)
 		{
 			healingTime = 0;
 			Camper->curHP = 2;
-			Camper->SetHealthState(ECamperHealth::ECH_Healthy);
+			Camper->camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
 		}
 		// 32초동안 치유 해야함.
 		healingTime += deltaTime;

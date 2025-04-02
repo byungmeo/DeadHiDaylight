@@ -6,6 +6,7 @@
 #include "Canival.h"
 #include "Player/Camper.h"
 #include "InteractionPoint.h"
+#include "SacrificePlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
 
 
@@ -78,6 +79,13 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			Camper->RescueHooking(TEXT("HookRescue"));
 			auto* HookedCamper = Cast<ACamper>(CamperPoint->AttachedActor);
 			HookedCamper->Hooking(TEXT("HookRescued"));
+			
+			// 갈고리에서 구해진 후 상태 세팅
+			HookedCamper->SetStanceState(ECamperStanceState::ECSS_Idle);
+			HookedCamper->SetHealthState(ECamperHealth::ECH_Injury);
+			HookedCamper->SetMovementState(ECamperMoveState::ECS_NONE);
+			HookedCamper->SetInteractionState(ECamperInteraction::ECI_NONE);
+			
 
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = false;
@@ -98,6 +106,7 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			HookingCamper->SetActorLocation(HookingCamper->GetActorLocation() + FVector(0, 0, 250));
 			HookingCamper->SetActorRotation(HookingCamper->GetActorRotation() + FRotator(0, -180, 0));
 			HookingCamper->Hooking(TEXT("HookIn"));
+			
 			
 			Slasher->HangOnHook(this);
 			Slasher->AttachedSurvivor = nullptr;
@@ -155,6 +164,7 @@ void AMeatHook::OnRescued()
 		RescuedCamper->InteractingPoint = nullptr;
 		RescuedCamper->NearPoint = nullptr;
 		RescuedCamper->OnRescued();
+		
 	}
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;

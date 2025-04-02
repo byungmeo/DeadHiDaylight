@@ -166,6 +166,17 @@ ACamper::ACamper()
 		hitcrawlMontage = tempMontage.Object;
 	}
 
+	static const ConstructorHelpers::FObjectFinder<USoundCue> tempHookInCue(TEXT("/Script/Engine.SoundCue'/Game/JS/Assets/Sound/hook/SC_HookIn.SC_HookIn'"));
+	if (tempHookInCue.Succeeded())
+	{
+		hookInCue = tempHookInCue.Object;
+	}
+	static const ConstructorHelpers::FObjectFinder<USoundAttenuation> tempHookInAttenuation(TEXT("/Script/Engine.SoundAttenuation'/Game/JS/Assets/Sound/hook/SA_HookIn.SA_HookIn'"));
+	if (tempHookInAttenuation.Succeeded())
+	{
+		hookInAttenuation = tempHookInAttenuation.Object;
+	}
+	
 	// CharacterMovement 컴포넌트
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -272,7 +283,6 @@ void ACamper::Tick(float DeltaTime)
 		// 쓰러진 상태에서 돌아갈 때 Crawlhealing이 끝나면
 		ServerRPC_HealthCheck();
 		SetStanceState(ECamperStanceState::ECSS_Idle);
-		StopInjureSound();
 	}
 	// Hook 걸리는 거 테스트 용
 	if (camperFSMComp && GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Four))
@@ -329,13 +339,6 @@ void ACamper::Tick(float DeltaTime)
 	}
 	PrintNetLog();
 
-	// if (curHP == maxHP && camperFSMComp) camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
-
-	// UE_LOG(LogTemp, Warning, TEXT("Current speed: %f"), curSpeed);
-	if (!bPlayInjureSound)
-	{
-		StopInjureSound();
-	}
 }
 
 // Called to bind functionality to input
@@ -820,13 +823,39 @@ void ACamper::MultiCastRPC_EndUnLock_Implementation()
 
 void ACamper::Hooking(FName sectionName)
 {
-	SetInteractionState(ECamperInteraction::ECI_Hook);
-	MultiCastRPC_Hooking(sectionName);
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_NONE)
+	{
+		SetInteractionState(ECamperInteraction::ECI_Hook);
+		MultiCastRPC_Hooking(sectionName);
+	}
+	else if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook)
+	{
+		SetInteractionState(ECamperInteraction::ECI_NONE);
+		MultiCastRPC_Hooking(sectionName);
+	}
 }
 
 void ACamper::MultiCastRPC_Hooking_Implementation(FName sectionName)
 {
 	if (Anim == nullptr) return;
+
+	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook) // State가 Hook라면
+	{
+		// Injure 사운드를 끄고
+		GetWorldTimerManager().ClearTimer(injureTimerHandle);
+		// 후크 걸릴 때 비명 한 번 재생
+		FTimerHandle hookInTimerHandle;
+		GetWorldTimerManager().SetTimer(hookInTimerHandle, [this]()
+		{
+			PlayHookInSound(); // 후크에 걸릴 때 소리 지르는 부분
+		}, 0.9f, false);
+	}
+	else if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_NONE) // State가 NONE이라면
+	{
+		// 다시 InjureSound를 재생
+		PlayInjureSound();
+	}
+	
 	Anim->ServerRPC_PlayHookingAnimation(sectionName);
 }
 
@@ -946,6 +975,8 @@ void ACamper::MultiCastRPC_SetHealthState_Implementation(ECamperHealth NewState)
 	switch (NewState)
 	{
 		case ECamperHealth::ECH_Healthy:
+			// Healthy 상태가 되면 Injury 사운드 끄기  
+			GetWorldTimerManager().ClearTimer(injureTimerHandle);
 			break;
 		case ECamperHealth::ECH_Injury:
 			break;
@@ -1070,51 +1101,21 @@ void ACamper::PlayRightSound()
 
 void ACamper::PlayInjureSound()
 {
-	if (!injureCue || !bPlayInjureSound) return;
+	if (!injureCue || !injureAttenuation) return;
 	
-	// 기존 사운드가 있으면 정지 후 해제
-	if (injuredAudioComp)
+	// 맞은 후 지속적으로 신음소리 내는 부분
+	GetWorldTimerManager().SetTimer(injureTimerHandle, [this]()
 	{
-		injuredAudioComp->Stop();
-		injuredAudioComp = nullptr;
-	}
-
-	injuredAudioComp = UGameplayStatics::SpawnSoundAttached(
-		injureCue,
-		GetRootComponent(),
-		NAME_None,
-		FVector::ZeroVector,
-		EAttachLocation::KeepRelativeOffset,
-		false
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			injureCue,
+			GetActorLocation(),
+			1.0f,
+			1.0f,
+			0.0f,
+			injureAttenuation
 		);
-	if (injuredAudioComp)
-	{
-		injuredAudioComp->OnAudioFinished.AddDynamic(this, &ACamper::OnInjureSoundFinished);
-		injuredAudioComp->Play();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT(" InjuredAudioComp Fail"));
-	}
-}
-
-void ACamper::OnInjureSoundFinished()
-{
-	if (bPlayInjureSound)
-	{
-		PlayInjureSound();
-	}
-}
-
-void ACamper::StopInjureSound()
-{
-	bPlayInjureSound = false;
-
-	if (injuredAudioComp)
-	{
-		injuredAudioComp->Stop();
-		injuredAudioComp = nullptr;
-	}
+	}, 1.0f, true);
 }
 
 void ACamper::PlayScreamSound()
@@ -1129,6 +1130,22 @@ void ACamper::PlayScreamSound()
 			1.0f,
 			0.0f,
 			injuredScreamAttenuation
+		);
+	}
+}
+
+void ACamper::PlayHookInSound()
+{
+	if (hookInCue)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			hookInCue,
+			GetActorLocation(),
+			1.5f,
+			1.0f,
+			0.0f,
+			hookInAttenuation
 		);
 	}
 }

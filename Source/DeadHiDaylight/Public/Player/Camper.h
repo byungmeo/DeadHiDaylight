@@ -64,6 +64,15 @@ public:
 	class USoundCue* injuredScreamCue;
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
 	class USoundAttenuation* injuredScreamAttenuation;
+
+	// Injure sound 반복재생 세팅하는 타이머
+	FTimerHandle injureTimerHandle;
+	
+	// HookIn Sound
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundCue* hookInCue;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="AnimSound")
+	class USoundAttenuation* hookInAttenuation;
 	
 	// 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
@@ -255,14 +264,16 @@ public:
 
 	// 다친 상태일 때 사운드 랜덤 반복 재생
 	void PlayInjureSound();
-	UFUNCTION()
-	void OnInjureSoundFinished(); // 사운드 반복재생하는 델리게이트
-	void StopInjureSound(); // 사운드 멈추는 함수
 
 	// 맞을 때 소리 지르는 함수
 	void PlayScreamSound();
 
+	// 후크 걸릴 때 소리 지르는 함수
+	void PlayHookInSound();
+
 	
+	
+	// 캐릭터 Log 띄워주는 함수
 	void PrintNetLog();
 
 	float testCheckTime = 0;

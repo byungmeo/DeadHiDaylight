@@ -213,7 +213,11 @@ public:
 	void PullDownPallet();
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastRPC_PullDownPallet();
-	
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_StartHealing(ACamper* camper);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastRPC_EndHealing(ACamper* camper);
 	// 뛸 때 왼발, 오른 발 사운드 재생 함수
 	void PlayLeftSound();
 	void PlayRightSound();

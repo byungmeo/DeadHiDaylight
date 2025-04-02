@@ -91,7 +91,8 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 		if (auto* HookingCamper = Slasher->AttachedSurvivor)
 		{
 			Point->AttachActor(Slasher, 0, false);
-			
+			HookingCamper->InteractingPoint = CamperPoint;
+			HookingCamper->NearPoint = nullptr;
 			// 1. 생존자 및 살인자에게 알림
 			HookingCamper->Hooking(TEXT("HookIn"));
 			Slasher->HangOnHook(this);
@@ -129,7 +130,9 @@ void AMeatHook::OnHooked(class ACanival* Slasher)
 		Camper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		CamperPoint->AttachActor(Camper, 0, false);
 		Slasher->AttachedSurvivor = nullptr;
-		Camper->Hooking(TEXT("HookIn"));
+		Slasher->InteractingPoint = nullptr;
+		Slasher->NearPoint = nullptr;
+		Camper->Hooking(TEXT("HookLoop"));
 	}
 	SlasherPoint->DetachActor();
 
@@ -139,7 +142,14 @@ void AMeatHook::OnHooked(class ACanival* Slasher)
 
 void AMeatHook::OnRescued()
 {
+	auto* RescuedCamper = Cast<ACamper>(CamperPoint->AttachedActor);
 	CamperPoint->DetachActor();
+	if (RescuedCamper)
+	{
+		RescuedCamper->InteractingPoint = nullptr;
+		RescuedCamper->NearPoint = nullptr;
+		RescuedCamper->OnRescued();
+	}
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;
 	GetWorldTimerManager().ClearTimer(SacrificeHandle);
@@ -147,11 +157,14 @@ void AMeatHook::OnRescued()
 
 void AMeatHook::OnSacrificed()
 {
-	if (auto* Camper = Cast<ACamper>(CamperPoint->AttachedActor))
+	auto* Camper = Cast<ACamper>(CamperPoint->AttachedActor);
+	CamperPoint->DetachActor();
+	if (Camper)
 	{
+		Camper->InteractingPoint = nullptr;
+		Camper->NearPoint = nullptr;
 		Camper->Hooking(TEXT("HookKilled"));
 	}
-	CamperPoint->DetachActor();
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;
 }

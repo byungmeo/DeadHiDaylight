@@ -1095,6 +1095,8 @@ void ACamper::OnInteraction(class UInteractionPoint* Point, AActor* OtherActor) 
 	if (auto* Slasher = Cast<ACanival>(OtherActor))
 	{
 		Slasher->AttachSurvivorToShoulder(this);
+		Slasher->InteractingPoint = nullptr;
+		Slasher->NearPoint = nullptr;
 	}
 	else if (auto* camper = Cast<ACamper>(OtherActor))
 	{
@@ -1135,4 +1137,20 @@ void ACamper::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherAct
 void ACamper::MultiCastRPC_EndHealing_Implementation(ACamper* camper)
 {
 	camper->Anim->ServerRPC_HealingAnimation(TEXT("EndHealing"));
+}
+
+void ACamper::OnRescued()
+{
+	if (HasAuthority())
+	{
+		MulticastRPC_OnRescued();
+	}
+}
+
+void ACamper::MulticastRPC_OnRescued_Implementation()
+{
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -210), FRotator(0, -90, 0));
+    SetActorEnableCollision(true);
+    GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    GetCharacterMovement()->StopMovementImmediately();
 }

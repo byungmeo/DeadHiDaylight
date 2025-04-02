@@ -103,6 +103,7 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			Slasher->AttachedSurvivor = nullptr;
 			Slasher->InteractingPoint = nullptr;
 			Slasher->NearPoint = nullptr;
+			Slasher->ClientRPC_ChangeNearPoint(nullptr);
 
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = true;
@@ -141,6 +142,10 @@ void AMeatHook::OnHooked(class ACanival* Slasher)
 		Camper->Hooking(TEXT("HookLoop"));
 	}
 	SlasherPoint->DetachActor();
+	Slasher->AttachedSurvivor = nullptr;
+	Slasher->InteractingPoint = nullptr;
+	Slasher->NearPoint = nullptr;
+	Slasher->ClientRPC_ChangeNearPoint(nullptr);
 
 	// 30초 뒤에 희생
 	GetWorldTimerManager().SetTimer(SacrificeHandle, this, &AMeatHook::OnSacrificed, 30.0f, false);

@@ -5,6 +5,7 @@
 
 #include "DHDGameInstance.h"
 #include "Generator.h"
+#include "ResultCarnival.h"
 #include "SacrificeCommonHUD.h"
 #include "SacrificePlayerController.h"
 #include "SacrificePlayerState.h"
@@ -77,6 +78,10 @@ void ASacrificeGameState::MulticastRPC_GameEnd_Implementation()
 		{
 			if (MyController->Hud)
 			{
+				if (auto* ResultCarnival = UGameplayStatics::GetActorOfClass(GetWorld(), AResultCarnival::StaticClass()))
+				{
+					MyController->SetViewTarget(ResultCarnival);
+				}
 				MyController->Hud->OnGameEnd();
 			}
 		}

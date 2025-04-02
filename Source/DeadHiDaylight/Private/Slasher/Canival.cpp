@@ -615,6 +615,7 @@ void ACanival::AttachSurvivorToShoulder(class ACamper* Survivor)
 		Survivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("joint_ShoulderLT_01Socket"));
 		Survivor->GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));
 
+		Survivor->SetInteractionState(ECamperInteraction::ECI_Carry);
 		Survivor->CrawlPoint->bCanInteract = false;
 		Survivor->SetActorEnableCollision(false);
 		Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Flying);

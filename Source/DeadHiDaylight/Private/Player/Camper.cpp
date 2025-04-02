@@ -233,7 +233,15 @@ void ACamper::OnRep_PlayerState()
 
 	// 클라이언트에서 초기화
 	userState = Cast<ASacrificePlayerState>(GetPlayerState());
+	ServerRPC_InitPlayerState(userState);
 	if (userState) UE_LOG(LogTemp, Warning, TEXT("[Client] PlayerState successfully casted!"));
+	
+}
+
+void ACamper::ServerRPC_InitPlayerState_Implementation(class ASacrificePlayerState* InState)
+{
+	NET_LOG(LogTemp, Warning, TEXT("ServerRPC_InitPlayerState_Implementation"));
+	userState = InState;
 }
 
 // Called every frame
@@ -441,33 +449,41 @@ void ACamper::SetStanceState(ECamperStanceState NewState)
 void ACamper::ServerRPC_SetStanceState_Implementation(ECamperStanceState NewState)
 {
 	MultiCastRPC_SetStanceState(NewState);
+	
+	if (userState == nullptr)
+    {
+    	UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+    	return;
+    }
+
+    FUserState NewUserState = userState->UserState;
+    NewUserState.Stance = NewState;
+	userState->UserState = NewUserState;
 }
 
 void ACamper::MultiCastRPC_SetStanceState_Implementation(ECamperStanceState NewState)
 {
 	camperFSMComp->curStanceState = NewState;
-
-	if (userState == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
-	}
+	
 	switch (NewState)
 	{
 	case ECamperStanceState::ECSS_Idle:
-		// curSpeed = 0;
-		// moveComp->MaxWalkSpeed = moveSpeed;
-		userState->UserState.Stance = ECamperStanceState::ECSS_Idle;
-		springArmComp->SetRelativeLocation(FVector(0, 0, 210));
-		
-		break;
+		{
+			// curSpeed = 0;
+			// moveComp->MaxWalkSpeed = moveSpeed;
+			springArmComp->SetRelativeLocation(FVector(0, 0, 210));
+			break;
+		}
 	case ECamperStanceState::ECSS_Crouch:
-		userState->UserState.Stance = ECamperStanceState::ECSS_Crouch;
-		springArmComp->SetRelativeLocation(FVector(0, 0, 160));
-		break;
+		{
+			springArmComp->SetRelativeLocation(FVector(0, 0, 160));
+			break;
+		}
 	case ECamperStanceState::ECSS_Crawl:
-		userState->UserState.Stance = ECamperStanceState::ECSS_Crawl;
-		Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
-		break;
+		{
+			Anim->PlayHitCrawlAnimation(TEXT("hitCrawl"));
+			break;
+		}
 	}
 }
 
@@ -480,17 +496,21 @@ void ACamper::SetMovementState(ECamperMoveState NewState)
 void ACamper::ServerRPC_SetMovementState_Implementation(ECamperMoveState NewState)
 {
 	MultiCastRPC_SetMovementState(NewState);
+
+	if (userState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+		return;
+	}
+
+	FUserState NewUserState = userState->UserState;
+	NewUserState.Move = NewState;
+	userState->UserState = NewUserState;
 }
 
 void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewState)
 {
 	camperFSMComp->curMoveState = NewState;
-
-	
-	if (userState == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
-	}
 	
 	FString s = UEnum::GetValueAsString(camperFSMComp->curMoveState);
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *s);
@@ -498,40 +518,44 @@ void ACamper::MultiCastRPC_SetMovementState_Implementation(ECamperMoveState NewS
 	switch (NewState)
 	{
 	case ECamperMoveState::ECS_NONE:
-		userState->UserState.Move = ECamperMoveState::ECS_NONE;
-		curSpeed = 0;
-		moveComp->StopMovementImmediately();
-		break;
+		{
+			curSpeed = 0;
+			moveComp->StopMovementImmediately();
+			break;
+		}
 	case ECamperMoveState::ECS_Move:
-		// Croch 상태
-		userState->UserState.Move = ECamperMoveState::ECS_Move;
-		if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch)
 		{
-			curSpeed = crouchSpeed * 2;
-			moveComp->MaxWalkSpeed = curSpeed;
+			// Croch 상태
+			if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crouch)
+			{
+				curSpeed = crouchSpeed * 2;
+				moveComp->MaxWalkSpeed = curSpeed;
+			}
+			else if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
+			{
+				curSpeed = crawlSpeed;
+				moveComp->MaxWalkSpeed = curSpeed;
+			}
+			else
+			{
+				curSpeed = moveSpeed * 2;
+				moveComp->MaxWalkSpeed = curSpeed;
+			}
+			break;
 		}
-		else if (camperFSMComp->curStanceState == ECamperStanceState::ECSS_Crawl)
-		{
-			curSpeed = crawlSpeed;
-			moveComp->MaxWalkSpeed = curSpeed;
-		}
-		else
-		{
-			curSpeed = moveSpeed * 2;
-			moveComp->MaxWalkSpeed = curSpeed;
-		}
-		break;
 	case ECamperMoveState::ECS_Run:
-		userState->UserState.Move = ECamperMoveState::ECS_Run;
-		if (camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crouch &&
-			camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crawl)
 		{
-			curSpeed = maxSpeed * 2;
-			moveComp->MaxWalkSpeed = curSpeed;
+			if (camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crouch &&
+				camperFSMComp->curStanceState != ECamperStanceState::ECSS_Crawl)
+			{
+				curSpeed = maxSpeed * 2;
+				moveComp->MaxWalkSpeed = curSpeed;
 			
+			}
+			break;
 		}
-		break;
 	}
+	
 	UE_LOG(LogTemp, Warning, TEXT("State : %s curSpeed : %f"), *s, curSpeed);
 }
 
@@ -770,7 +794,10 @@ void ACamper::MultiCastRPC_GetDamage_Implementation(const FString& weapon)
 void ACamper::ChangeSpeed()
 {
 	// 다친 상태로 전환 (서버와 로컬 모두 실행)
-	camperFSMComp->curHealthState = ECamperHealth::ECH_Injury;
+	if (HasAuthority())
+	{
+		SetHealthState(ECamperHealth::ECH_Injury);
+	}
 
 	// 이전 속도를 저장
 	beforeSpeed = moveComp->MaxWalkSpeed;
@@ -891,43 +918,21 @@ void ACamper::SetInteractionState(ECamperInteraction NewState)
 void ACamper::ServerRPC_SetInteractionState_Implementation(ECamperInteraction NewState)
 {
 	MultiCastRPC_SetInteractionState(NewState);
+
+	if (userState == nullptr)
+    {
+    	UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+    	return;
+    }
+
+    FUserState NewUserState = userState->UserState;
+    NewUserState.Interaction = NewState;
+    userState->UserState = NewUserState;
 }
 
 void ACamper::MultiCastRPC_SetInteractionState_Implementation(ECamperInteraction NewState)
 {
 	camperFSMComp->curInteractionState = NewState;
-
-	if (userState == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
-	}
-	switch (NewState)
-	{
-		case ECamperInteraction::ECI_NONE:
-			userState->UserState.Interaction = ECamperInteraction::ECI_NONE;
-			break;
-		case ECamperInteraction::ECI_Repair:
-			userState->UserState.Interaction = ECamperInteraction::ECI_Repair;
-			break;
-		case ECamperInteraction::ECI_DeadHard:
-			userState->UserState.Interaction = ECamperInteraction::ECI_DeadHard;
-			break;
-		case ECamperInteraction::ECI_Carry:
-			userState->UserState.Interaction = ECamperInteraction::ECI_Carry;
-			break;
-		case ECamperInteraction::ECI_Hook:
-			userState->UserState.Interaction = ECamperInteraction::ECI_Hook;
-			break;
-		case ECamperInteraction::ECI_HookRescue:
-			userState->UserState.Interaction = ECamperInteraction::ECI_HookRescue;
-			break;
-		case ECamperInteraction::ECI_UnLock:
-			userState->UserState.Interaction = ECamperInteraction::ECI_UnLock;
-			break;
-		case ECamperInteraction::ECI_Healing:
-			userState->UserState.Interaction = ECamperInteraction::ECI_Healing;
-			break;
-	}
 }
 
 void ACamper::SetHealthState(ECamperHealth NewState)
@@ -938,20 +943,22 @@ void ACamper::SetHealthState(ECamperHealth NewState)
 void ACamper::ServerRPC_SetHealthState_Implementation(ECamperHealth NewState)
 {
 	MultiCastRPC_SetHealthState(NewState);
+	
+	if (userState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("userState Not Set"));
+		return;
+	}
+
+	NET_LOG(LogTemp, Warning, TEXT("MultiCastRPC_SetHealthState_Implementation"));
+	FUserState NewUserState = userState->UserState;
+	NewUserState.Health = NewState;
+	userState->UserState = NewUserState;
 }
 
 void ACamper::MultiCastRPC_SetHealthState_Implementation(ECamperHealth NewState)
 {
 	camperFSMComp->curHealthState = NewState;
-	switch (NewState)
-	{
-		case ECamperHealth::ECH_Healthy:
-			break;
-		case ECamperHealth::ECH_Injury:
-			break;
-		case ECamperHealth::ECH_Dead:
-			break;
-	}
 }
 
 void ACamper::PullDownPallet()
@@ -1235,14 +1242,14 @@ void ACamper::OnRescued()
 
 void ACamper::MulticastRPC_OnRescued_Implementation()
 {
-	if (camperFSMComp)
+	if (camperFSMComp && HasAuthority())
 	{
-		camperFSMComp->curHealthState = ECamperHealth::ECH_Healthy;
-		camperFSMComp->curMoveState = ECamperMoveState::ECS_NONE;
-		camperFSMComp->curStanceState = ECamperStanceState::ECSS_Idle;
-		camperFSMComp->curInteractionState = ECamperInteraction::ECI_NONE;
-		curHP = maxHP;
+		SetHealthState(ECamperHealth::ECH_Healthy);
+		SetMovementState(ECamperMoveState::ECS_NONE);
+		SetStanceState(ECamperStanceState::ECSS_Idle);
+		SetInteractionState(ECamperInteraction::ECI_NONE);
 	}
+	curHP = maxHP;
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -210), FRotator(0, -90, 0));
     SetActorEnableCollision(true);
     GetCharacterMovement()->SetMovementMode(MOVE_Walking);

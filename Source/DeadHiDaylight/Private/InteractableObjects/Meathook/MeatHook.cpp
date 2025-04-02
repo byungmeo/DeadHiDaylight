@@ -6,7 +6,9 @@
 #include "Canival.h"
 #include "Player/Camper.h"
 #include "InteractionPoint.h"
+#include "SacrificePlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 // Sets default values
@@ -144,6 +146,7 @@ void AMeatHook::OnHooked(class ACanival* Slasher)
 	if (auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor))
 	{
 		Camper->Hooking(TEXT("HookLoop"));
+		Camper->SetInteractionState(ECamperInteraction::ECI_Hook);
 	}
 	SlasherPoint->DetachActor();
 	Slasher->AttachedSurvivor = nullptr;
@@ -180,6 +183,22 @@ void AMeatHook::OnSacrificed()
 		Camper->InteractingPoint = nullptr;
 		Camper->NearPoint = nullptr;
 		Camper->Hooking(TEXT("HookKilled"));
+		FTimerHandle KilledTimer;
+		GetWorldTimerManager().SetTimer(KilledTimer, [this, Camper]() {
+			if (Camper)
+			{
+				Camper->SetHealthState(ECamperHealth::ECH_Dead);
+				Camper->UnPossessed();
+				Camper->GetMesh()->SetVisibility(false);
+				Camper->SetActorEnableCollision(false);
+				if (Camper->CrawlPoint)
+				{
+					Camper->CrawlPoint->DestroyComponent();
+				}
+				Camper->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+				Camper->GetCharacterMovement()->StopMovementImmediately();
+			}
+		}, 13.0f, false);
 	}
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;

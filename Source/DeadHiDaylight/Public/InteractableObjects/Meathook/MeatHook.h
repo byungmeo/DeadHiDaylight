@@ -42,4 +42,6 @@ public:
 	void OnHooked(class ACanival* Slasher);
 	void OnRescued();
 	void OnSacrificed();
+
+	FTimerHandle SacrificeHandle;
 };

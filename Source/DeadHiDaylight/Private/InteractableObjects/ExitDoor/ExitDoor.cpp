@@ -5,7 +5,10 @@
 
 #include "Player/Camper.h"
 #include "InteractionPoint.h"
+#include "SacrificeGameState.h"
+#include "SacrificePlayerState.h"
 #include "DeadHiDaylight/DeadHiDaylight.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -45,7 +48,16 @@ AExitDoor::AExitDoor()
 		ExitArea->SetupAttachment(Mesh);
 		ExitArea->SetRelativeLocation(FVector(500, 0, 0));
 		ExitArea->SetBoxExtent(FVector(200, 1000, 1000));
-		ExitArea->OnComponentBeginOverlap.AddDynamic(this, &AExitDoor::OnExitAreaBeginOverlap);
+	}
+}
+
+void AExitDoor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		ExitArea->OnComponentBeginOverlap.AddDynamic(this, &AExitDoor::ServerOnly_OnExitAreaBeginOverlap);
 	}
 }
 
@@ -121,11 +133,32 @@ void AExitDoor::OnStopInteraction(class UInteractionPoint* Point, AActor* OtherA
 	}
 }
 
-void AExitDoor::OnExitAreaBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+void AExitDoor::ServerOnly_OnExitAreaBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (auto* Camper = Cast<ACamper>(OtherActor))
 	{
+		if (Camper->GetMesh()->IsVisible() == false)
+		{
+			return;
+		}
+		
 		NET_LOG(LogTemp, Warning, TEXT("AExitDoor::OnExitAreaBeginOverlap : 생존자 탈출 성공"));
+		auto* CamperState = Cast<ASacrificePlayerState>(Camper->GetPlayerState());
+		if (CamperState)
+		{
+			// TODO: 탈출 처리
+			auto* GameState = Cast<ASacrificeGameState>(GetWorld()->GetGameState());
+			if (GameState)
+			{
+				GameState->ServerOnly_OnCamperExitOrDie();
+			}
+		}
+		Camper->UnPossessed();
+		Camper->GetMesh()->SetVisibility(false);
+		Camper->SetActorEnableCollision(false);
+		Camper->CrawlPoint->DestroyComponent();
+		Camper->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		Camper->GetCharacterMovement()->StopMovementImmediately();
 	}
 }

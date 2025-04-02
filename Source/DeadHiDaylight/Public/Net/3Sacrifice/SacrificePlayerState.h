@@ -79,7 +79,7 @@ struct FUserState
 	 * Common
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	FName Name = FName(NAME_None);
+	FText Name;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	EPlayerRole PlayerRole = EPlayerRole::EPR_None;
 
@@ -87,9 +87,15 @@ struct FUserState
 	 *	Camper
 	 */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	ECamperStanceState Stance = ECamperStanceState::ECSS_Idle;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	ECamperMoveState Move = ECamperMoveState::ECS_NONE;	
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	EStrugglePhase StrugglePhase = EStrugglePhase::ESP_First;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	ECamperHealth Health = ECamperHealth::ECH_Healthy;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	ECamperInteraction Interaction = ECamperInteraction::ECI_NONE;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpdatedUserState, const FUserState&, UserState);
@@ -109,13 +115,10 @@ protected:
 public:
 	bool bIsInit = false;
 	
-	UPROPERTY(ReplicatedUsing=OnRep_UserState ,BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(ReplicatedUsing=OnRep_UserState, BlueprintReadOnly, VisibleAnywhere)
 	FUserState UserState;
 
 	UFUNCTION()
 	void OnRep_UserState();
 	FOnUpdatedUserState OnUpdatedUserState;
-	
-	UFUNCTION(CallInEditor, Category="Test")
-    void ChangeHealth();
 };

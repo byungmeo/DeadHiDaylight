@@ -75,7 +75,9 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			// TODO: Case2 : 생존자가 갈고리에 걸려있는 생존자를 구하는 경우
 			
 			// 1. 구하려는 생존자에게 알림
-			Camper->RescueHooking(TEXT("HookRescueIn"));
+			Camper->RescueHooking(TEXT("HookRescue"));
+			auto* HookedCamper = Cast<ACamper>(CamperPoint->AttachedActor);
+			HookedCamper->Hooking(TEXT("HookRescued"));
 
 			// 2. Point를 적절한 상태로 전환
 			CamperPoint->bCanInteract = false;
@@ -122,12 +124,17 @@ void AMeatHook::OnStopInteraction(UInteractionPoint* Point, AActor* OtherActor)
 
 void AMeatHook::OnHooked(class ACanival* Slasher)
 {
-	auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor);
-	Camper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	CamperPoint->AttachActor(Camper, 0, false);
-	Slasher->AttachedSurvivor = nullptr;
-	// Camper->ServerRPC_Hooking(TEXT("HookIn"));
+	if (auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor))
+	{
+		Camper->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		CamperPoint->AttachActor(Camper, 0, false);
+		Slasher->AttachedSurvivor = nullptr;
+		Camper->Hooking(TEXT("HookIn"));
+	}
 	SlasherPoint->DetachActor();
+
+	// 30초 뒤에 희생
+	GetWorldTimerManager().SetTimer(SacrificeHandle, this, &AMeatHook::OnSacrificed, 30.0f, false);
 }
 
 void AMeatHook::OnRescued()
@@ -135,10 +142,15 @@ void AMeatHook::OnRescued()
 	CamperPoint->DetachActor();
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;
+	GetWorldTimerManager().ClearTimer(SacrificeHandle);
 }
 
 void AMeatHook::OnSacrificed()
 {
+	if (auto* Camper = Cast<ACamper>(CamperPoint->AttachedActor))
+	{
+		Camper->Hooking(TEXT("HookKilled"));
+	}
 	CamperPoint->DetachActor();
 	CamperPoint->bCanInteract = false;
 	SlasherPoint->bCanInteract = true;

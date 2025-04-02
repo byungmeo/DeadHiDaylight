@@ -46,7 +46,7 @@ public:
 	void RequestCallbackWithGuid();
 	
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_RequestCreatePawn(FGuid Guid);
+	void ServerRPC_RequestCreatePawn(FGuid Guid, const FText& Nickname);
 
 	UPROPERTY()
 	TObjectPtr<AActor> SkillCheckableObject = nullptr;

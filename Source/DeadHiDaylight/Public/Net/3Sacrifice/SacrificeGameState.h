@@ -3,14 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SacrificePlayerState.h"
 #include "GameFramework/GameState.h"
 #include "SacrificeGameState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRepGeneratorCount, int, Count);
 
-/**
- * 희생제에서 생존자, 살인마 모두가 가지고 있는(혹은 알아야 하는) 상태
- */
 UCLASS()
 class DEADHIDAYLIGHT_API ASacrificeGameState : public AGameStateBase
 {
@@ -42,4 +40,10 @@ public:
 	UFUNCTION()
     void OnRep_ReqGeneratorCount();
 	FOnRepGeneratorCount OnRepGeneratorCount;
+
+	// BeginPlay에서 계산된다
+	int RemCamperCount = 0;
+	void ServerOnly_OnCamperExitOrDie();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_GameEnd();
 };

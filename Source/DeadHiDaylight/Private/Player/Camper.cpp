@@ -850,16 +850,7 @@ void ACamper::MultiCastRPC_EndUnLock_Implementation()
 
 void ACamper::Hooking(FName sectionName)
 {
-	if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_NONE)
-	{
-		SetInteractionState(ECamperInteraction::ECI_Hook);
-		MultiCastRPC_Hooking(sectionName);
-	}
-	else if (camperFSMComp->curInteractionState == ECamperInteraction::ECI_Hook)
-	{
-		SetInteractionState(ECamperInteraction::ECI_NONE);
-		MultiCastRPC_Hooking(sectionName);
-	}
+	MultiCastRPC_Hooking(sectionName);
 }
 
 void ACamper::MultiCastRPC_Hooking_Implementation(FName sectionName)

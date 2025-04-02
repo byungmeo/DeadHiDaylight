@@ -105,8 +105,8 @@ void AMeatHook::OnInteraction(UInteractionPoint* Point, AActor* OtherActor)
 			CamperPoint->AttachActor(HookingCamper, 0, false);
 			HookingCamper->SetActorLocation(HookingCamper->GetActorLocation() + FVector(0, 0, 250));
 			HookingCamper->SetActorRotation(HookingCamper->GetActorRotation() + FRotator(0, -180, 0));
+			HookingCamper->SetInteractionState(ECamperInteraction::ECI_Hook);
 			HookingCamper->Hooking(TEXT("HookIn"));
-			
 			
 			Slasher->HangOnHook(this);
 			Slasher->AttachedSurvivor = nullptr;
@@ -141,16 +141,17 @@ void AMeatHook::OnStopInteraction(UInteractionPoint* Point, AActor* OtherActor)
 
 void AMeatHook::OnHooked(class ACanival* Slasher)
 {
-	if (false == HasAuthority())
-	{
-		return;
-	}
-	
 	if (auto* Camper = Cast<ACamper>(Slasher->AttachedSurvivor))
 	{
 		Camper->Hooking(TEXT("HookLoop"));
 		Camper->SetInteractionState(ECamperInteraction::ECI_Hook);
 	}
+	
+	if (false == HasAuthority())
+	{
+		return;
+	}
+
 	SlasherPoint->DetachActor();
 	Slasher->AttachedSurvivor = nullptr;
 	Slasher->InteractingPoint = nullptr;
@@ -191,7 +192,7 @@ void AMeatHook::OnSacrificed()
 			if (Camper)
 			{
 				Camper->SetHealthState(ECamperHealth::ECH_Dead);
-				Camper->UnPossessed();
+				// Camper->UnPossessed();
 				Camper->GetMesh()->SetVisibility(false);
 				Camper->SetActorEnableCollision(false);
 				if (Camper->CrawlPoint)
